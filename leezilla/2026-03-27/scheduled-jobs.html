@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumion Scheduled Jobs &mdash; Engineering Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        midnight: '#0f172a',
+                        navy: '#1e293b',
+                        surface: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+        ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.5); }
+
+        /* Timeline */
+        .hour-col { min-width: 56px; position: relative; }
+        .hour-col::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+            background: rgba(99,102,241,0.08);
+        }
+        .hour-col:hover::before { background: rgba(99,102,241,0.25); }
+
+        .job-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .job-dot:hover {
+            transform: scale(1.8);
+            z-index: 10;
+        }
+        .job-dot.cat-payments { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+        .job-dot.cat-notifications { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.4); }
+        .job-dot.cat-data { background: #8b5cf6; box-shadow: 0 0 6px rgba(139,92,246,0.4); }
+        .job-dot.cat-reporting { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.4); }
+        .job-dot.cat-integrations { background: #ec4899; box-shadow: 0 0 6px rgba(236,72,153,0.4); }
+        .job-dot.cat-maintenance { background: #6b7280; box-shadow: 0 0 6px rgba(107,114,128,0.4); }
+        .job-dot.cat-ai { background: #06b6d4; box-shadow: 0 0 6px rgba(6,182,212,0.4); }
+        .job-dot.cat-crm { background: #f97316; box-shadow: 0 0 6px rgba(249,115,22,0.4); }
+
+        /* Cards */
+        .job-card {
+            background: rgba(30,41,59,0.6);
+            border: 1px solid rgba(99,102,241,0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        .job-card:hover {
+            border-color: rgba(99,102,241,0.3);
+            background: rgba(30,41,59,0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .job-card.highlight {
+            border-color: rgba(99,102,241,0.5);
+            background: rgba(30,41,59,0.95);
+            box-shadow: 0 0 20px rgba(99,102,241,0.15);
+        }
+
+        /* Badge */
+        .freq-badge {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+        .freq-minute { background: rgba(239,68,68,0.15); color: #fca5a5; }
+        .freq-5min { background: rgba(249,115,22,0.15); color: #fdba74; }
+        .freq-10min { background: rgba(245,158,11,0.15); color: #fcd34d; }
+        .freq-30min { background: rgba(234,179,8,0.15); color: #fde68a; }
+        .freq-hourly { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+        .freq-6hour { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+        .freq-daily { background: rgba(59,130,246,0.15); color: #93c5fd; }
+        .freq-weekday { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+        .freq-weekly { background: rgba(6,182,212,0.15); color: #67e8f9; }
+        .freq-monthly { background: rgba(236,72,153,0.15); color: #f9a8d4; }
+        .freq-bimonthly { background: rgba(168,85,247,0.15); color: #d8b4fe; }
+
+        /* Modifier pills */
+        .mod-pill {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .mod-overlap { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+        .mod-server { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+        .mod-skip { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .mod-between { background: rgba(139,92,246,0.2); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+        .mod-weekdays { background: rgba(6,182,212,0.2); color: #22d3ee; border: 1px solid rgba(6,182,212,0.3); }
+
+        /* Category filter */
+        .cat-filter {
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .cat-filter:hover { opacity: 0.9; }
+        .cat-filter.active { border-color: currentColor; }
+        .cat-filter.inactive { opacity: 0.35; }
+
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            z-index: 9999;
+            background: #1e293b;
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            max-width: 360px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .tooltip.visible { opacity: 1; }
+
+        /* Stat card */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(30,41,59,0.8) 0%, rgba(30,41,59,0.4) 100%);
+            border: 1px solid rgba(99,102,241,0.12);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+        .stat-card.sc-blue::before { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+        .stat-card.sc-green::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+        .stat-card.sc-purple::before { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+        .stat-card.sc-amber::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+        .stat-card.sc-cyan::before { background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+
+        /* Search */
+        .search-input {
+            background: rgba(15,23,42,0.6);
+            border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 10px;
+            padding: 10px 16px 10px 40px;
+            color: #e2e8f0;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: rgba(99,102,241,0.4); }
+        .search-input::placeholder { color: #475569; }
+
+        /* Heatmap cell */
+        .heat-cell {
+            border-radius: 4px;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .heat-cell:hover { transform: scale(1.15); z-index: 2; }
+
+        /* Animate in */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeUp 0.4s ease-out both; }
+
+        /* Timeline marker pulse */
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+        .now-marker::after {
+            content: '';
+            position: absolute;
+            width: 12px; height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            top: -6px; left: 50%; transform: translateX(-50%);
+            animation: pulse-ring 2s ease-out infinite;
+        }
+        .now-marker::before {
+            content: '';
+            position: absolute;
+            width: 6px; height: 6px;
+            background: #ef4444;
+            border-radius: 50%;
+            top: -3px; left: 50%; transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        /* Expand/collapse */
+        .expandable { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .expandable.open { max-height: 2000px; }
+    </style>
+<meta name="share-summary" content="Interactive engineering dashboard cataloging all Lumion scheduled commands, jobs, and automations — organized by category with a 24-hour heatmap, search, filtering, and modifier details."><meta name="share-hash" content="af8395b8a9fa640d680c60564ab3a295b71f4a1e0fb37dcf8e16be638783549f">
+</head>
+<body class="min-h-screen">
+
+<!-- Tooltip -->
+<div id="tooltip" class="tooltip"></div>
+
+<!-- Hero -->
+<header class="relative overflow-hidden">
+    <div class="absolute inset-0" style="background: radial-gradient(ellipse at 30% 0%, rgba(99,102,241,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 100%, rgba(16,185,129,0.08) 0%, transparent 50%);"></div>
+    <div class="relative max-w-7xl mx-auto px-6 pt-12 pb-8">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <span class="text-xs font-semibold tracking-widest uppercase text-indigo-400">Lumion Engineering</span>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Scheduled Jobs</h1>
+        <p class="mt-3 text-lg text-slate-400 max-w-2xl">
+            A complete engineering view of <span id="totalCount" class="text-white font-semibold">0</span> scheduled commands, jobs, and automations.
+            <span class="text-slate-500">Timezone: America/Los_Angeles (Pacific)</span>
+        </p>
+    </div>
+</header>
+
+<!-- Stats -->
+<section class="max-w-7xl mx-auto px-6 -mt-2 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="stat-card sc-blue animate-in" style="animation-delay:0.05s">
+            <div class="text-3xl font-bold text-white" id="statTotal">0</div>
+            <div class="text-xs font-medium text-slate-400 mt-1">Total Jobs</div>
+        </div>
+        <div class="stat-card sc-green animate-in" style="animation-delay:0.1s">
+            <div class="text-3xl font-bold text-white" id="statHighFreq">0</div>
+            <div class="text-xs font-medium text-slate-400 mt-1">High-Frequency (&le;30m)</div>
+        </div>
+        <div class="stat-card sc-purple animate-in" style="animation-delay:0.15s">
+            <div class="text-3xl font-bold text-white" id="statDaily">0</div>
+            <div class="text-xs font-medium text-slate-400 mt-1">Daily Commands</div>
+        </div>
+        <div class="stat-card sc-amber animate-in" style="animation-delay:0.2s">
+            <div class="text-3xl font-bold text-white" id="statOverlap">0</div>
+            <div class="text-xs font-medium text-slate-400 mt-1">WithoutOverlapping</div>
+        </div>
+        <div class="stat-card sc-cyan animate-in" style="animation-delay:0.25s">
+            <div class="text-3xl font-bold text-white" id="statOneServer">0</div>
+            <div class="text-xs font-medium text-slate-400 mt-1">OnOneServer</div>
+        </div>
+    </div>
+</section>
+
+<!-- Heatmap -->
+<section class="max-w-7xl mx-auto px-6 mb-10">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            24-Hour Activity Heatmap
+        </h2>
+        <span class="text-xs text-slate-500">Times in Pacific (PT)</span>
+    </div>
+    <div class="bg-slate-800/40 rounded-2xl border border-slate-700/50 p-6 overflow-x-auto">
+        <div id="heatmapGrid" class="grid gap-1" style="grid-template-columns: 80px repeat(24, 1fr);"></div>
+        <div class="flex items-center justify-end gap-3 mt-4">
+            <span class="text-[10px] text-slate-500">Fewer</span>
+            <div class="flex gap-1">
+                <div class="w-4 h-4 rounded bg-slate-800 border border-slate-700"></div>
+                <div class="w-4 h-4 rounded" style="background:rgba(99,102,241,0.15)"></div>
+                <div class="w-4 h-4 rounded" style="background:rgba(99,102,241,0.3)"></div>
+                <div class="w-4 h-4 rounded" style="background:rgba(99,102,241,0.5)"></div>
+                <div class="w-4 h-4 rounded" style="background:rgba(99,102,241,0.75)"></div>
+                <div class="w-4 h-4 rounded bg-indigo-500"></div>
+            </div>
+            <span class="text-[10px] text-slate-500">More</span>
+        </div>
+    </div>
+</section>
+
+<!-- Filters + Search -->
+<section class="max-w-7xl mx-auto px-6 mb-6">
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
+        <div class="relative flex-1 max-w-md">
+            <svg class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search commands, jobs, categories...">
+        </div>
+        <div id="catFilters" class="flex flex-wrap gap-2"></div>
+    </div>
+</section>
+
+<!-- Frequency group selector -->
+<section class="max-w-7xl mx-auto px-6 mb-6">
+    <div class="flex flex-wrap gap-2" id="freqTabs"></div>
+</section>
+
+<!-- Job listing -->
+<section class="max-w-7xl mx-auto px-6 mb-16">
+    <div id="jobList" class="space-y-3"></div>
+    <div id="noResults" class="hidden text-center py-16">
+        <svg class="w-12 h-12 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p class="text-slate-500 font-medium">No jobs match your filters</p>
+    </div>
+</section>
+
+<!-- Architecture Notes -->
+<section class="max-w-7xl mx-auto px-6 mb-16">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Engineering Notes
+    </h2>
+    <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-slate-800/40 rounded-xl border border-slate-700/50 p-5">
+            <h3 class="text-sm font-semibold text-amber-400 mb-2 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                Datamart Rebuild Skip Windows
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                All <code class="text-violet-400 bg-violet-500/10 px-1 rounded">reportbuilder:*</code> and <code class="text-violet-400 bg-violet-500/10 px-1 rounded">contracts:backfill-*</code> commands skip execution during two critical windows:
+            </p>
+            <ul class="mt-2 text-xs text-slate-400 space-y-1">
+                <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></span> <strong class="text-slate-300">Backup:</strong> 05:00&ndash;06:59 UTC (21:00&ndash;22:59 PT PDT)</li>
+                <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></span> <strong class="text-slate-300">Payment Processing:</strong> 00:00&ndash;01:00 PT (midnight window)</li>
+            </ul>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl border border-slate-700/50 p-5">
+            <h3 class="text-sm font-semibold text-emerald-400 mb-2 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Payment Processing Sequence
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Automatic payments run sequentially starting at midnight PT with 10-15 min staggering and <code class="text-emerald-400 bg-emerald-500/10 px-1 rounded">withoutOverlapping(30)</code> + <code class="text-emerald-400 bg-emerald-500/10 px-1 rounded">onOneServer()</code>:
+            </p>
+            <ol class="mt-2 text-xs text-slate-400 space-y-1 list-decimal list-inside">
+                <li><strong class="text-slate-300">00:00</strong> &mdash; Interest accruals</li>
+                <li><strong class="text-slate-300">00:15</strong> &mdash; ISA payments</li>
+                <li><strong class="text-slate-300">00:20</strong> &mdash; Installment payments</li>
+                <li><strong class="text-slate-300">00:30</strong> &mdash; Retail installment payments</li>
+                <li><strong class="text-slate-300">02:15</strong> &mdash; Payment promises</li>
+                <li><strong class="text-slate-300">07:00</strong> &mdash; Reattempt failed payments</li>
+            </ol>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl border border-slate-700/50 p-5">
+            <h3 class="text-sm font-semibold text-blue-400 mb-2 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Modifier Reference
+            </h3>
+            <div class="mt-2 space-y-2 text-xs text-slate-400">
+                <div class="flex items-start gap-2"><span class="mod-pill mod-overlap mt-0.5">No Overlap</span><span>Prevents concurrent execution. Some with <code class="text-slate-300">expiresAt: 30</code> min lock.</span></div>
+                <div class="flex items-start gap-2"><span class="mod-pill mod-server mt-0.5">One Server</span><span>Runs on a single server in the cluster (uses cache lock).</span></div>
+                <div class="flex items-start gap-2"><span class="mod-pill mod-skip mt-0.5">Conditional Skip</span><span>Skipped during backup/payment windows via <code class="text-slate-300">skip()</code> callback.</span></div>
+                <div class="flex items-start gap-2"><span class="mod-pill mod-between mt-0.5">Time Window</span><span>Only runs between specified hours (e.g., 8:00&ndash;18:00).</span></div>
+                <div class="flex items-start gap-2"><span class="mod-pill mod-weekdays mt-0.5">Weekdays</span><span>Restricted to Monday&ndash;Friday execution.</span></div>
+            </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl border border-slate-700/50 p-5">
+            <h3 class="text-sm font-semibold text-cyan-400 mb-2 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                Schedule Source
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                All jobs defined in <code class="text-cyan-400 bg-cyan-500/10 px-1 rounded">routes/console.php</code>. Schedule timezone is <strong class="text-slate-300">America/Los_Angeles</strong>. App timezone is <strong class="text-slate-300">UTC</strong>.
+            </p>
+            <p class="text-xs text-slate-400 mt-2">
+                Mix of Artisan commands (<code class="text-slate-300">php artisan {name}</code>) and dispatched Jobs (<code class="text-slate-300">App\Jobs\*</code>). Some use class-based scheduling via <code class="text-slate-300">Schedule::command(ClassName::class)</code>.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-slate-800 py-8 text-center">
+    <p class="text-xs text-slate-600">
+        Generated from <code class="text-slate-500">routes/console.php</code> &middot; Lumion Engineering &middot; <span id="genDate"></span>
+    </p>
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const JOBS = [
+    // Every Minute
+    { cmd: "process:credit-reports", freq: "everyMinute", freqLabel: "Every Minute", category: "data", hour: null, minute: null, mods: [], desc: "Process pending credit report requests" },
+    { cmd: "process:criminal-record-reports", freq: "everyMinute", freqLabel: "Every Minute", category: "data", hour: null, minute: null, mods: [], desc: "Process pending criminal record checks" },
+    { cmd: "process:identity-verification-reports", freq: "everyMinute", freqLabel: "Every Minute", category: "data", hour: null, minute: null, mods: [], desc: "Process identity verification requests" },
+    { cmd: "automation:process-events", freq: "everyMinute", freqLabel: "Every Minute", category: "data", hour: null, minute: null, mods: [], desc: "Process automation event queue" },
+    { cmd: "rb:process-scheduled-exports", freq: "everyMinute", freqLabel: "Every Minute", category: "reporting", hour: null, minute: null, mods: ["withoutOverlapping"], desc: "Process scheduled report exports", isClass: true },
+
+    // Every 5 Minutes
+    { cmd: "automation:process-dynamic-audiences", freq: "every5min", freqLabel: "Every 5 Min", category: "data", hour: null, minute: null, mods: ["withoutOverlapping", "onOneServer"], desc: "Refresh dynamic audience membership" },
+    { cmd: "ai:close-inactive-conversations", freq: "every5min", freqLabel: "Every 5 Min", category: "ai", hour: null, minute: null, mods: ["withoutOverlapping", "onOneServer"], desc: "Close AI conversations after inactivity timeout" },
+    { cmd: "NotifyUsersOfUnreadAssignedMessages", freq: "every5min", freqLabel: "Every 5 Min (Weekdays 8-18)", category: "notifications", hour: null, minute: null, mods: ["weekdays", "between(8:00,18:00)"], desc: "Alert users about unread assigned messages", isJob: true },
+
+    // Every 10 Minutes
+    { cmd: "FindUnansweredMessages", freq: "every10min", freqLabel: "Every 10 Min (Weekdays 8-18)", category: "crm", hour: null, minute: null, mods: ["weekdays", "between(8:00,18:00)"], desc: "Flag unanswered student messages", isJob: true },
+    { cmd: "app:repair-deselected-program-ids-from-custom-payment-plans", freq: "every10min", freqLabel: "Every 10 Min", category: "data", hour: null, minute: null, mods: [], desc: "Repair deselected program IDs from custom payment plans" },
+
+    // Every 30 Minutes
+    { cmd: "FindAbandonedEnrollmentApplications", freq: "every30min", freqLabel: "Every 30 Min (Weekdays 8-18)", category: "crm", hour: null, minute: null, mods: ["weekdays", "between(8:00,18:00)"], desc: "Detect abandoned enrollment applications", isJob: true },
+
+    // Hourly
+    { cmd: "fill:application-activities", freq: "hourly", freqLabel: "Hourly (:00)", category: "data", hour: "*", minute: 0, mods: [], desc: "Backfill application activity records" },
+    { cmd: "remove:mailgun-event-content-body-htmls-from-database", freq: "hourly", freqLabel: "Hourly (:00)", category: "maintenance", hour: "*", minute: 0, mods: [], desc: "Clean up Mailgun HTML content from database" },
+    { cmd: "aircall:reactivate-webhook", freq: "hourly", freqLabel: "Hourly (:00)", category: "integrations", hour: "*", minute: 0, mods: [], desc: "Keep Aircall webhook active" },
+    { cmd: "fill:brex-transfers", freq: "hourly", freqLabel: "Hourly (:40)", category: "payments", hour: "*", minute: 40, mods: [], desc: "Sync Brex transfer data" },
+    { cmd: "finix:sync-devices --all", freq: "hourly", freqLabel: "Hourly (:30)", category: "integrations", hour: "*", minute: 30, mods: ["withoutOverlapping"], desc: "Sync all Finix payment devices" },
+    { cmd: "reportbuilder:bulk-backfill-contract-details --reset", freq: "hourly", freqLabel: "Hourly (:05)", category: "reporting", hour: "*", minute: 5, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Rebuild contract details datamart" },
+    { cmd: "reportbuilder:bulk-backfill-fixed-payment-period-details --reset", freq: "hourly", freqLabel: "Hourly (:08)", category: "reporting", hour: "*", minute: 8, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Rebuild fixed payment period datamart" },
+    { cmd: "reportbuilder:bulk-backfill-contract-activity --reset", freq: "hourly", freqLabel: "Hourly (:11)", category: "reporting", hour: "*", minute: 11, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Rebuild contract activity datamart" },
+    { cmd: "reportbuilder:bulk-backfill-contract-activity-paid --reset", freq: "hourly", freqLabel: "Hourly (:14)", category: "reporting", hour: "*", minute: 14, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Rebuild contract activity paid datamart" },
+    { cmd: "reportbuilder:bulk-backfill-aging --reset", freq: "hourly", freqLabel: "Hourly (:17)", category: "reporting", hour: "*", minute: 17, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Rebuild aging datamart" },
+    { cmd: "reportbuilder:bulk-reload-payment-periods --reset", freq: "hourly", freqLabel: "Hourly (:20)", category: "reporting", hour: "*", minute: 20, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Reload payment periods datamart" },
+    { cmd: "reportbuilder:bulk-backfill-collection-rates --reset", freq: "hourly", freqLabel: "Hourly (:25)", category: "reporting", hour: "*", minute: 25, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Rebuild collection rates datamart" },
+    { cmd: "contracts:backfill-payment-period-change-logs --reset", freq: "hourly", freqLabel: "Hourly (:45)", category: "reporting", hour: "*", minute: 45, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Backfill payment period change logs" },
+    { cmd: "contracts:backfill-missing-payment-period-audits --chunk=25000", freq: "hourly", freqLabel: "Hourly (:30)", category: "reporting", hour: "*", minute: 30, mods: ["withoutOverlapping", "conditionalSkip"], desc: "Backfill missing payment period audit records" },
+
+    // Every 6 Hours
+    { cmd: "app:fill-payment-report-line-items", freq: "every6h", freqLabel: "Every 6 Hours", category: "reporting", hour: "*/6", minute: 0, mods: [], desc: "Populate payment report line items" },
+    { cmd: "app:fill-isa-signed-at-on-applications-table", freq: "every6h", freqLabel: "Every 6 Hours", category: "data", hour: "*/6", minute: 0, mods: [], desc: "Backfill ISA signed_at dates on applications" },
+
+    // Daily — 00:xx
+    { cmd: "contracts:record-daily-interest-accruals", freq: "daily", freqLabel: "Daily 00:00", category: "payments", hour: 0, minute: 0, mods: ["withoutOverlapping(30)", "onOneServer"], desc: "Record daily interest accrual calculations" },
+    { cmd: "course-scheduling:send-session-reminders", freq: "daily", freqLabel: "Daily 00:00", category: "notifications", hour: 0, minute: 0, mods: [], desc: "Send upcoming course session reminders" },
+    { cmd: "attendance:send-upcoming-session-notifications", freq: "daily", freqLabel: "Daily 00:00", category: "notifications", hour: 0, minute: 0, mods: ["onOneServer"], desc: "Notify about upcoming attendance sessions", isClass: true },
+    { cmd: "crm:create-default-workflow-for-institutions", freq: "daily", freqLabel: "Daily 00:00", category: "crm", hour: 0, minute: 0, mods: [], desc: "Create default CRM workflow for new institutions" },
+    { cmd: "process:automatic-isa-payments", freq: "daily", freqLabel: "Daily 00:15", category: "payments", hour: 0, minute: 15, mods: ["withoutOverlapping(30)", "onOneServer"], desc: "Process automatic ISA payment collections" },
+    { cmd: "process:automatic-installment-payments", freq: "daily", freqLabel: "Daily 00:20", category: "payments", hour: 0, minute: 20, mods: ["withoutOverlapping(30)", "onOneServer"], desc: "Process automatic installment payment collections" },
+    { cmd: "process:automatic-retail-installment-payments", freq: "daily", freqLabel: "Daily 00:30", category: "payments", hour: 0, minute: 30, mods: ["withoutOverlapping(30)", "onOneServer"], desc: "Process automatic retail installment payments" },
+
+    // Daily — 01:xx
+    { cmd: "set:self-paced-payment-period-due-dates", freq: "daily", freqLabel: "Daily 01:00", category: "payments", hour: 1, minute: 0, mods: [], desc: "Set due dates for self-paced payment periods" },
+    { cmd: "send:program-start-date-notifications", freq: "daily", freqLabel: "Daily 01:00", category: "notifications", hour: 1, minute: 0, mods: [], desc: "Notify students about program start dates" },
+    { cmd: "send:two-weeks-after-program-start-date-notifications", freq: "daily", freqLabel: "Daily 01:00", category: "notifications", hour: 1, minute: 0, mods: [], desc: "Two-week post-start check-in notifications" },
+    { cmd: "send:graduation-notifications", freq: "daily", freqLabel: "Daily 01:00", category: "notifications", hour: 1, minute: 0, mods: [], desc: "Send graduation milestone notifications" },
+    { cmd: "send:thirty-day-checkin-isa-and-deferred-notifications", freq: "daily", freqLabel: "Daily 01:00", category: "notifications", hour: 1, minute: 0, mods: [], desc: "30-day check-in for ISA & deferred students" },
+    { cmd: "check:brex-api-key-status", freq: "daily", freqLabel: "Daily 01:30", category: "integrations", hour: 1, minute: 30, mods: [], desc: "Verify Brex API key validity" },
+
+    // Daily — 02:xx
+    { cmd: "synchronize:hubspot-contacts-and-engagements", freq: "daily", freqLabel: "Daily 02:00", category: "integrations", hour: 2, minute: 0, mods: [], desc: "Full HubSpot contact and engagement sync" },
+    { cmd: "app:populate-report-deposit-installment-contract", freq: "daily", freqLabel: "Daily 02:00", category: "reporting", hour: 2, minute: 0, mods: [], desc: "Populate deposit/installment/contract report" },
+    { cmd: "FlipApplicantsToSecondaryList", freq: "daily", freqLabel: "Daily 02:00", category: "data", hour: 2, minute: 0, mods: [], desc: "Move stale third-party applicants to secondary list", isJob: true },
+    { cmd: "ai:aggregate-usage", freq: "daily", freqLabel: "Daily 02:00", category: "ai", hour: 2, minute: 0, mods: ["onOneServer"], desc: "Aggregate AI usage metrics" },
+    { cmd: "payments:process-payment-promises", freq: "daily", freqLabel: "Daily 02:15", category: "payments", hour: 2, minute: 15, mods: ["withoutOverlapping(30)", "onOneServer"], desc: "Process scheduled payment promises" },
+    { cmd: "formstack:poll-signatures --from-days=7", freq: "daily", freqLabel: "Daily 02:30", category: "integrations", hour: 2, minute: 30, mods: ["withoutOverlapping"], desc: "Poll Formstack for recent document signatures" },
+
+    // Daily — 03:xx
+    { cmd: "formstack:poll-signatures --from-days=90", freq: "weekly", freqLabel: "Weekly Sun 03:00", category: "integrations", hour: 3, minute: 0, mods: ["withoutOverlapping"], desc: "Deep poll Formstack for 90-day signature window", weekday: 0 },
+    { cmd: "fill:transactions", freq: "daily", freqLabel: "Daily 03:00", category: "payments", hour: 3, minute: 0, mods: [], desc: "Backfill transaction records" },
+    { cmd: "cancel:old-incomplete-applications", freq: "daily", freqLabel: "Daily 03:30", category: "data", hour: 3, minute: 30, mods: [], desc: "Cancel stale incomplete applications" },
+    { cmd: "assign:portfolios-to-isas", freq: "daily", freqLabel: "Daily 03:40", category: "payments", hour: 3, minute: 40, mods: [], desc: "Auto-assign portfolios to funding contracts" },
+    { cmd: "servicer-queues:assign-past-due --non-self-servicing", freq: "daily", freqLabel: "Daily 03:45", category: "payments", hour: 3, minute: 45, mods: ["onOneServer", "withoutOverlapping"], desc: "Assign past-due contracts to servicer queues" },
+
+    // Daily — 04:xx
+    { cmd: "set:is-eligible-to-be-satisfied-field-on-isas-table", freq: "daily", freqLabel: "Daily 04:00", category: "data", hour: 4, minute: 0, mods: [], desc: "Update contract satisfaction eligibility flags" },
+    { cmd: "rb:reload-unpaid-dm-payment-periods", freq: "daily", freqLabel: "Daily 04:00", category: "reporting", hour: 4, minute: 0, mods: ["withoutOverlapping"], desc: "Reload unpaid datamart payment periods" },
+    { cmd: "invoices:audit", freq: "daily", freqLabel: "Daily 04:30", category: "payments", hour: 4, minute: 30, mods: ["withoutOverlapping"], desc: "Audit invoice payment states for consistency" },
+    { cmd: "process:contract-delayed-until-date-applications", freq: "daily", freqLabel: "Daily 04:45", category: "data", hour: 4, minute: 45, mods: [], desc: "Process contracts with delayed start dates" },
+    { cmd: "servicer-queue:update-table", freq: "daily", freqLabel: "Daily 04:45", category: "data", hour: 4, minute: 45, mods: ["withoutOverlapping"], desc: "Update servicer queue table data", isClass: true },
+
+    // Daily — 05:xx
+    { cmd: "send:graduation-congratulations", freq: "daily", freqLabel: "Daily 05:00", category: "notifications", hour: 5, minute: 0, mods: [], desc: "Send graduation congratulation messages" },
+    { cmd: "app:store-payabli-batches", freq: "daily", freqLabel: "Daily 05:00", category: "integrations", hour: 5, minute: 0, mods: ["withoutOverlapping", "onOneServer"], desc: "Sync Payabli payment batches" },
+    { cmd: "app:store-payabli-transfers", freq: "daily", freqLabel: "Daily 05:15", category: "integrations", hour: 5, minute: 15, mods: ["withoutOverlapping", "onOneServer"], desc: "Sync Payabli transfer records" },
+
+    // Daily — 06:xx
+    { cmd: "sendgrid:collect-config-stats", freq: "daily", freqLabel: "Daily 06:00", category: "integrations", hour: 6, minute: 0, mods: ["withoutOverlapping"], desc: "Collect SendGrid configuration statistics" },
+    { cmd: "app:check-payabli-transfers", freq: "weekly", freqLabel: "Weekly Mon 06:00", category: "integrations", hour: 6, minute: 0, mods: ["withoutOverlapping"], desc: "Reconcile Payabli transfer records", weekday: 1 },
+    { cmd: "UploadOrgReportsToS3 (Org 8)", freq: "daily", freqLabel: "Daily 06:00", category: "reporting", hour: 6, minute: 0, mods: [], desc: "Upload organization 8 reports to S3", isJob: true },
+    { cmd: "UploadOrgReportsToS3 (Org 205)", freq: "daily", freqLabel: "Daily 06:05", category: "reporting", hour: 6, minute: 5, mods: [], desc: "Upload organization 205 reports to S3", isJob: true },
+
+    // Daily — 07:xx
+    { cmd: "send:automatic-isa-income-reporting-notifications", freq: "daily", freqLabel: "Daily 07:00", category: "notifications", hour: 7, minute: 0, mods: [], desc: "Remind ISA holders about income reporting" },
+    { cmd: "app:reattempt-failed-payments", freq: "daily", freqLabel: "Daily 07:00", category: "payments", hour: 7, minute: 0, mods: ["withoutOverlapping(30)", "onOneServer"], desc: "Retry failed automatic payments" },
+
+    // Daily — 08:xx
+    { cmd: "send:daily-deposit-reminders", freq: "daily", freqLabel: "Daily 08:00", category: "notifications", hour: 8, minute: 0, mods: [], desc: "Daily deposit payment reminders" },
+    { cmd: "send:invoice-due-today-notifications", freq: "daily", freqLabel: "Daily 08:05", category: "notifications", hour: 8, minute: 5, mods: [], desc: "Notify about invoices due today" },
+
+    // Daily — 09:xx
+    { cmd: "app:refund-payment", freq: "daily", freqLabel: "Daily 09:00", category: "payments", hour: 9, minute: 0, mods: ["onOneServer"], desc: "Process scheduled payment refunds" },
+    { cmd: "surveys:send-scheduled", freq: "daily", freqLabel: "Daily 09:00", category: "notifications", hour: 9, minute: 0, mods: [], desc: "Send scheduled survey notifications" },
+    { cmd: "send:isa-reporting-due-today-notifications", freq: "daily", freqLabel: "Daily 09:00", category: "notifications", hour: 9, minute: 0, mods: [], desc: "ISA income reporting due today alerts" },
+    { cmd: "send:isa-autopayment-today-notifications", freq: "daily", freqLabel: "Daily 09:10", category: "notifications", hour: 9, minute: 10, mods: [], desc: "Notify about today's ISA autopayment" },
+    { cmd: "send:first-isa-autopayment-notifications", freq: "daily", freqLabel: "Daily 09:20", category: "notifications", hour: 9, minute: 20, mods: [], desc: "First ISA autopayment notification" },
+    { cmd: "send:final-installment-autopayment-notifications", freq: "daily", freqLabel: "Daily 09:30", category: "notifications", hour: 9, minute: 30, mods: [], desc: "Final installment autopayment notification" },
+    { cmd: "send:final-retail-installment-autopayment-notifications", freq: "daily", freqLabel: "Daily 09:40", category: "notifications", hour: 9, minute: 40, mods: [], desc: "Final retail installment autopayment notification" },
+    { cmd: "send:reporting-past-due-notifications-early", freq: "daily", freqLabel: "Daily 09:50", category: "notifications", hour: 9, minute: 50, mods: [], desc: "Early reporting past-due notifications" },
+
+    // Daily — 10:xx
+    { cmd: "send:reporting-past-due-notifications-early-special", freq: "daily", freqLabel: "Daily 10:00", category: "notifications", hour: 10, minute: 0, mods: [], desc: "Special early reporting past-due notifications" },
+    { cmd: "send:installment-due-today-notifications-optimized", freq: "daily", freqLabel: "Daily 10:10", category: "notifications", hour: 10, minute: 10, mods: [], desc: "Optimized installment due-today notifications" },
+    { cmd: "send:granular-late-notifications", freq: "daily", freqLabel: "Daily 10:20", category: "notifications", hour: 10, minute: 20, mods: [], desc: "Granular late payment notifications (multi-tier)" },
+    { cmd: "send:incomplete-application-notifications", freq: "daily", freqLabel: "Daily 10:30", category: "notifications", hour: 10, minute: 30, mods: [], desc: "Remind about incomplete applications" },
+    { cmd: "send:deposit-past-due-notifications", freq: "daily", freqLabel: "Daily 10:40", category: "notifications", hour: 10, minute: 40, mods: [], desc: "Deposit past-due notifications" },
+    { cmd: "send:invoice-past-due-notifications", freq: "daily", freqLabel: "Daily 10:50", category: "notifications", hour: 10, minute: 50, mods: [], desc: "Invoice past-due notifications" },
+
+    // Daily — 11:xx
+    { cmd: "send:pregraduation-notifications", freq: "daily", freqLabel: "Daily 11:00", category: "notifications", hour: 11, minute: 0, mods: [], desc: "Pre-graduation milestone notifications" },
+    { cmd: "SendReminderEmailForAlternateListVisibility", freq: "daily", freqLabel: "Daily 11:40", category: "notifications", hour: 11, minute: 40, mods: [], desc: "Remind about alternate list visibility", isJob: true },
+
+    // Daily — 12:xx
+    { cmd: "send:reported-but-not-paid-notifications", freq: "daily", freqLabel: "Daily 12:00", category: "notifications", hour: 12, minute: 0, mods: [], desc: "Notify reported-but-not-paid accounts" },
+    { cmd: "process:unreported-income-with-average-expected-income", freq: "daily", freqLabel: "Daily 12:05", category: "data", hour: 12, minute: 5, mods: [], desc: "Process unreported income using averages" },
+    { cmd: "send:reporting-past-due-notifications-late", freq: "daily", freqLabel: "Daily 12:15", category: "notifications", hour: 12, minute: 15, mods: [], desc: "Late reporting past-due notifications" },
+    { cmd: "send:reporting-past-due-notifications-late-special", freq: "daily", freqLabel: "Daily 12:20", category: "notifications", hour: 12, minute: 20, mods: [], desc: "Special late reporting past-due notifications" },
+
+    // Daily — 15:xx
+    { cmd: "send:isa-post-signing-notifications", freq: "daily", freqLabel: "Daily 15:00", category: "notifications", hour: 15, minute: 0, mods: [], desc: "Post-signing ISA onboarding notifications" },
+
+    // Daily — 23:xx
+    { cmd: "app:enable-stripe-subscription-automatic-payment", freq: "daily", freqLabel: "Daily 23:00", category: "payments", hour: 23, minute: 0, mods: [], desc: "Enable Stripe subscription autopayments" },
+    { cmd: "ai:purge-expired-conversations", freq: "daily", freqLabel: "Daily 23:00", category: "ai", hour: 23, minute: 0, mods: ["onOneServer"], desc: "Purge expired AI conversation data" },
+    { cmd: "reset:past-due-overridden-amounts-for-payment-periods", freq: "daily", freqLabel: "Daily 23:00", category: "payments", hour: 23, minute: 0, mods: [], desc: "Reset past-due override amounts nightly" },
+    { cmd: "app:purge-onboarding-service-logs", freq: "daily", freqLabel: "Daily 23:00", category: "maintenance", hour: 23, minute: 0, mods: [], desc: "Purge old onboarding service logs" },
+    { cmd: "file-uploads:cleanup-temp", freq: "daily", freqLabel: "Daily 23:30", category: "maintenance", hour: 23, minute: 30, mods: [], desc: "Clean up temporary file uploads" },
+
+    // Weekday
+    { cmd: "send:formstack-reminder-to-institution", freq: "weekday", freqLabel: "Weekdays 09:00", category: "notifications", hour: 9, minute: 0, mods: ["weekdays"], desc: "Remind institutions about pending Formstack docs" },
+
+    // Weekly
+    { cmd: "calculate:portfolio-irr-schedules", freq: "weekly", freqLabel: "Weekly Sun 03:00", category: "reporting", hour: 3, minute: 0, mods: [], desc: "Calculate portfolio IRR schedules", weekday: 0 },
+    { cmd: "send:weekly-applicant-updates", freq: "weekly", freqLabel: "Weekly Mon 09:00", category: "notifications", hour: 9, minute: 0, mods: [], desc: "Weekly applicant status digest", weekday: 1 },
+    { cmd: "send:weekly-income-reporting-reminders", freq: "weekly", freqLabel: "Weekly Mon 10:00", category: "notifications", hour: 10, minute: 0, mods: [], desc: "Weekly income reporting reminders", weekday: 1 },
+    { cmd: "send:weekly-installment-due-this-week-notifications", freq: "weekly", freqLabel: "Weekly Mon 10:00", category: "notifications", hour: 10, minute: 0, mods: [], desc: "Installment due this week notifications", weekday: 1 },
+    { cmd: "send:first-installment-autopayment-notifications", freq: "weekly", freqLabel: "Weekly Mon 11:00", category: "notifications", hour: 11, minute: 0, mods: [], desc: "First installment autopayment heads-up", weekday: 1 },
+    { cmd: "send:contract-signature-reminder-notifications (Mon)", freq: "weekly", freqLabel: "Weekly Mon 16:00", category: "notifications", hour: 16, minute: 0, mods: [], desc: "Contract signature reminder (Monday)", weekday: 1 },
+    { cmd: "send:graduation-date-confirmation-notifications", freq: "weekly", freqLabel: "Weekly Wed 08:00", category: "notifications", hour: 8, minute: 0, mods: [], desc: "Graduation date confirmation request", weekday: 3 },
+    { cmd: "send:delinquent-deposit-installment-notifications", freq: "weekly", freqLabel: "Weekly Thu 11:00", category: "notifications", hour: 11, minute: 0, mods: [], desc: "Delinquent deposit/installment notifications", weekday: 4 },
+    { cmd: "send:weekly-payment-method-linking-reminders", freq: "weekly", freqLabel: "Weekly Thu 16:00", category: "notifications", hour: 16, minute: 0, mods: [], desc: "Remind to link payment methods", weekday: 4 },
+    { cmd: "send:contract-signature-reminder-notifications (Thu)", freq: "weekly", freqLabel: "Weekly Thu 16:00", category: "notifications", hour: 16, minute: 0, mods: [], desc: "Contract signature reminder (Thursday)", weekday: 4 },
+    { cmd: "archive:payabli-api-requests --retention-days=7", freq: "weekly", freqLabel: "Weekly Tue 03:00", category: "maintenance", hour: 3, minute: 0, mods: ["withoutOverlapping"], desc: "Archive Payabli API request logs (7-day retention)", weekday: 2 },
+
+    // Monthly
+    { cmd: "send:monthly-income-reporting-reminders", freq: "monthly", freqLabel: "Monthly 1st 10:00", category: "notifications", hour: 10, minute: 0, mods: [], desc: "Monthly income reporting reminders" },
+    { cmd: "send:student-assessment-summary", freq: "monthly", freqLabel: "Monthly 14th 09:00", category: "notifications", hour: 9, minute: 0, mods: [], desc: "Mid-month student assessment summary" },
+    { cmd: "create:servicing-reporting-snapshot", freq: "monthly", freqLabel: "Last Day 20:00", category: "reporting", hour: 20, minute: 0, mods: [], desc: "End-of-month servicing reporting snapshot" },
+
+    // Bi-monthly
+    { cmd: "send:isa-to-pp-offers-to-students", freq: "bimonthly", freqLabel: "Bi-monthly 1st", category: "notifications", hour: 0, minute: 0, mods: [], desc: "Offer ISA-to-payment-plan conversions" },
+];
+
+// ── CATEGORY CONFIG ───────────────────────────────────────────────────────────
+const CATEGORIES = {
+    payments:      { label: "Payments",      color: "#10b981", bg: "rgba(16,185,129,0.12)",  text: "#6ee7b7" },
+    notifications: { label: "Notifications", color: "#3b82f6", bg: "rgba(59,130,246,0.12)",  text: "#93c5fd" },
+    data:          { label: "Data",          color: "#8b5cf6", bg: "rgba(139,92,246,0.12)",  text: "#c4b5fd" },
+    reporting:     { label: "Reporting",     color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  text: "#fcd34d" },
+    integrations:  { label: "Integrations",  color: "#ec4899", bg: "rgba(236,72,153,0.12)",  text: "#f9a8d4" },
+    maintenance:   { label: "Maintenance",   color: "#6b7280", bg: "rgba(107,114,128,0.12)", text: "#d1d5db" },
+    ai:            { label: "AI",            color: "#06b6d4", bg: "rgba(6,182,212,0.12)",   text: "#67e8f9" },
+    crm:           { label: "CRM",           color: "#f97316", bg: "rgba(249,115,22,0.12)",  text: "#fdba74" },
+};
+
+const FREQ_ORDER = ["everyMinute","every5min","every10min","every30min","hourly","every6h","daily","weekday","weekly","monthly","bimonthly"];
+const FREQ_LABELS = {
+    everyMinute: "Every Minute", every5min: "Every 5 Min", every10min: "Every 10 Min",
+    every30min: "Every 30 Min", hourly: "Hourly", every6h: "Every 6 Hours",
+    daily: "Daily", weekday: "Weekdays", weekly: "Weekly", monthly: "Monthly", bimonthly: "Bi-Monthly",
+};
+const FREQ_CLASSES = {
+    everyMinute: "freq-minute", every5min: "freq-5min", every10min: "freq-10min",
+    every30min: "freq-30min", hourly: "freq-hourly", every6h: "freq-6hour",
+    daily: "freq-daily", weekday: "freq-weekday", weekly: "freq-weekly", monthly: "freq-monthly", bimonthly: "freq-bimonthly",
+};
+const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let activeCategories = new Set(Object.keys(CATEGORIES));
+let activeFreq = null; // null = all
+let searchQuery = '';
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('genDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('totalCount').textContent = JOBS.length;
+    computeStats();
+    renderCategoryFilters();
+    renderFreqTabs();
+    renderHeatmap();
+    renderJobList();
+    setupSearch();
+});
+
+function computeStats() {
+    document.getElementById('statTotal').textContent = JOBS.length;
+    document.getElementById('statHighFreq').textContent = JOBS.filter(j => ['everyMinute','every5min','every10min','every30min'].includes(j.freq)).length;
+    document.getElementById('statDaily').textContent = JOBS.filter(j => j.freq === 'daily').length;
+    document.getElementById('statOverlap').textContent = JOBS.filter(j => j.mods.some(m => m.startsWith('withoutOverlapping'))).length;
+    document.getElementById('statOneServer').textContent = JOBS.filter(j => j.mods.includes('onOneServer')).length;
+}
+
+// ── CATEGORY FILTERS ──────────────────────────────────────────────────────────
+function renderCategoryFilters() {
+    const container = document.getElementById('catFilters');
+    container.innerHTML = '';
+
+    // All button
+    const allBtn = document.createElement('button');
+    allBtn.className = 'cat-filter';
+    allBtn.style.cssText = `background:rgba(99,102,241,0.12);color:#a5b4fc;`;
+    allBtn.textContent = 'All';
+    if (activeCategories.size === Object.keys(CATEGORIES).length) allBtn.classList.add('active');
+    allBtn.onclick = () => { activeCategories = new Set(Object.keys(CATEGORIES)); renderCategoryFilters(); renderJobList(); renderHeatmap(); };
+    container.appendChild(allBtn);
+
+    Object.entries(CATEGORIES).forEach(([key, cat]) => {
+        const btn = document.createElement('button');
+        btn.className = 'cat-filter';
+        const count = JOBS.filter(j => j.category === key).length;
+        btn.style.cssText = `background:${cat.bg};color:${cat.text};`;
+        btn.innerHTML = `${cat.label} <span class="ml-1 opacity-60">${count}</span>`;
+        if (activeCategories.has(key)) btn.classList.add('active');
+        else btn.classList.add('inactive');
+        btn.onclick = () => {
+            if (activeCategories.size === Object.keys(CATEGORIES).length) {
+                activeCategories = new Set([key]);
+            } else if (activeCategories.has(key) && activeCategories.size === 1) {
+                activeCategories = new Set(Object.keys(CATEGORIES));
+            } else if (activeCategories.has(key)) {
+                activeCategories.delete(key);
+            } else {
+                activeCategories.add(key);
+            }
+            renderCategoryFilters(); renderJobList(); renderHeatmap();
+        };
+        container.appendChild(btn);
+    });
+}
+
+// ── FREQ TABS ─────────────────────────────────────────────────────────────────
+function renderFreqTabs() {
+    const container = document.getElementById('freqTabs');
+    container.innerHTML = '';
+
+    const allBtn = document.createElement('button');
+    allBtn.className = `cat-filter ${activeFreq === null ? 'active' : ''}`;
+    allBtn.style.cssText = 'background:rgba(99,102,241,0.08);color:#94a3b8;font-size:11px;';
+    allBtn.textContent = 'All Frequencies';
+    allBtn.onclick = () => { activeFreq = null; renderFreqTabs(); renderJobList(); };
+    container.appendChild(allBtn);
+
+    FREQ_ORDER.forEach(f => {
+        const count = JOBS.filter(j => j.freq === f).length;
+        if (count === 0) return;
+        const btn = document.createElement('button');
+        btn.className = `cat-filter ${activeFreq === f ? 'active' : ''}`;
+        btn.style.cssText = 'background:rgba(99,102,241,0.06);color:#94a3b8;font-size:11px;';
+        btn.innerHTML = `${FREQ_LABELS[f]} <span class="opacity-50">${count}</span>`;
+        btn.onclick = () => { activeFreq = activeFreq === f ? null : f; renderFreqTabs(); renderJobList(); };
+        container.appendChild(btn);
+    });
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────────
+function renderHeatmap() {
+    const grid = document.getElementById('heatmapGrid');
+    grid.innerHTML = '';
+
+    const rows = Object.keys(CATEGORIES).filter(c => activeCategories.has(c));
+
+    // Header row
+    const corner = document.createElement('div');
+    corner.className = 'text-[10px] text-slate-600 font-medium flex items-end pb-1';
+    corner.textContent = '';
+    grid.appendChild(corner);
+    for (let h = 0; h < 24; h++) {
+        const hdr = document.createElement('div');
+        hdr.className = 'text-[10px] text-slate-500 text-center pb-1 font-mono';
+        hdr.textContent = h.toString().padStart(2, '0');
+        grid.appendChild(hdr);
+    }
+
+    rows.forEach(cat => {
+        // Row label
+        const label = document.createElement('div');
+        label.className = 'text-[11px] font-semibold flex items-center pr-2';
+        label.style.color = CATEGORIES[cat].text;
+        label.textContent = CATEGORIES[cat].label;
+        grid.appendChild(label);
+
+        for (let h = 0; h < 24; h++) {
+            const cell = document.createElement('div');
+            cell.className = 'heat-cell h-7 flex items-center justify-center';
+            const jobsInCell = getJobsAtHour(cat, h);
+            const count = jobsInCell.length;
+            const intensity = count === 0 ? 0 : Math.min(count / 6, 1);
+            cell.style.background = count === 0
+                ? 'rgba(30,41,59,0.4)'
+                : `rgba(${hexToRgb(CATEGORIES[cat].color)},${0.1 + intensity * 0.6})`;
+            if (count > 0) {
+                cell.innerHTML = `<span class="text-[9px] font-bold" style="color:${CATEGORIES[cat].text}">${count}</span>`;
+            }
+            // Tooltip
+            cell.onmouseenter = (e) => {
+                if (count === 0) return;
+                const names = jobsInCell.map(j => j.cmd).join('\n');
+                showTooltip(e, `<div class="font-semibold text-white mb-1">${CATEGORIES[cat].label} at ${h.toString().padStart(2,'0')}:00 PT</div><div class="text-slate-400">${count} job${count>1?'s':''}</div><div class="mt-1 text-[10px] text-slate-500 font-mono whitespace-pre-line">${names}</div>`);
+            };
+            cell.onmouseleave = hideTooltip;
+            grid.appendChild(cell);
+        }
+    });
+}
+
+function getJobsAtHour(cat, h) {
+    return JOBS.filter(j => {
+        if (j.category !== cat) return false;
+        if (j.hour === null) return false; // high-freq jobs show across all
+        if (j.hour === '*' || j.hour === '*/6') {
+            if (j.hour === '*/6') return h % 6 === 0;
+            return true;
+        }
+        return j.hour === h;
+    });
+}
+
+// ── JOB LIST ──────────────────────────────────────────────────────────────────
+function renderJobList() {
+    const container = document.getElementById('jobList');
+    const noResults = document.getElementById('noResults');
+    container.innerHTML = '';
+
+    const filtered = JOBS.filter(j => {
+        if (!activeCategories.has(j.category)) return false;
+        if (activeFreq && j.freq !== activeFreq) return false;
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            return j.cmd.toLowerCase().includes(q) || j.desc.toLowerCase().includes(q)
+                || j.category.toLowerCase().includes(q) || j.freqLabel.toLowerCase().includes(q)
+                || j.mods.some(m => m.toLowerCase().includes(q));
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        noResults.classList.remove('hidden');
+        return;
+    }
+    noResults.classList.add('hidden');
+
+    // Group by frequency
+    const groups = {};
+    filtered.forEach(j => {
+        if (!groups[j.freq]) groups[j.freq] = [];
+        groups[j.freq].push(j);
+    });
+
+    FREQ_ORDER.forEach(freq => {
+        if (!groups[freq]) return;
+        const jobs = groups[freq];
+
+        // Group header
+        const header = document.createElement('div');
+        header.className = 'flex items-center gap-3 mt-6 mb-2 cursor-pointer select-none group';
+        header.innerHTML = `
+            <span class="freq-badge ${FREQ_CLASSES[freq]}">${FREQ_LABELS[freq]}</span>
+            <span class="text-xs text-slate-500">${jobs.length} job${jobs.length > 1 ? 's' : ''}</span>
+            <div class="flex-1 h-px bg-slate-800"></div>
+            <svg class="w-4 h-4 text-slate-600 transition-transform group-hover:text-slate-400 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        `;
+        const jobsContainer = document.createElement('div');
+        jobsContainer.className = 'expandable open space-y-2';
+
+        header.onclick = () => {
+            jobsContainer.classList.toggle('open');
+            header.querySelector('.chevron').style.transform = jobsContainer.classList.contains('open') ? '' : 'rotate(-90deg)';
+        };
+
+        container.appendChild(header);
+
+        jobs.sort((a, b) => {
+            if (a.hour === b.hour) return (a.minute || 0) - (b.minute || 0);
+            if (a.hour === null || a.hour === '*') return -1;
+            if (b.hour === null || b.hour === '*') return 1;
+            return a.hour - b.hour;
+        });
+
+        jobs.forEach((job, idx) => {
+            const card = document.createElement('div');
+            card.className = 'job-card animate-in';
+            card.style.animationDelay = `${idx * 0.03}s`;
+
+            const cat = CATEGORIES[job.category];
+            const typeLabel = job.isJob ? 'Job' : job.isClass ? 'Class' : 'Command';
+            const typeBg = job.isJob ? 'rgba(168,85,247,0.15)' : job.isClass ? 'rgba(6,182,212,0.15)' : 'rgba(99,102,241,0.08)';
+            const typeColor = job.isJob ? '#c084fc' : job.isClass ? '#67e8f9' : '#94a3b8';
+            const timeStr = job.hour === null ? 'Continuous'
+                : job.hour === '*' ? `Every hour :${(job.minute || 0).toString().padStart(2,'0')}`
+                : job.hour === '*/6' ? `Every 6h :${(job.minute || 0).toString().padStart(2,'0')}`
+                : `${job.hour.toString().padStart(2,'0')}:${(job.minute || 0).toString().padStart(2,'0')} PT`;
+            const dayStr = job.weekday !== undefined ? ` (${WEEKDAYS[job.weekday]})` : '';
+
+            card.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 rounded-full mt-2 flex-shrink-0" style="background:${cat.color}"></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <code class="text-sm font-mono font-semibold text-white truncate">${escHtml(job.cmd)}</code>
+                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded" style="background:${typeBg};color:${typeColor}">${typeLabel}</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">${escHtml(job.desc)}</p>
+                        <div class="flex items-center gap-2 mt-2 flex-wrap">
+                            <span class="text-[10px] font-mono text-slate-500">
+                                <svg class="w-3 h-3 inline -mt-0.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                ${timeStr}${dayStr}
+                            </span>
+                            <span class="freq-badge ${FREQ_CLASSES[job.freq]}">${FREQ_LABELS[job.freq]}</span>
+                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style="background:${cat.bg};color:${cat.text}">${cat.label}</span>
+                            ${job.mods.map(m => modPill(m)).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            jobsContainer.appendChild(card);
+        });
+        container.appendChild(jobsContainer);
+    });
+}
+
+function modPill(mod) {
+    if (mod.startsWith('withoutOverlapping')) return `<span class="mod-pill mod-overlap" title="Prevents concurrent runs">${mod}</span>`;
+    if (mod === 'onOneServer') return `<span class="mod-pill mod-server" title="Single-server execution">onOneServer</span>`;
+    if (mod === 'conditionalSkip') return `<span class="mod-pill mod-skip" title="Skipped during backup/payment windows">skip(window)</span>`;
+    if (mod.startsWith('between')) return `<span class="mod-pill mod-between" title="Restricted time window">${mod}</span>`;
+    if (mod === 'weekdays') return `<span class="mod-pill mod-weekdays" title="Monday-Friday only">weekdays</span>`;
+    return `<span class="mod-pill" style="background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.2)">${escHtml(mod)}</span>`;
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+function setupSearch() {
+    const input = document.getElementById('searchInput');
+    let debounce;
+    input.addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => {
+            searchQuery = input.value.trim();
+            renderJobList();
+        }, 200);
+    });
+}
+
+// ── TOOLTIP ───────────────────────────────────────────────────────────────────
+function showTooltip(e, html) {
+    const tip = document.getElementById('tooltip');
+    tip.innerHTML = html;
+    tip.classList.add('visible');
+    const rect = e.target.getBoundingClientRect();
+    let x = rect.right + 8;
+    let y = rect.top;
+    if (x + 360 > window.innerWidth) x = rect.left - 368;
+    if (y + 200 > window.innerHeight) y = window.innerHeight - 210;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+}
+
+function hideTooltip() {
+    document.getElementById('tooltip').classList.remove('visible');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `${r},${g},${b}`;
+}
+</script>
+</body>
+</html>
