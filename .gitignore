@@ -1,1 +1,41 @@
+# ===========================================
+# MiaShare/shared — HTML-only whitelist
+# ===========================================
+# This repo serves GitHub Pages. Only .html
+# files and .gitignore belong here.
+# ===========================================
+
+# Ignore everything by default
+*
+
+# Allow directory traversal (git needs this)
+!*/
+
+# Allow HTML files
+!*.html
+
+# Allow this file to persist
+!.gitignore
+
+# -------------------------------------------
+# Explicit denies (override the allows above)
+# -------------------------------------------
+
+# Local first-run config (written by /share)
+.share-config
+
+# macOS artifacts
 .DS_Store
+
+# Editor / IDE junk
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Node / Python / build artifacts
+node_modules/
+__pycache__/
+*.pyc
+.env
