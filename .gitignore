@@ -1,8 +1,8 @@
 # ===========================================
-# MiaShare/shared — HTML-only whitelist
+# MiaShare/shared — Static asset whitelist
 # ===========================================
-# This repo serves GitHub Pages. Only .html
-# files and .gitignore belong here.
+# This repo serves GitHub Pages. Only HTML,
+# images, JS, and .gitignore belong here.
 # ===========================================
 
 # Ignore everything by default
@@ -13,6 +13,18 @@
 
 # Allow HTML files
 !*.html
+
+# Allow common image formats
+!*.png
+!*.jpg
+!*.jpeg
+!*.gif
+!*.svg
+!*.webp
+!*.ico
+
+# Allow JavaScript files
+!*.js
 
 # Allow this file to persist
 !.gitignore
