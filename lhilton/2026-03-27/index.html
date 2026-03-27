@@ -3,48 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026-03-27</title>
+    <title>2026-03-27 — Shared</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { font-family: 'Inter', sans-serif; background-color: #11142B; color: #ffffff; height: 100%; }
-        body { display: flex; flex-direction: column; }
-        header { background-color: #051014; border-bottom: 1px solid #2a2e4d; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { display: flex; align-items: center; justify-content: center; }
-        .logo svg { height: 32px; width: auto; fill: white; }
-        .header-label { font-size: 18px; font-weight: 600; color: white; }
-        main { flex: 1; padding: 32px 24px; overflow-y: auto; }
-        main::-webkit-scrollbar { width: 8px; }
-        main::-webkit-scrollbar-track { background: #11142B; }
-        main::-webkit-scrollbar-thumb { background: #3a3e5d; border-radius: 4px; }
-        main::-webkit-scrollbar-thumb:hover { background: #4a4e6d; }
-        .breadcrumbs { font-size: 13px; color: #7a7f9e; margin-bottom: 32px; max-width: 900px; margin-left: auto; margin-right: auto; }
-        .breadcrumbs a { color: #5261CE; text-decoration: none; transition: color 0.25s ease; }
-        .breadcrumbs a:hover { color: #FE6D73; }
-        .breadcrumb-separator { margin: 0 6px; }
-        .cards-container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
-        .card { display: flex; flex-direction: row; background-color: #1a1e3d; border: 1px solid #2a2e4d; border-radius: 8px; overflow: hidden; text-decoration: none; color: inherit; transition: all 0.25s ease; }
-        .card:hover { background-color: #1e2245; border-color: #3a3e5d; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
-        .card-left { width: 80px; background-color: rgba(82, 97, 206, 0.1); border-right: 3px solid #5261CE; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .card-left.file { border-right-color: #FE6D73; }
-        .card-left.image { border-right-color: #4CAF50; }
-        .card-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-        .card-icon svg { width: 44px; height: 44px; }
-        .folder-icon { fill: #5261CE; }
-        .file-icon { fill: #FE6D73; }
-        .image-icon { fill: #4CAF50; }
-        .card-right { flex: 1; padding: 20px 24px; display: flex; flex-direction: column; justify-content: center; }
-        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .card-name { font-size: 18px; font-weight: 600; color: white; transition: color 0.25s ease; }
-        .card:hover .card-name { color: #FE6D73; }
-        .card-badge { background-color: rgba(82, 97, 206, 0.2); color: #5261CE; font-size: 12px; padding: 4px 12px; border-radius: 12px; white-space: nowrap; margin-left: 12px; }
-        .card-summary { font-size: 14px; color: #7a7f9e; margin-bottom: 8px; word-break: break-word; }
-        .card-date { font-size: 12px; color: #5a5f7e; }
-        footer { padding: 24px; text-align: center; color: #7a7f9e; font-size: 13px; border-top: 1px solid #2a2e4d; }
-        footer a { color: #5261CE; text-decoration: none; transition: color 0.25s ease; }
-        footer a:hover { color: #FE6D73; }
-        @media (max-width: 768px) { header { padding: 16px 20px; } main { padding: 24px 20px; } .cards-container { max-width: 100%; } .card { flex-direction: column; } .card-left { width: 100%; height: 60px; border-right: none; border-bottom: 3px solid #5261CE; } .card-left.file { border-bottom-color: #FE6D73; } .card-left.image { border-bottom-color: #4CAF50; } .card-right { padding: 16px 20px; } .breadcrumbs { margin-bottom: 24px; } }
-    </style>
+    <style>*{margin:0;padding:0;box-sizing:border-box}html,body{font-family:'Inter',sans-serif;background-color:#11142B;color:#fff;height:100%}body{display:flex;flex-direction:column}header{background-color:#051014;border-bottom:1px solid #2a2e4d;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}.logo{display:flex;align-items:center;justify-content:center}.logo svg{height:32px;width:auto;fill:white}.header-label{font-size:18px;font-weight:600;color:white}main{flex:1;padding:32px 24px;overflow-y:auto}main::-webkit-scrollbar{width:8px}main::-webkit-scrollbar-track{background:#11142B}main::-webkit-scrollbar-thumb{background:#3a3e5d;border-radius:4px}main::-webkit-scrollbar-thumb:hover{background:#4a4e6d}.breadcrumbs{font-size:13px;color:#7a7f9e;margin-bottom:32px;max-width:900px;margin-left:auto;margin-right:auto}.breadcrumbs a{color:#5261CE;text-decoration:none;transition:color .25s ease}.breadcrumbs a:hover{color:#FE6D73}.breadcrumb-separator{margin:0 6px}.cards-container{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:12px}.card{display:flex;flex-direction:row;background-color:#1a1e3d;border:1px solid #2a2e4d;border-radius:8px;overflow:hidden;text-decoration:none;color:inherit;transition:all .25s ease}.card:hover{background-color:#1e2245;border-color:#3a3e5d;box-shadow:0 4px 16px rgba(0,0,0,.3)}.card-left{width:80px;background-color:rgba(82,97,206,.1);border-right:3px solid #5261CE;display:flex;align-items:center;justify-content:center;flex-shrink:0}.card-left.file{border-right-color:#FE6D73}.card-left.image{border-right-color:#4CAF50}.card-icon{width:44px;height:44px;display:flex;align-items:center;justify-content:center}.card-icon svg{width:44px;height:44px}.folder-icon{fill:#5261CE}.file-icon{fill:#FE6D73}.image-icon{fill:#4CAF50}.card-right{flex:1;padding:20px 24px;display:flex;flex-direction:column;justify-content:center}.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.card-name{font-size:18px;font-weight:600;color:white;transition:color .25s ease}.card:hover .card-name{color:#FE6D73}.card-badge{background-color:rgba(82,97,206,.2);color:#5261CE;font-size:12px;padding:4px 12px;border-radius:12px;white-space:nowrap;margin-left:12px}.card-summary{font-size:14px;color:#7a7f9e;margin-bottom:8px;word-break:break-word}.card-date{font-size:12px;color:#5a5f7e}footer{padding:24px;text-align:center;color:#7a7f9e;font-size:13px;border-top:1px solid #2a2e4d}footer a{color:#5261CE;text-decoration:none;transition:color .25s ease}footer a:hover{color:#FE6D73}@media(max-width:768px){header{padding:16px 20px}main{padding:24px 20px}.cards-container{max-width:100%}.card{flex-direction:column}.card-left{width:100%;height:60px;border-right:none;border-bottom:3px solid #5261CE}.card-left.file{border-bottom-color:#FE6D73}.card-left.image{border-bottom-color:#4CAF50}.card-right{padding:16px 20px}.breadcrumbs{margin-bottom:24px}}</style>
 </head>
 <body>
 <header>
@@ -52,7 +13,13 @@
     <div class="header-label">Shared</div>
 </header>
 <main>
-    <div class="breadcrumbs"><a href="/shared/">Shared</a><span class="breadcrumb-separator">/</span><a href="/shared/lhilton/">lhilton</a><span class="breadcrumb-separator">/</span><a href="/shared/lhilton/2026-03-27/">2026-03-27</a></div>
+    <div class="breadcrumbs">
+        <a href="/shared/">Shared</a>
+        <span class="breadcrumb-separator">/</span>
+        <a href="/shared/lhilton/">lhilton</a>
+        <span class="breadcrumb-separator">/</span>
+        <a href="/shared/lhilton/2026-03-27/">2026-03-27</a>
+    </div>
     <div class="cards-container">
         <a href="ai-assistant-technical-overview.html" class="card">
             <div class="card-left file"><div class="card-icon"><svg class="file-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg></div></div>
@@ -70,11 +37,19 @@
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
+        <a href="scheduled-jobs.html" class="card">
+            <div class="card-left file"><div class="card-icon"><svg class="file-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg></div></div>
+            <div class="card-right">
+                <div class="card-top"><div class="card-name">scheduled-jobs.html</div><div class="card-badge">HTML</div></div>
+                <div class="card-summary">Lumion Scheduled Jobs — Engineering Dashboard displays an interactive timeline and heatmap visualization of background jobs, workers, and scheduled tasks running on the platform, with filtering by category and search capabilities.</div>
+                <div class="card-date">Published Mar 27, 2026</div>
+            </div>
+        </a>
         <a href="slideshow.html" class="card">
             <div class="card-left file"><div class="card-icon"><svg class="file-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">slideshow.html</div><div class="card-badge">HTML</div></div>
-                <div class="card-summary">Interactive slideshow presenting screenshots of the Lumion AI Assistant interface and login flow.</div>
+                <div class="card-summary">AI Form Builder Test — PRAX-979 slideshow presentation with screenshots.</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
@@ -82,7 +57,7 @@
             <div class="card-left image"><div class="card-icon"><svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">01-login-page.png</div><div class="card-badge">PNG</div></div>
-                <div class="card-summary">01 Login Page — Used by slideshow.html</div>
+                <div class="card-summary">Login page screenshot. Used by slideshow.html</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
@@ -90,7 +65,7 @@
             <div class="card-left image"><div class="card-icon"><svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">02-login-filled.png</div><div class="card-badge">PNG</div></div>
-                <div class="card-summary">02 Login Filled — Used by slideshow.html</div>
+                <div class="card-summary">Login filled screenshot. Used by slideshow.html</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
@@ -98,7 +73,7 @@
             <div class="card-left image"><div class="card-icon"><svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">03-school-dashboard.png</div><div class="card-badge">PNG</div></div>
-                <div class="card-summary">03 School Dashboard — Used by slideshow.html</div>
+                <div class="card-summary">School dashboard screenshot. Used by slideshow.html</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
@@ -106,7 +81,7 @@
             <div class="card-left image"><div class="card-icon"><svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">04-assistant-drawer-open.png</div><div class="card-badge">PNG</div></div>
-                <div class="card-summary">04 Assistant Drawer Open — Used by slideshow.html</div>
+                <div class="card-summary">Assistant drawer open screenshot. Used by slideshow.html</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
@@ -114,7 +89,7 @@
             <div class="card-left image"><div class="card-icon"><svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">05-prompt-typed.png</div><div class="card-badge">PNG</div></div>
-                <div class="card-summary">05 Prompt Typed — Used by slideshow.html</div>
+                <div class="card-summary">Prompt typed screenshot. Used by slideshow.html</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
@@ -122,7 +97,7 @@
             <div class="card-left image"><div class="card-icon"><svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">06-message-sent.png</div><div class="card-badge">PNG</div></div>
-                <div class="card-summary">06 Message Sent — Used by slideshow.html</div>
+                <div class="card-summary">Message sent screenshot. Used by slideshow.html</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
@@ -130,7 +105,7 @@
             <div class="card-left image"><div class="card-icon"><svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">07-ai-response-streaming.png</div><div class="card-badge">PNG</div></div>
-                <div class="card-summary">07 Ai Response Streaming — Used by slideshow.html</div>
+                <div class="card-summary">AI response streaming screenshot. Used by slideshow.html</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
         </a>
@@ -138,11 +113,12 @@
             <div class="card-left image"><div class="card-icon"><svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div></div>
             <div class="card-right">
                 <div class="card-top"><div class="card-name">12-pages-list-tall.png</div><div class="card-badge">PNG</div></div>
-                <div class="card-summary">12 Pages List Tall — Used by slideshow.html</div>
+                <div class="card-summary">Pages list screenshot. Used by slideshow.html</div>
                 <div class="card-date">Published Mar 27, 2026</div>
             </div>
-        </a></div>
+        </a>
+    </div>
 </main>
-<footer>Powered by MiaShare &middot; Generated 2026-03-27 22:54 UTC</footer>
+<footer>Powered by MiaShare &middot; Generated 2026-03-27 22:50 UTC</footer>
 </body>
 </html>
