@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta name="share-summary" content="Technical marketing overview of the Lumion AI Assistant (Mia) — two-tier agentic architecture, 17 MCP tools, RAG pipeline, security features, and implementation progress.">
+<meta name="share-hash" content="dd89e328651aa3580f683e84a29f1d6ae7606b2bbcf7e9efa4d667ffd3f3a357">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumion AI Assistant — Technical Overview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lumion: {
+                            dark: '#11142B',
+                            blue: '#5261CE',
+                            accent: '#6CB8BA',
+                            glow: '#7B8AFF',
+                            surface: '#1a1d3a',
+                            card: '#1e2142',
+                            rose: '#FE6D73',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* === SCROLLBAR === */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #11142B; }
+        ::-webkit-scrollbar-thumb { background: #5261CE44; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5261CE88; }
+
+        /* === ANIMATED GRADIENT MESH === */
+        .hero-mesh {
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 40%, rgba(82, 97, 206, 0.25) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 50% at 80% 30%, rgba(107, 184, 186, 0.2) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 50% 80%, rgba(254, 109, 115, 0.1) 0%, transparent 70%),
+                linear-gradient(180deg, #11142B 0%, #0d0f22 100%);
+        }
+
+        /* === GRID PATTERN === */
+        .grid-pattern {
+            background-image:
+                linear-gradient(rgba(82, 97, 206, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(82, 97, 206, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* === GLOW EFFECTS === */
+        .glow-blue { box-shadow: 0 0 40px rgba(82, 97, 206, 0.3), 0 0 80px rgba(82, 97, 206, 0.1); }
+        .glow-teal { box-shadow: 0 0 40px rgba(107, 184, 186, 0.3), 0 0 80px rgba(107, 184, 186, 0.1); }
+        .glow-rose { box-shadow: 0 0 40px rgba(254, 109, 115, 0.3), 0 0 80px rgba(254, 109, 115, 0.1); }
+        .text-glow { text-shadow: 0 0 30px rgba(82, 97, 206, 0.5); }
+
+        /* === ANIMATED BORDER === */
+        .animated-border {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .animated-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, #5261CE, #6CB8BA, #FE6D73, #5261CE);
+            background-size: 300% 300%;
+            animation: border-rotate 6s ease infinite;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        @keyframes border-rotate {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* === FLOW ANIMATION === */
+        @keyframes flow-dash {
+            to { stroke-dashoffset: -24; }
+        }
+        .flow-line {
+            stroke-dasharray: 8 8;
+            animation: flow-dash 1.5s linear infinite;
+        }
+
+        /* === PULSE === */
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .pulse-soft { animation: pulse-soft 3s ease-in-out infinite; }
+
+        /* === FLOAT === */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .float { animation: float 4s ease-in-out infinite; }
+        .float-delay { animation: float 4s ease-in-out 1s infinite; }
+        .float-delay-2 { animation: float 4s ease-in-out 2s infinite; }
+
+        /* === TYPING CURSOR === */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .cursor-blink::after {
+            content: '|';
+            animation: blink 1s step-end infinite;
+            color: #5261CE;
+            font-weight: 300;
+        }
+
+        /* === STAT COUNTER === */
+        @keyframes count-up {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* === REVEAL ON SCROLL === */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* === CODE BLOCK === */
+        .code-block {
+            background: linear-gradient(135deg, #0d0f22 0%, #151833 100%);
+            border: 1px solid rgba(82, 97, 206, 0.2);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        .code-keyword { color: #c792ea; }
+        .code-string { color: #c3e88d; }
+        .code-comment { color: #546e7a; }
+        .code-function { color: #82aaff; }
+        .code-variable { color: #f07178; }
+        .code-type { color: #ffcb6b; }
+        .code-number { color: #f78c6c; }
+        .code-arrow { color: #89ddff; }
+        .code-bracket { color: #89ddff; }
+
+        /* === TOOL CARD HOVER === */
+        .tool-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(82, 97, 206, 0.15);
+        }
+        .tool-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(82, 97, 206, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(82, 97, 206, 0.1);
+        }
+
+        /* === TIER TOGGLE === */
+        .tier-tab {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .tier-tab.active {
+            background: linear-gradient(135deg, #5261CE, #6CB8BA);
+            color: white;
+            box-shadow: 0 4px 20px rgba(82, 97, 206, 0.4);
+        }
+
+        /* === PROGRESS BAR === */
+        .progress-fill {
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* === PARTICLES === */
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+        }
+        @keyframes particle-float {
+            0% { opacity: 0; transform: translateY(0) scale(0); }
+            20% { opacity: 0.6; transform: translateY(-20px) scale(1); }
+            100% { opacity: 0; transform: translateY(-120px) scale(0.5); }
+        }
+
+        /* === BADGE === */
+        .tech-badge {
+            background: rgba(82, 97, 206, 0.1);
+            border: 1px solid rgba(82, 97, 206, 0.2);
+            transition: all 0.3s ease;
+        }
+        .tech-badge:hover {
+            background: rgba(82, 97, 206, 0.2);
+            border-color: rgba(82, 97, 206, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === NAV === */
+        .nav-link {
+            position: relative;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #5261CE, #6CB8BA);
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* === SECTION DIVIDER === */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(82, 97, 206, 0.3), transparent);
+        }
+
+        /* === TIMELINE === */
+        .timeline-node {
+            position: relative;
+        }
+        .timeline-node::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #5261CE;
+            background: #11142B;
+        }
+        .timeline-node.complete::before {
+            background: #5261CE;
+            box-shadow: 0 0 12px rgba(82, 97, 206, 0.5);
+        }
+        .timeline-node.active::before {
+            background: #6CB8BA;
+            border-color: #6CB8BA;
+            box-shadow: 0 0 12px rgba(107, 184, 186, 0.5);
+            animation: pulse-soft 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+
+<body class="bg-lumion-dark text-gray-200 font-sans overflow-x-hidden">
+
+    <!-- ==================== NAVIGATION ==================== -->
+    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-lumion-dark/80 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-lumion-blue to-lumion-accent flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+                </div>
+                <span class="font-bold text-white text-lg tracking-tight">Lumion AI</span>
+                <span class="text-xs font-mono text-lumion-accent bg-lumion-accent/10 px-2 py-0.5 rounded-full">v1.6.1</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm text-gray-400">
+                <a href="#architecture" class="nav-link hover:text-white transition-colors">Architecture</a>
+                <a href="#tiers" class="nav-link hover:text-white transition-colors">Tiers</a>
+                <a href="#tools" class="nav-link hover:text-white transition-colors">MCP Tools</a>
+                <a href="#security" class="nav-link hover:text-white transition-colors">Security</a>
+                <a href="#stack" class="nav-link hover:text-white transition-colors">Stack</a>
+                <a href="#progress" class="nav-link hover:text-white transition-colors">Progress</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== HERO ==================== -->
+    <section class="hero-mesh grid-pattern min-h-screen flex items-center relative pt-16">
+        <div class="max-w-7xl mx-auto px-6 py-20 w-full">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <!-- Left: Copy -->
+                <div class="relative z-10">
+                    <div class="inline-flex items-center gap-2 text-sm text-lumion-accent bg-lumion-accent/10 border border-lumion-accent/20 rounded-full px-4 py-1.5 mb-8">
+                        <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                        <span class="font-medium">Cortex AI Platform</span>
+                    </div>
+
+                    <h1 class="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-6">
+                        Meet <span class="bg-gradient-to-r from-lumion-blue via-lumion-accent to-lumion-glow bg-clip-text text-transparent text-glow">Mia</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl text-gray-300 font-light leading-relaxed mb-4">
+                        An agentic AI assistant with <span class="text-white font-medium">MCP tool orchestration</span>,
+                        <span class="text-white font-medium">RAG-powered knowledge retrieval</span>, and
+                        <span class="text-white font-medium">real-time streaming</span> &mdash; embedded natively in every Lumion panel.
+                    </p>
+                    <p class="text-base text-gray-500 mb-10 max-w-lg">
+                        Two-tier architecture. 17 MCP tools. Multi-tenant isolation. TCPA-compliant communications.
+                        Built on Laravel 11, Filament 3, Livewire 3, and Prism PHP.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#architecture" class="group inline-flex items-center gap-2 bg-gradient-to-r from-lumion-blue to-lumion-accent text-white font-semibold px-6 py-3 rounded-xl hover:shadow-lg hover:shadow-lumion-blue/30 transition-all duration-300">
+                            <span>Explore Architecture</span>
+                            <i data-lucide="arrow-down" class="w-4 h-4 group-hover:translate-y-0.5 transition-transform"></i>
+                        </a>
+                        <a href="#tiers" class="inline-flex items-center gap-2 border border-white/10 text-gray-300 font-medium px-6 py-3 rounded-xl hover:border-white/25 hover:text-white transition-all duration-300">
+                            <i data-lucide="layers" class="w-4 h-4"></i>
+                            <span>View Tiers</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: Animated Terminal -->
+                <div class="relative hidden lg:block">
+                    <div class="animated-border float">
+                        <div class="bg-lumion-card rounded-2xl p-6 relative z-10">
+                            <!-- Terminal header -->
+                            <div class="flex items-center gap-2 mb-5">
+                                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                                <span class="ml-3 text-xs font-mono text-gray-500">AgentOrchestrator.php</span>
+                            </div>
+                            <!-- Code -->
+                            <div class="font-mono text-[12.5px] leading-[1.8] whitespace-pre overflow-hidden">
+<span class="code-comment">// Multi-turn agentic tool loop</span>
+<span class="code-keyword">public function</span> <span class="code-function">orchestrate</span>(<span class="code-type">Conversation</span> <span class="code-variable">$conversation</span>):
+{
+    <span class="code-variable">$prism</span> = <span class="code-type">Prism</span>::<span class="code-function">text</span>()
+        <span class="code-arrow">-></span><span class="code-function">using</span>(<span class="code-variable">$this</span><span class="code-arrow">-></span>provider, <span class="code-variable">$this</span><span class="code-arrow">-></span>model)
+        <span class="code-arrow">-></span><span class="code-function">withMessages</span>(<span class="code-variable">$history</span>)
+        <span class="code-arrow">-></span><span class="code-function">withTools</span>(<span class="code-variable">$mcpTools</span>)
+        <span class="code-arrow">-></span><span class="code-function">withMaxSteps</span>(<span class="code-number">10</span>)
+        <span class="code-arrow">-></span><span class="code-function">asStream</span>();
+
+    <span class="code-keyword">foreach</span> (<span class="code-variable">$prism</span> <span class="code-keyword">as</span> <span class="code-variable">$chunk</span>) {
+        <span class="code-keyword">match</span>(<span class="code-variable">$chunk</span><span class="code-arrow">-></span>type) {
+            <span class="code-string">'text'</span>  <span class="code-arrow">=></span> <span class="code-variable">$this</span><span class="code-arrow">-></span><span class="code-function">onTextDelta</span>(<span class="code-variable">$chunk</span>),
+            <span class="code-string">'tool'</span>  <span class="code-arrow">=></span> <span class="code-variable">$this</span><span class="code-arrow">-></span><span class="code-function">onToolStart</span>(<span class="code-variable">$chunk</span>),
+            <span class="code-string">'confirm'</span> <span class="code-arrow">=></span> <span class="code-variable">$this</span><span class="code-arrow">-></span><span class="code-function">onActionProposed</span>(<span class="code-variable">$chunk</span>),
+        };
+    }<span class="cursor-blink"></span>
+}</div>
+                        </div>
+                    </div>
+                    <!-- Floating badges around terminal -->
+                    <div class="absolute -top-4 -right-4 bg-lumion-surface border border-lumion-blue/30 rounded-xl px-3 py-2 text-xs font-mono text-lumion-glow float-delay glow-blue">
+                        <i data-lucide="zap" class="w-3 h-3 inline mr-1"></i>wire:stream
+                    </div>
+                    <div class="absolute -bottom-4 -left-4 bg-lumion-surface border border-lumion-accent/30 rounded-xl px-3 py-2 text-xs font-mono text-lumion-accent float-delay-2 glow-teal">
+                        <i data-lucide="shield-check" class="w-3 h-3 inline mr-1"></i>14 injection patterns
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== STATS BAR ==================== -->
+    <section class="relative z-10 -mt-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="bg-lumion-card/90 backdrop-blur-xl border border-white/10 rounded-2xl p-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center" data-stat="17" data-suffix="">
+                    <div class="stat-value text-4xl font-black text-white mb-1">17</div>
+                    <div class="text-sm text-gray-400">MCP Tools</div>
+                </div>
+                <div class="text-center" data-stat="32" data-suffix="">
+                    <div class="stat-value text-4xl font-black text-white mb-1">32</div>
+                    <div class="text-sm text-gray-400">Functional Requirements</div>
+                </div>
+                <div class="text-center" data-stat="41" data-suffix="">
+                    <div class="stat-value text-4xl font-black text-white mb-1">41</div>
+                    <div class="text-sm text-gray-400">Implementation Stories</div>
+                </div>
+                <div class="text-center" data-stat="18" data-suffix="">
+                    <div class="stat-value text-4xl font-black text-white mb-1">18</div>
+                    <div class="text-sm text-gray-400">Arch Decisions Resolved</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== ARCHITECTURE ==================== -->
+    <section id="architecture" class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="reveal text-center mb-20">
+                <div class="inline-flex items-center gap-2 text-sm text-lumion-blue bg-lumion-blue/10 border border-lumion-blue/20 rounded-full px-4 py-1.5 mb-6">
+                    <i data-lucide="git-branch" class="w-3.5 h-3.5"></i>
+                    System Design
+                </div>
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4">Architecture</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">A callback-driven orchestrator bridging Prism LLM and Livewire UI &mdash; with full MCP tool authorization at every boundary.</p>
+            </div>
+
+            <!-- Architecture Diagram -->
+            <div class="reveal">
+                <div class="bg-lumion-card/50 border border-white/5 rounded-2xl p-8 md:p-12 overflow-hidden">
+                    <svg viewBox="0 0 1000 520" class="w-full" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Grid background -->
+                        <defs>
+                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(82,97,206,0.05)" stroke-width="1"/>
+                            </pattern>
+                            <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#5261CE;stop-opacity:1"/>
+                                <stop offset="100%" style="stop-color:#7B8AFF;stop-opacity:1"/>
+                            </linearGradient>
+                            <linearGradient id="grad-teal" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6CB8BA;stop-opacity:1"/>
+                                <stop offset="100%" style="stop-color:#8ED8DA;stop-opacity:1"/>
+                            </linearGradient>
+                            <linearGradient id="grad-rose" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#FE6D73;stop-opacity:1"/>
+                                <stop offset="100%" style="stop-color:#FF9A9E;stop-opacity:1"/>
+                            </linearGradient>
+                            <linearGradient id="grad-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1"/>
+                                <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1"/>
+                            </linearGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <rect width="1000" height="520" fill="url(#grid)"/>
+
+                        <!-- === USER LAYER === -->
+                        <text x="80" y="35" fill="#9ca3af" font-size="11" font-weight="600" letter-spacing="2">USER LAYER</text>
+
+                        <!-- School User -->
+                        <rect x="30" y="50" width="180" height="70" rx="12" fill="#1e2142" stroke="url(#grad-blue)" stroke-width="1.5"/>
+                        <text x="120" y="78" fill="white" font-size="13" font-weight="700" text-anchor="middle">School Portal</text>
+                        <text x="120" y="98" fill="#9ca3af" font-size="10" text-anchor="middle">Agentic Tier &bull; GPT-5.2</text>
+
+                        <!-- Student User -->
+                        <rect x="240" y="50" width="180" height="70" rx="12" fill="#1e2142" stroke="url(#grad-teal)" stroke-width="1.5"/>
+                        <text x="330" y="78" fill="white" font-size="13" font-weight="700" text-anchor="middle">Student Portal</text>
+                        <text x="330" y="98" fill="#9ca3af" font-size="10" text-anchor="middle">RAG Tier &bull; GPT-5 Mini</text>
+
+                        <!-- === PRESENTATION LAYER === -->
+                        <text x="80" y="165" fill="#9ca3af" font-size="11" font-weight="600" letter-spacing="2">PRESENTATION</text>
+
+                        <!-- Livewire Drawer -->
+                        <rect x="100" y="180" width="260" height="65" rx="12" fill="#1e2142" stroke="rgba(82,97,206,0.3)" stroke-width="1"/>
+                        <text x="230" y="206" fill="white" font-size="13" font-weight="600" text-anchor="middle">AssistantDrawer</text>
+                        <text x="230" y="224" fill="#7B8AFF" font-size="10" font-weight="500" text-anchor="middle">Livewire 3 + Alpine.js + wire:stream</text>
+
+                        <!-- Flow arrows: User -> Drawer -->
+                        <line x1="120" y1="120" x2="180" y2="180" stroke="#5261CE" stroke-width="1.5" class="flow-line" opacity="0.6"/>
+                        <line x1="330" y1="120" x2="280" y2="180" stroke="#6CB8BA" stroke-width="1.5" class="flow-line" opacity="0.6"/>
+
+                        <!-- === ORCHESTRATION LAYER === -->
+                        <text x="80" y="290" fill="#9ca3af" font-size="11" font-weight="600" letter-spacing="2">ORCHESTRATION</text>
+
+                        <!-- AgentOrchestrator -->
+                        <rect x="60" y="305" width="220" height="70" rx="14" fill="#1e2142" stroke="url(#grad-blue)" stroke-width="2" filter="url(#glow)"/>
+                        <text x="170" y="333" fill="white" font-size="14" font-weight="700" text-anchor="middle">AgentOrchestrator</text>
+                        <text x="170" y="353" fill="#7B8AFF" font-size="10" font-weight="500" text-anchor="middle">Callback Contract &bull; 10-step loop</text>
+
+                        <!-- Prism PHP -->
+                        <rect x="320" y="305" width="160" height="70" rx="14" fill="#1e2142" stroke="url(#grad-purple)" stroke-width="2"/>
+                        <text x="400" y="333" fill="white" font-size="14" font-weight="700" text-anchor="middle">Prism PHP</text>
+                        <text x="400" y="353" fill="#a78bfa" font-size="10" font-weight="500" text-anchor="middle">OpenAI &bull; Streaming</text>
+
+                        <!-- Flow: Drawer -> Orchestrator -->
+                        <line x1="230" y1="245" x2="170" y2="305" stroke="#5261CE" stroke-width="1.5" class="flow-line" opacity="0.6"/>
+
+                        <!-- Flow: Orchestrator <-> Prism -->
+                        <line x1="280" y1="340" x2="320" y2="340" stroke="#8b5cf6" stroke-width="2" class="flow-line" opacity="0.7"/>
+
+                        <!-- === TOOL LAYER === -->
+                        <text x="570" y="35" fill="#9ca3af" font-size="11" font-weight="600" letter-spacing="2">TOOL LAYER</text>
+
+                        <!-- InstitutionMCP -->
+                        <rect x="540" y="50" width="200" height="130" rx="14" fill="#1e2142" stroke="url(#grad-blue)" stroke-width="1.5"/>
+                        <text x="640" y="78" fill="white" font-size="13" font-weight="700" text-anchor="middle">InstitutionMCP</text>
+                        <text x="640" y="98" fill="#5261CE" font-size="10" font-weight="500" text-anchor="middle">12 Authorized Tools</text>
+                        <text x="556" y="122" fill="#6b7280" font-size="9">ContactSearch</text>
+                        <text x="556" y="137" fill="#6b7280" font-size="9">PaymentTrends</text>
+                        <text x="556" y="152" fill="#6b7280" font-size="9">CommunicationDraft</text>
+                        <text x="556" y="167" fill="#6b7280" font-size="9">SendCommunication</text>
+                        <text x="670" y="122" fill="#6b7280" font-size="9">ActivitySummary</text>
+                        <text x="670" y="137" fill="#6b7280" font-size="9">InvoiceSearch</text>
+                        <text x="670" y="152" fill="#6b7280" font-size="9">EnrollmentSearch</text>
+                        <text x="670" y="167" fill="#6b7280" font-size="9">+ 5 more</text>
+
+                        <!-- StudentMCP -->
+                        <rect x="770" y="50" width="200" height="130" rx="14" fill="#1e2142" stroke="url(#grad-teal)" stroke-width="1.5"/>
+                        <text x="870" y="78" fill="white" font-size="13" font-weight="700" text-anchor="middle">StudentMCP</text>
+                        <text x="870" y="98" fill="#6CB8BA" font-size="10" font-weight="500" text-anchor="middle">5 Read-Only Tools</text>
+                        <text x="786" y="122" fill="#6b7280" font-size="9">KnowledgeSearch</text>
+                        <text x="786" y="137" fill="#6b7280" font-size="9">EnrollmentData</text>
+                        <text x="786" y="152" fill="#6b7280" font-size="9">PaymentSchedule</text>
+                        <text x="786" y="167" fill="#6b7280" font-size="9">CourseSchedule</text>
+
+                        <!-- === DATA LAYER === -->
+                        <text x="570" y="230" fill="#9ca3af" font-size="11" font-weight="600" letter-spacing="2">DATA LAYER</text>
+
+                        <!-- Qdrant -->
+                        <rect x="540" y="248" width="140" height="60" rx="10" fill="#1e2142" stroke="url(#grad-teal)" stroke-width="1"/>
+                        <text x="610" y="274" fill="white" font-size="12" font-weight="600" text-anchor="middle">Qdrant</text>
+                        <text x="610" y="292" fill="#6CB8BA" font-size="9" text-anchor="middle">3072-dim vectors</text>
+
+                        <!-- Cortex -->
+                        <rect x="700" y="248" width="140" height="60" rx="10" fill="#1e2142" stroke="url(#grad-purple)" stroke-width="1"/>
+                        <text x="770" y="274" fill="white" font-size="12" font-weight="600" text-anchor="middle">Cortex</text>
+                        <text x="770" y="292" fill="#a78bfa" font-size="9" text-anchor="middle">Prompt versioning</text>
+
+                        <!-- Horizon -->
+                        <rect x="860" y="248" width="120" height="60" rx="10" fill="#1e2142" stroke="url(#grad-rose)" stroke-width="1"/>
+                        <text x="920" y="274" fill="white" font-size="12" font-weight="600" text-anchor="middle">Horizon</text>
+                        <text x="920" y="292" fill="#FE6D73" font-size="9" text-anchor="middle">ai queue</text>
+
+                        <!-- === PERSISTENCE === -->
+                        <text x="570" y="360" fill="#9ca3af" font-size="11" font-weight="600" letter-spacing="2">PERSISTENCE</text>
+
+                        <!-- DB Tables -->
+                        <rect x="540" y="378" width="140" height="55" rx="10" fill="#1e2142" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                        <text x="610" y="401" fill="white" font-size="11" font-weight="600" text-anchor="middle">ai_conversations</text>
+                        <text x="610" y="419" fill="#6b7280" font-size="9" text-anchor="middle">UUID &bull; encrypted</text>
+
+                        <rect x="700" y="378" width="120" height="55" rx="10" fill="#1e2142" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                        <text x="760" y="401" fill="white" font-size="11" font-weight="600" text-anchor="middle">ai_messages</text>
+                        <text x="760" y="419" fill="#6b7280" font-size="9" text-anchor="middle">AES-256 at rest</text>
+
+                        <rect x="840" y="378" width="140" height="55" rx="10" fill="#1e2142" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                        <text x="910" y="401" fill="white" font-size="11" font-weight="600" text-anchor="middle">ai_action_confirms</text>
+                        <text x="910" y="419" fill="#6b7280" font-size="9" text-anchor="middle">State machine</text>
+
+                        <!-- === CROSS-CUTTING === -->
+                        <text x="570" y="480" fill="#9ca3af" font-size="11" font-weight="600" letter-spacing="2">CROSS-CUTTING</text>
+
+                        <rect x="540" y="490" width="110" height="28" rx="6" fill="rgba(82,97,206,0.15)" stroke="rgba(82,97,206,0.3)" stroke-width="1"/>
+                        <text x="595" y="509" fill="#7B8AFF" font-size="10" font-weight="500" text-anchor="middle">Multi-Tenancy</text>
+
+                        <rect x="664" y="490" width="110" height="28" rx="6" fill="rgba(254,109,115,0.15)" stroke="rgba(254,109,115,0.3)" stroke-width="1"/>
+                        <text x="719" y="509" fill="#FF9A9E" font-size="10" font-weight="500" text-anchor="middle">InjectionGuard</text>
+
+                        <rect x="788" y="490" width="80" height="28" rx="6" fill="rgba(107,184,186,0.15)" stroke="rgba(107,184,186,0.3)" stroke-width="1"/>
+                        <text x="828" y="509" fill="#8ED8DA" font-size="10" font-weight="500" text-anchor="middle">RBAC</text>
+
+                        <rect x="882" y="490" width="100" height="28" rx="6" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.3)" stroke-width="1"/>
+                        <text x="932" y="509" fill="#a78bfa" font-size="10" font-weight="500" text-anchor="middle">Amplitude</text>
+
+                        <!-- Flow: Orchestrator -> Tools -->
+                        <path d="M 280 330 Q 400 240 540 120" fill="none" stroke="#5261CE" stroke-width="1.5" class="flow-line" opacity="0.5"/>
+                        <path d="M 280 330 Q 500 280 770 120" fill="none" stroke="#6CB8BA" stroke-width="1.5" class="flow-line" opacity="0.5"/>
+
+                        <!-- Flow: Tools -> Data -->
+                        <line x1="640" y1="180" x2="610" y2="248" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 4"/>
+                        <line x1="870" y1="180" x2="770" y2="248" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 4"/>
+                        <line x1="640" y1="180" x2="920" y2="248" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="4 4"/>
+
+                        <!-- Flow: Data -> Persistence -->
+                        <line x1="610" y1="308" x2="610" y2="378" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 4"/>
+                        <line x1="770" y1="308" x2="760" y2="378" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 4"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Key Decision Cards -->
+            <div class="grid md:grid-cols-3 gap-6 mt-10 reveal">
+                <div class="bg-lumion-card/60 border border-white/5 rounded-xl p-6 hover:border-lumion-blue/30 transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-lumion-blue/15 flex items-center justify-center mb-4">
+                        <i data-lucide="git-merge" class="w-5 h-5 text-lumion-blue"></i>
+                    </div>
+                    <h3 class="text-white font-bold mb-2">Callback-Driven Orchestration</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">AgentOrchestrator bridges Prism and Livewire via 7 typed callbacks. Tool execution happens mid-stream without re-querying the LLM. Testable in complete isolation from the UI layer.</p>
+                </div>
+                <div class="bg-lumion-card/60 border border-white/5 rounded-xl p-6 hover:border-lumion-accent/30 transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-lumion-accent/15 flex items-center justify-center mb-4">
+                        <i data-lucide="radio" class="w-5 h-5 text-lumion-accent"></i>
+                    </div>
+                    <h3 class="text-white font-bold mb-2">Hybrid Streaming</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Text deltas stream via <code class="text-lumion-accent text-xs font-mono">wire:stream</code> (append mode). Structured content &mdash; tool status cards, entity results, action confirmations &mdash; render through standard Livewire state updates. Zero custom protocol.</p>
+                </div>
+                <div class="bg-lumion-card/60 border border-white/5 rounded-xl p-6 hover:border-lumion-rose/30 transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-lumion-rose/15 flex items-center justify-center mb-4">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-lumion-rose"></i>
+                    </div>
+                    <h3 class="text-white font-bold mb-2">Action Confirmation FSM</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">Database-backed state machine: PROPOSED &rarr; CONFIRMED &rarr; QUEUED &rarr; EXECUTED. Atomic transitions prevent double-execution. 10-minute TTL with automatic expiration. Always cancellable.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ==================== TIERS ==================== -->
+    <section id="tiers" class="py-32">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="reveal text-center mb-16">
+                <div class="inline-flex items-center gap-2 text-sm text-lumion-accent bg-lumion-accent/10 border border-lumion-accent/20 rounded-full px-4 py-1.5 mb-6">
+                    <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                    Two-Tier Architecture
+                </div>
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4">One Codebase. Two Capability Tiers.</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">The same AgentOrchestrator serves both tiers &mdash; tool registration and authorization determine the ceiling.</p>
+            </div>
+
+            <!-- Tier Toggle -->
+            <div class="flex justify-center mb-12 reveal">
+                <div class="inline-flex bg-lumion-surface/80 border border-white/10 rounded-xl p-1.5">
+                    <button onclick="showTier('school')" id="tab-school" class="tier-tab active rounded-lg px-6 py-2.5 text-sm font-semibold">
+                        <i data-lucide="building-2" class="w-4 h-4 inline mr-1.5"></i>School &mdash; Agentic
+                    </button>
+                    <button onclick="showTier('student')" id="tab-student" class="tier-tab rounded-lg px-6 py-2.5 text-sm font-semibold text-gray-400">
+                        <i data-lucide="graduation-cap" class="w-4 h-4 inline mr-1.5"></i>Student &mdash; RAG
+                    </button>
+                </div>
+            </div>
+
+            <!-- School Tier -->
+            <div id="tier-school" class="reveal">
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <!-- Left: Features -->
+                    <div class="space-y-4">
+                        <div class="bg-lumion-card/60 border border-lumion-blue/20 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-lg bg-lumion-blue/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i data-lucide="search" class="w-4.5 h-4.5 text-lumion-blue"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">CRM Intelligence</h4>
+                                    <p class="text-sm text-gray-400">Natural language search across Contacts, Applications, Payments, Invoices, and Enrollments. "Show me all applications from last week with pending payments."</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-lumion-card/60 border border-lumion-blue/20 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-lg bg-lumion-blue/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i data-lucide="bar-chart-3" class="w-4.5 h-4.5 text-lumion-blue"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Payment Analytics</h4>
+                                    <p class="text-sm text-gray-400">Trend analysis by program, date range, and status. Collections reporting. Payment schedule calculations.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-lumion-card/60 border border-lumion-blue/20 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-lg bg-lumion-blue/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i data-lucide="mail" class="w-4.5 h-4.5 text-lumion-blue"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Communication Drafting</h4>
+                                    <p class="text-sm text-gray-400">AI-drafted emails and SMS following Lumion's Communication Style Guide. Full preview in action confirmation cards before sending.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-lumion-card/60 border border-lumion-blue/20 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-lg bg-lumion-blue/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i data-lucide="activity" class="w-4.5 h-4.5 text-lumion-blue"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Daily Activity Summaries</h4>
+                                    <p class="text-sm text-gray-400">Real-time aggregation of leads, applications, payments, and enrollment changes. Quick-action cards surface daily counts.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Code example -->
+                    <div>
+                        <div class="code-block p-6 h-full">
+                            <div class="flex items-center gap-2 mb-4 text-gray-500 text-xs">
+                                <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                                <span class="font-mono">McpToolAdapter.php &mdash; Tool Bridge</span>
+                            </div>
+                            <pre class="text-[12px] leading-[1.8] overflow-x-auto"><span class="code-comment">// Bridge MCP tools to Prism's tool interface</span>
+<span class="code-keyword">public function</span> <span class="code-function">adaptTools</span>(<span class="code-type">McpServer</span> <span class="code-variable">$server</span>): <span class="code-type">array</span>
+{
+    <span class="code-keyword">return</span> <span class="code-function">collect</span>(<span class="code-variable">$server</span><span class="code-arrow">-></span>tools)
+        <span class="code-arrow">-></span><span class="code-function">filter</span>(<span class="code-keyword">fn</span> (<span class="code-type">AuthorizedMcpTool</span> <span class="code-variable">$tool</span>)
+            <span class="code-arrow">=></span> <span class="code-variable">$tool</span><span class="code-arrow">-></span><span class="code-function">eligibleForRegistration</span>())
+        <span class="code-arrow">-></span><span class="code-function">map</span>(<span class="code-keyword">fn</span> (<span class="code-variable">$tool</span>) <span class="code-arrow">=></span> <span class="code-type">Tool</span>::<span class="code-function">as</span>(
+            name: <span class="code-variable">$tool</span><span class="code-arrow">-></span><span class="code-function">name</span>(),
+            description: <span class="code-variable">$tool</span><span class="code-arrow">-></span><span class="code-function">description</span>(),
+            parameters: <span class="code-variable">$tool</span><span class="code-arrow">-></span><span class="code-function">inputSchema</span>(),
+            fn: <span class="code-keyword">function</span> (<span class="code-type">array</span> <span class="code-variable">$params</span>) <span class="code-keyword">use</span> (<span class="code-variable">$tool</span>) {
+                <span class="code-comment">// Authorization check at execution</span>
+                <span class="code-variable">$tool</span><span class="code-arrow">-></span><span class="code-function">authorize</span>(<span class="code-variable">$this</span><span class="code-arrow">-></span>user);
+
+                <span class="code-comment">// Confirmable? Pause for user.</span>
+                <span class="code-keyword">if</span> (<span class="code-variable">$tool</span><span class="code-arrow">-></span><span class="code-function">isConfirmable</span>()) {
+                    <span class="code-keyword">throw new</span> <span class="code-type">ActionConfirmationPending</span>(
+                        <span class="code-variable">$tool</span>, <span class="code-variable">$params</span>
+                    );
+                }
+
+                <span class="code-keyword">return</span> <span class="code-variable">$tool</span><span class="code-arrow">-></span><span class="code-function">execute</span>(<span class="code-variable">$params</span>);
+            }
+        ))
+        <span class="code-arrow">-></span><span class="code-function">all</span>();
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Tier (hidden by default) -->
+            <div id="tier-student" class="hidden">
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <!-- Left: Features -->
+                    <div class="space-y-4">
+                        <div class="bg-lumion-card/60 border border-lumion-accent/20 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-lg bg-lumion-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i data-lucide="book-open" class="w-4.5 h-4.5 text-lumion-accent"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Knowledge Base Search</h4>
+                                    <p class="text-sm text-gray-400">Semantic vector search against institution-specific Qdrant collections. Source attribution with confidence scores. 0.5 threshold (conservative) &mdash; no best-effort guesses on financial topics.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-lumion-card/60 border border-lumion-accent/20 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-lg bg-lumion-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i data-lucide="lock" class="w-4.5 h-4.5 text-lumion-accent"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Read-Only Data Access</h4>
+                                    <p class="text-sm text-gray-400">Students can only view <em>their own</em> enrollment status, course schedule, and payment history. Every query enforced with <code class="text-lumion-accent text-xs font-mono">where user_id = auth()->id()</code>.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-lumion-card/60 border border-lumion-accent/20 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-lg bg-lumion-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i data-lucide="message-circle" class="w-4.5 h-4.5 text-lumion-accent"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Low-Confidence Fallback</h4>
+                                    <p class="text-sm text-gray-400">When RAG confidence drops below 0.5, the assistant gracefully redirects: "I'm not sure about that &mdash; here's how to contact your school." No hallucinated financial info.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-lumion-card/60 border border-lumion-accent/20 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-lg bg-lumion-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i data-lucide="phone" class="w-4.5 h-4.5 text-lumion-accent"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-semibold mb-1">Talk to My School</h4>
+                                    <p class="text-sm text-gray-400">Dedicated action card surfaces institution contact details &mdash; email, phone, office hours. Always-available escape hatch when AI can't help.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: RAG Pipeline Visualization -->
+                    <div class="bg-lumion-card/50 border border-white/5 rounded-2xl p-8">
+                        <h4 class="text-white font-bold mb-6 flex items-center gap-2">
+                            <i data-lucide="database" class="w-4 h-4 text-lumion-accent"></i>
+                            RAG Pipeline
+                        </h4>
+                        <div class="space-y-6">
+                            <!-- Step 1 -->
+                            <div class="flex items-start gap-4">
+                                <div class="w-8 h-8 rounded-full bg-lumion-accent/20 border border-lumion-accent/40 flex items-center justify-center shrink-0 text-xs font-bold text-lumion-accent">1</div>
+                                <div>
+                                    <div class="text-white font-medium text-sm">Firecrawl Ingestion</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Institution uploads URL &rarr; webhook-based async crawl</div>
+                                </div>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="flex items-start gap-4">
+                                <div class="w-8 h-8 rounded-full bg-lumion-accent/20 border border-lumion-accent/40 flex items-center justify-center shrink-0 text-xs font-bold text-lumion-accent">2</div>
+                                <div>
+                                    <div class="text-white font-medium text-sm">Chunking & Embedding</div>
+                                    <div class="text-xs text-gray-500 mt-0.5"><code class="text-lumion-accent">text-embedding-3-large</code> &rarr; 3072-dimensional vectors</div>
+                                </div>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="flex items-start gap-4">
+                                <div class="w-8 h-8 rounded-full bg-lumion-accent/20 border border-lumion-accent/40 flex items-center justify-center shrink-0 text-xs font-bold text-lumion-accent">3</div>
+                                <div>
+                                    <div class="text-white font-medium text-sm">Vector Storage</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Institution-scoped Qdrant collection: <code class="text-lumion-accent">institution_{id}</code></div>
+                                </div>
+                            </div>
+                            <!-- Step 4 -->
+                            <div class="flex items-start gap-4">
+                                <div class="w-8 h-8 rounded-full bg-lumion-accent/20 border border-lumion-accent/40 flex items-center justify-center shrink-0 text-xs font-bold text-lumion-accent">4</div>
+                                <div>
+                                    <div class="text-white font-medium text-sm">Semantic Search</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Query embedding &rarr; cosine similarity &rarr; threshold gate (0.5)</div>
+                                </div>
+                            </div>
+                            <!-- Step 5 -->
+                            <div class="flex items-start gap-4">
+                                <div class="w-8 h-8 rounded-full bg-lumion-accent/20 border border-lumion-accent/40 flex items-center justify-center shrink-0 text-xs font-bold text-lumion-accent">5</div>
+                                <div>
+                                    <div class="text-white font-medium text-sm">Source-Attributed Response</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Structured JSON with headings, source URLs, and confidence scores</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-white/5">
+                            <div class="flex items-center gap-3 text-xs">
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                                    <span class="text-gray-400">&ge; 0.5 confidence</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                                    <span class="text-gray-400">0.3 &ndash; 0.5 flagged</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                                    <span class="text-gray-400">&lt; 0.3 fallback</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ==================== MCP TOOLS ==================== -->
+    <section id="tools" class="py-32">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="reveal text-center mb-16">
+                <div class="inline-flex items-center gap-2 text-sm text-lumion-rose bg-lumion-rose/10 border border-lumion-rose/20 rounded-full px-4 py-1.5 mb-6">
+                    <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
+                    Model Context Protocol
+                </div>
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4">17 MCP Tools</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">Every tool extends <code class="text-lumion-blue font-mono text-sm">AuthorizedMcpTool</code> &mdash; with 3-tier RBAC, institution scoping, rate limiting, and audit logging baked in.</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 reveal">
+                <!-- School Tools -->
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-blue/15 flex items-center justify-center">
+                            <i data-lucide="users" class="w-4 h-4 text-lumion-blue"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">ContactSearch</div>
+                            <div class="text-[10px] text-lumion-blue font-mono">InstitutionMCP</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Natural language contact lookup with fuzzy matching, phone/email search, and relationship traversal.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-blue/15 flex items-center justify-center">
+                            <i data-lucide="calendar-check" class="w-4 h-4 text-lumion-blue"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">ActivitySummary</div>
+                            <div class="text-[10px] text-lumion-blue font-mono">InstitutionMCP</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Daily aggregation of leads, applications, payments, and enrollment changes across the institution.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-blue/15 flex items-center justify-center">
+                            <i data-lucide="trending-up" class="w-4 h-4 text-lumion-blue"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">PaymentTrends</div>
+                            <div class="text-[10px] text-lumion-blue font-mono">InstitutionMCP</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Trend analysis by program, date range, and status. Identifies payment velocity changes and anomalies.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-blue/15 flex items-center justify-center">
+                            <i data-lucide="file-text" class="w-4 h-4 text-lumion-blue"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">InvoiceSearch</div>
+                            <div class="text-[10px] text-lumion-blue font-mono">InstitutionMCP</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Full-text search across invoices with status filtering, amount ranges, and contact association.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-blue/15 flex items-center justify-center">
+                            <i data-lucide="clipboard-list" class="w-4 h-4 text-lumion-blue"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">EnrollmentSearch</div>
+                            <div class="text-[10px] text-lumion-blue font-mono">InstitutionMCP</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Search enrollment records by student, program, status, and date range with full application context.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-blue/15 flex items-center justify-center">
+                            <i data-lucide="file-search" class="w-4 h-4 text-lumion-blue"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">ApplicationSearch</div>
+                            <div class="text-[10px] text-lumion-blue font-mono">InstitutionMCP</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Search funding applications by applicant, status, program. Cross-references enrollment and payment data.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5 border-amber-500/20">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                            <i data-lucide="pen-tool" class="w-4 h-4 text-amber-400"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">CommunicationDraft</div>
+                            <div class="text-[10px] text-amber-400 font-mono">InstitutionMCP &bull; Confirmable</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Drafts email/SMS using Lumion's Communication Style Guide. Preview in action confirmation card before any send.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5 border-red-500/20">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center">
+                            <i data-lucide="send" class="w-4 h-4 text-red-400"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">SendCommunication</div>
+                            <div class="text-[10px] text-red-400 font-mono">InstitutionMCP &bull; TCPA Guard</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Executes email/SMS dispatch. SMS gated by TCPA compliance window (8AM-9PM contact-local, Mon-Fri, no holidays).</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-blue/15 flex items-center justify-center">
+                            <i data-lucide="calculator" class="w-4 h-4 text-lumion-blue"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">PaymentScheduleCalc</div>
+                            <div class="text-[10px] text-lumion-blue font-mono">InstitutionMCP</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Calculates payment schedules using the Funding domain's service layer with Money objects and frequency support.</p>
+                </div>
+
+                <!-- Student Tools -->
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-accent/15 flex items-center justify-center">
+                            <i data-lucide="search" class="w-4 h-4 text-lumion-accent"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">KnowledgeSearch</div>
+                            <div class="text-[10px] text-lumion-accent font-mono">StudentMCP &bull; RAG</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Semantic vector search against institution knowledge base. 0.5 confidence threshold. Source-attributed results.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-accent/15 flex items-center justify-center">
+                            <i data-lucide="graduation-cap" class="w-4 h-4 text-lumion-accent"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">EnrollmentData</div>
+                            <div class="text-[10px] text-lumion-accent font-mono">StudentMCP &bull; Read-Only</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Student's own enrollment status, program details, and progress. Enforced <code class="text-lumion-accent text-[10px] font-mono">auth()->id()</code> scoping.</p>
+                </div>
+
+                <div class="tool-card bg-lumion-card/60 rounded-xl p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-lumion-accent/15 flex items-center justify-center">
+                            <i data-lucide="credit-card" class="w-4 h-4 text-lumion-accent"></i>
+                        </div>
+                        <div>
+                            <div class="text-white font-semibold text-sm">PaymentSchedule</div>
+                            <div class="text-[10px] text-lumion-accent font-mono">StudentMCP &bull; Read-Only</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400">Student's upcoming payments, payment history, and current balance. PII fields (SSN, DOB) excluded from responses.</p>
+                </div>
+            </div>
+
+            <!-- Tool Authorization Pipeline -->
+            <div class="mt-12 reveal">
+                <div class="bg-lumion-card/40 border border-white/5 rounded-2xl p-8">
+                    <h3 class="text-white font-bold text-lg mb-6 flex items-center gap-2">
+                        <i data-lucide="shield" class="w-5 h-5 text-lumion-blue"></i>
+                        Every Tool Call Passes Through
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div class="text-center p-4 rounded-xl bg-lumion-surface/50">
+                            <div class="text-2xl mb-2">1</div>
+                            <div class="text-xs text-gray-300 font-medium">Feature Flag</div>
+                            <div class="text-[10px] text-gray-500 mt-1">lumion-ai-assist</div>
+                        </div>
+                        <div class="text-center p-4 rounded-xl bg-lumion-surface/50">
+                            <div class="text-2xl mb-2">2</div>
+                            <div class="text-xs text-gray-300 font-medium">Laravel Gate</div>
+                            <div class="text-[10px] text-gray-500 mt-1">RBAC check</div>
+                        </div>
+                        <div class="text-center p-4 rounded-xl bg-lumion-surface/50">
+                            <div class="text-2xl mb-2">3</div>
+                            <div class="text-xs text-gray-300 font-medium">Institution Scope</div>
+                            <div class="text-[10px] text-gray-500 mt-1">Multi-tenancy</div>
+                        </div>
+                        <div class="text-center p-4 rounded-xl bg-lumion-surface/50">
+                            <div class="text-2xl mb-2">4</div>
+                            <div class="text-xs text-gray-300 font-medium">Rate Limiter</div>
+                            <div class="text-[10px] text-gray-500 mt-1">100/user/hr</div>
+                        </div>
+                        <div class="text-center p-4 rounded-xl bg-lumion-surface/50">
+                            <div class="text-2xl mb-2">5</div>
+                            <div class="text-xs text-gray-300 font-medium">Audit Log</div>
+                            <div class="text-[10px] text-gray-500 mt-1">PII-scrubbed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ==================== SECURITY ==================== -->
+    <section id="security" class="py-32">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="reveal text-center mb-16">
+                <div class="inline-flex items-center gap-2 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-full px-4 py-1.5 mb-6">
+                    <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                    Defense in Depth
+                </div>
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4">Security & Compliance</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">Multi-layered protection: prompt injection detection, encrypted persistence, TCPA compliance, and strict multi-tenant isolation.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 reveal">
+                <!-- Injection Protection -->
+                <div class="bg-gradient-to-br from-red-950/30 to-lumion-card/60 border border-red-500/20 rounded-2xl p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
+                            <i data-lucide="bug" class="w-5 h-5 text-red-400"></i>
+                        </div>
+                        <h3 class="text-white font-bold text-lg">InjectionProtector</h3>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="bg-lumion-dark/50 rounded-lg px-3 py-2 text-xs font-mono text-red-300">ignore_previous</div>
+                        <div class="bg-lumion-dark/50 rounded-lg px-3 py-2 text-xs font-mono text-red-300">system_override</div>
+                        <div class="bg-lumion-dark/50 rounded-lg px-3 py-2 text-xs font-mono text-red-300">role_reversal</div>
+                        <div class="bg-lumion-dark/50 rounded-lg px-3 py-2 text-xs font-mono text-red-300">jailbreak_attempt</div>
+                        <div class="bg-lumion-dark/50 rounded-lg px-3 py-2 text-xs font-mono text-red-300">sql_injection</div>
+                        <div class="bg-lumion-dark/50 rounded-lg px-3 py-2 text-xs font-mono text-red-300">encoding_bypass</div>
+                        <div class="bg-lumion-dark/50 rounded-lg px-3 py-2 text-xs font-mono text-red-300">unicode_direction</div>
+                        <div class="bg-lumion-dark/50 rounded-lg px-3 py-2 text-xs font-mono text-red-300">null_byte_detect</div>
+                    </div>
+                    <p class="text-xs text-gray-400">14 regex patterns with whitelist bypass detection. Refined to avoid false positives ("$50" allowed, "$(cmd)" blocked).</p>
+                </div>
+
+                <!-- Data Protection -->
+                <div class="bg-gradient-to-br from-purple-950/30 to-lumion-card/60 border border-purple-500/20 rounded-2xl p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center">
+                            <i data-lucide="lock" class="w-5 h-5 text-purple-400"></i>
+                        </div>
+                        <h3 class="text-white font-bold text-lg">Data Protection</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="check" class="w-4 h-4 text-green-400 mt-0.5 shrink-0"></i>
+                            <div>
+                                <div class="text-white text-sm font-medium">Encrypted at Rest</div>
+                                <div class="text-xs text-gray-400">ai_messages.content encrypted via Laravel encryption (AES-256-CBC)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="check" class="w-4 h-4 text-green-400 mt-0.5 shrink-0"></i>
+                            <div>
+                                <div class="text-white text-sm font-medium">PII Exclusion</div>
+                                <div class="text-xs text-gray-400">SSN, DOB, and sensitive fields stripped from all tool responses</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="check" class="w-4 h-4 text-green-400 mt-0.5 shrink-0"></i>
+                            <div>
+                                <div class="text-white text-sm font-medium">Audit Trail</div>
+                                <div class="text-xs text-gray-400">S3-archived execution logs via Cortex. AiActionAuditLog for every tool call.</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="check" class="w-4 h-4 text-green-400 mt-0.5 shrink-0"></i>
+                            <div>
+                                <div class="text-white text-sm font-medium">90-Day Retention</div>
+                                <div class="text-xs text-gray-400">Automated cleanup via PurgeExpiredConversations scheduled command</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TCPA Compliance -->
+                <div class="bg-gradient-to-br from-amber-950/30 to-lumion-card/60 border border-amber-500/20 rounded-2xl p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                            <i data-lucide="phone-off" class="w-5 h-5 text-amber-400"></i>
+                        </div>
+                        <h3 class="text-white font-bold text-lg">TCPA Compliance</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="clock" class="w-4 h-4 text-amber-400 mt-0.5 shrink-0"></i>
+                            <div class="text-sm text-gray-300">SMS window: <span class="text-white font-medium">8 AM &ndash; 9 PM</span> in contact's local timezone</div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="calendar" class="w-4 h-4 text-amber-400 mt-0.5 shrink-0"></i>
+                            <div class="text-sm text-gray-300">Business days only: <span class="text-white font-medium">Mon&ndash;Fri, excluding US federal holidays</span></div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="timer" class="w-4 h-4 text-amber-400 mt-0.5 shrink-0"></i>
+                            <div class="text-sm text-gray-300">Out-of-window SMS: <span class="text-white font-medium">queued with scheduled delivery</span> (cancellable)</div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="shield" class="w-4 h-4 text-amber-400 mt-0.5 shrink-0"></i>
+                            <div class="text-sm text-gray-300">Job-side guard: <span class="text-white font-medium">BusinessDayChecker</span> validates before dispatch</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Tenancy -->
+                <div class="bg-gradient-to-br from-blue-950/30 to-lumion-card/60 border border-lumion-blue/20 rounded-2xl p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-lumion-blue/15 flex items-center justify-center">
+                            <i data-lucide="building" class="w-5 h-5 text-lumion-blue"></i>
+                        </div>
+                        <h3 class="text-white font-bold text-lg">Multi-Tenant Isolation</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="check" class="w-4 h-4 text-green-400 mt-0.5 shrink-0"></i>
+                            <div>
+                                <div class="text-white text-sm font-medium">Institution-Scoped Everything</div>
+                                <div class="text-xs text-gray-400">Subdomain architecture enforces complete data separation per institution</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="check" class="w-4 h-4 text-green-400 mt-0.5 shrink-0"></i>
+                            <div>
+                                <div class="text-white text-sm font-medium">Per-Institution Qdrant Collections</div>
+                                <div class="text-xs text-gray-400">Knowledge bases are fully isolated &mdash; no cross-tenant vector contamination</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="check" class="w-4 h-4 text-green-400 mt-0.5 shrink-0"></i>
+                            <div>
+                                <div class="text-white text-sm font-medium">No Global Lookups</div>
+                                <div class="text-xs text-gray-400">All queries chain through institution() &mdash; zero unscoped Conversation::find() calls</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ==================== TECH STACK ==================== -->
+    <section id="stack" class="py-32">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="reveal text-center mb-16">
+                <div class="inline-flex items-center gap-2 text-sm text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-4 py-1.5 mb-6">
+                    <i data-lucide="boxes" class="w-3.5 h-3.5"></i>
+                    Technology
+                </div>
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4">Built On Giants</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">Leveraging 3+ years of Lumion AI infrastructure investments. Zero new external dependencies beyond Prism PHP.</p>
+            </div>
+
+            <!-- Stack Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 reveal">
+                <div class="tech-badge rounded-xl p-4 text-center">
+                    <div class="text-2xl font-black text-white mb-1">Laravel 11</div>
+                    <div class="text-xs text-gray-400">Framework</div>
+                </div>
+                <div class="tech-badge rounded-xl p-4 text-center">
+                    <div class="text-2xl font-black text-white mb-1">Filament 3</div>
+                    <div class="text-xs text-gray-400">Admin Panel</div>
+                </div>
+                <div class="tech-badge rounded-xl p-4 text-center">
+                    <div class="text-2xl font-black text-white mb-1">Livewire 3</div>
+                    <div class="text-xs text-gray-400">Reactive UI</div>
+                </div>
+                <div class="tech-badge rounded-xl p-4 text-center">
+                    <div class="text-2xl font-black text-white mb-1">Alpine.js</div>
+                    <div class="text-xs text-gray-400">Client State</div>
+                </div>
+                <div class="tech-badge rounded-xl p-4 text-center">
+                    <div class="text-2xl font-black text-white mb-1">Prism PHP</div>
+                    <div class="text-xs text-gray-400">LLM SDK</div>
+                </div>
+                <div class="tech-badge rounded-xl p-4 text-center">
+                    <div class="text-2xl font-black text-white mb-1">Qdrant</div>
+                    <div class="text-xs text-gray-400">Vector DB</div>
+                </div>
+                <div class="tech-badge rounded-xl p-4 text-center">
+                    <div class="text-2xl font-black text-white mb-1">Horizon</div>
+                    <div class="text-xs text-gray-400">Queue Manager</div>
+                </div>
+                <div class="tech-badge rounded-xl p-4 text-center">
+                    <div class="text-2xl font-black text-white mb-1">Cortex</div>
+                    <div class="text-xs text-gray-400">Prompt Engine</div>
+                </div>
+            </div>
+
+            <!-- Innovations -->
+            <div class="mt-16 reveal">
+                <h3 class="text-2xl font-bold text-white mb-8 text-center">Key Technical Innovations</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-lumion-card/40 border border-white/5 rounded-xl p-6">
+                        <div class="text-lumion-glow font-mono text-xs mb-3">INNOVATION #1</div>
+                        <h4 class="text-white font-bold mb-2">Stream-to-Card Transition</h4>
+                        <p class="text-sm text-gray-400">Token-by-token text streaming seamlessly injects interactive Livewire components mid-response at tool-call boundaries. No reference product does this &mdash; it's invented here.</p>
+                    </div>
+                    <div class="bg-lumion-card/40 border border-white/5 rounded-xl p-6">
+                        <div class="text-lumion-accent font-mono text-xs mb-3">INNOVATION #2</div>
+                        <h4 class="text-white font-bold mb-2">Institution-Aware Context</h4>
+                        <p class="text-sm text-gray-400">The drawer receives page context silently &mdash; which contact, enrollment, or payment the user is viewing. The AI already knows without the user explaining.</p>
+                    </div>
+                    <div class="bg-lumion-card/40 border border-white/5 rounded-xl p-6">
+                        <div class="text-lumion-rose font-mono text-xs mb-3">INNOVATION #3</div>
+                        <h4 class="text-white font-bold mb-2">Cross-Session Context Rebuild</h4>
+                        <p class="text-sm text-gray-400">Resumed conversations with history exceeding the context window get old messages summarized via GPT-5-nano and injected as a preamble. Cross-session continuity without losing context.</p>
+                    </div>
+                    <div class="bg-lumion-card/40 border border-white/5 rounded-xl p-6">
+                        <div class="text-purple-400 font-mono text-xs mb-3">INNOVATION #4</div>
+                        <h4 class="text-white font-bold mb-2">Prompt Inheritance System</h4>
+                        <p class="text-sm text-gray-400">Global prompts with institution-specific overrides. Protected fields (model, identifier) can't be overridden. Full version history on every change. Redis-cached with 300s TTL.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance targets -->
+            <div class="mt-16 reveal">
+                <div class="bg-gradient-to-r from-lumion-card/80 to-lumion-surface/80 border border-white/5 rounded-2xl p-8">
+                    <h3 class="text-white font-bold text-lg mb-6 flex items-center gap-2">
+                        <i data-lucide="gauge" class="w-5 h-5 text-lumion-accent"></i>
+                        Performance Targets
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
+                        <div>
+                            <div class="text-3xl font-black text-white">&lt;300<span class="text-lg text-gray-400">ms</span></div>
+                            <div class="text-xs text-gray-500 mt-1">Drawer Open</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-black text-white">&lt;2<span class="text-lg text-gray-400">s</span></div>
+                            <div class="text-xs text-gray-500 mt-1">First Token (p95)</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-black text-white">&lt;3<span class="text-lg text-gray-400">s</span></div>
+                            <div class="text-xs text-gray-500 mt-1">CRM Search</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-black text-white">50</div>
+                            <div class="text-xs text-gray-500 mt-1">Concurrent Sessions</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-black text-white">99.5<span class="text-lg text-gray-400">%</span></div>
+                            <div class="text-xs text-gray-500 mt-1">Availability SLA</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ==================== PROGRESS ==================== -->
+    <section id="progress" class="py-32">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="reveal text-center mb-16">
+                <div class="inline-flex items-center gap-2 text-sm text-lumion-blue bg-lumion-blue/10 border border-lumion-blue/20 rounded-full px-4 py-1.5 mb-6">
+                    <i data-lucide="rocket" class="w-3.5 h-3.5"></i>
+                    Implementation Status
+                </div>
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4">87% Complete</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">36 of 41 stories shipped. Epic 5 (Student AI Assistant) is the final frontier.</p>
+            </div>
+
+            <!-- Progress Overview -->
+            <div class="reveal mb-12">
+                <div class="bg-lumion-card/50 border border-white/5 rounded-2xl p-8">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-white font-semibold">Overall Progress</span>
+                        <span class="text-lumion-accent font-mono font-bold">36 / 41 stories</span>
+                    </div>
+                    <div class="w-full h-3 bg-lumion-dark rounded-full overflow-hidden">
+                        <div class="progress-fill h-full bg-gradient-to-r from-lumion-blue to-lumion-accent rounded-full" style="width: 87.8%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Epic Timeline -->
+            <div class="reveal">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Left: Timeline -->
+                    <div class="space-y-8 pl-8 border-l-2 border-lumion-blue/20 relative">
+                        <div class="timeline-node complete">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-white font-bold">Epic 1: Foundation & Chat</h4>
+                                <span class="text-xs font-mono text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">10/10</span>
+                            </div>
+                            <p class="text-xs text-gray-400">Streaming spike, feature flags, database schema, AgentOrchestrator, system prompts, drawer component, chat UI, welcome screen, error handling, context builder.</p>
+                        </div>
+                        <div class="timeline-node complete">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-white font-bold">Epic 2: Polish & Accessibility</h4>
+                                <span class="text-xs font-mono text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">6/6</span>
+                            </div>
+                            <p class="text-xs text-gray-400">Responsive breakpoints, drag-resize, reduced motion, WCAG 2.1 AA, Amplitude analytics, screen reader testing.</p>
+                        </div>
+                        <div class="timeline-node complete">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-white font-bold">Epic 3: CRM Intelligence</h4>
+                                <span class="text-xs font-mono text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">7/7</span>
+                            </div>
+                            <p class="text-xs text-gray-400">Quick action cards, 5 InstitutionMCP tools, follow-up suggestions, Tool Output Contract Gate.</p>
+                        </div>
+                        <div class="timeline-node complete">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-white font-bold">Epic 4: Actions & Compliance</h4>
+                                <span class="text-xs font-mono text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">5/5</span>
+                            </div>
+                            <p class="text-xs text-gray-400">Communication drafting, action confirmation FSM, SendCommunication tool, TCPA compliance, pending indicator.</p>
+                        </div>
+                        <div class="timeline-node active">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-white font-bold">Epic 5: Student Assistant</h4>
+                                <span class="text-xs font-mono text-lumion-accent bg-lumion-accent/10 px-2 py-0.5 rounded-full">0/5</span>
+                            </div>
+                            <p class="text-xs text-gray-400">StudentMCP domain, KnowledgeSearch, enrollment/payment/course tools, quick actions, fallback system.</p>
+                        </div>
+                        <div class="timeline-node complete">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-white font-bold">Epic 6: History & Config</h4>
+                                <span class="text-xs font-mono text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">7/7</span>
+                            </div>
+                            <p class="text-xs text-gray-400">Conversation history, resume, timeout, cleanup commands, assistant naming settings.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Analytics Summary -->
+                    <div class="space-y-6">
+                        <div class="bg-lumion-card/50 border border-white/5 rounded-xl p-6">
+                            <h4 class="text-white font-bold mb-4 flex items-center gap-2">
+                                <i data-lucide="bar-chart" class="w-4 h-4 text-lumion-blue"></i>
+                                Amplitude Events
+                            </h4>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-mono text-xs">ai_drawer_opened</span>
+                                    <span class="text-gray-300">E-001</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-mono text-xs">ai_message_sent</span>
+                                    <span class="text-gray-300">E-002</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-mono text-xs">ai_quick_action_clicked</span>
+                                    <span class="text-gray-300">E-003</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-mono text-xs">ai_action_confirmed</span>
+                                    <span class="text-gray-300">E-004</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-mono text-xs">ai_action_cancelled</span>
+                                    <span class="text-gray-300">E-005</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-mono text-xs">ai_fallback_triggered</span>
+                                    <span class="text-gray-300">E-007</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-400 font-mono text-xs">ai_conversation_resumed</span>
+                                    <span class="text-gray-300">E-009</span>
+                                </div>
+                                <div class="text-center pt-2 border-t border-white/5">
+                                    <span class="text-xs text-gray-500">12 total events tracking full user journey</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-lumion-card/50 border border-white/5 rounded-xl p-6">
+                            <h4 class="text-white font-bold mb-4 flex items-center gap-2">
+                                <i data-lucide="terminal" class="w-4 h-4 text-lumion-accent"></i>
+                                Scheduled Commands
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="bg-lumion-dark/50 rounded-lg px-4 py-3">
+                                    <div class="font-mono text-xs text-lumion-accent mb-1">CloseInactiveConversations</div>
+                                    <div class="text-[10px] text-gray-500">Every 5 min &bull; Soft-deletes 30+ min inactive</div>
+                                </div>
+                                <div class="bg-lumion-dark/50 rounded-lg px-4 py-3">
+                                    <div class="font-mono text-xs text-lumion-accent mb-1">PurgeExpiredConversations</div>
+                                    <div class="text-[10px] text-gray-500">Daily &bull; 90-day retention cleanup</div>
+                                </div>
+                                <div class="bg-lumion-dark/50 rounded-lg px-4 py-3">
+                                    <div class="font-mono text-xs text-lumion-accent mb-1">AggregateAiUsage</div>
+                                    <div class="text-[10px] text-gray-500">Daily &bull; Token costs per institution</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ==================== TARGET IMPACT ==================== -->
+    <section class="py-32">
+        <div class="max-w-5xl mx-auto px-6 text-center reveal">
+            <h2 class="text-4xl md:text-5xl font-black text-white mb-6">The Bottom Line</h2>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto mb-16 leading-relaxed">
+                A production-grade AI assistant that reduces student support tickets by <span class="text-white font-bold">20&ndash;30%</span>,
+                cuts email composition time in half, and makes every institution's data instantly accessible
+                through natural language &mdash; all while maintaining strict multi-tenant isolation and regulatory compliance.
+            </p>
+
+            <div class="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
+                <div class="text-center">
+                    <div class="text-5xl font-black bg-gradient-to-r from-lumion-blue to-lumion-accent bg-clip-text text-transparent mb-2">3</div>
+                    <div class="text-sm text-gray-400">New Domains</div>
+                    <div class="text-xs text-gray-600 mt-1">AI, StudentMCP, InstitutionMCP+</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-black bg-gradient-to-r from-lumion-accent to-green-400 bg-clip-text text-transparent mb-2">40+</div>
+                    <div class="text-sm text-gray-400">AI Model Variants</div>
+                    <div class="text-xs text-gray-600 mt-1">GPT-5.x, O3, GPT-4o families</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-black bg-gradient-to-r from-lumion-rose to-purple-400 bg-clip-text text-transparent mb-2">0</div>
+                    <div class="text-sm text-gray-400">New Infrastructure</div>
+                    <div class="text-xs text-gray-600 mt-1">Builds on existing stack</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="border-t border-white/5 py-12">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-lumion-blue to-lumion-accent flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-3 h-3 text-white"></i>
+                </div>
+                <span class="text-sm text-gray-500">Lumion AI Assistant &mdash; Technical Overview</span>
+            </div>
+            <div class="text-xs text-gray-600">
+                PRD v1.6.1 &bull; Architecture v1.0 &bull; Cortex AI Platform &bull; March 2026
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== SCRIPTS ==================== -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Scroll reveal
+        const revealElements = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '-50px' });
+
+        revealElements.forEach(el => observer.observe(el));
+
+        // Tier toggle
+        function showTier(tier) {
+            document.getElementById('tier-school').classList.toggle('hidden', tier !== 'school');
+            document.getElementById('tier-student').classList.toggle('hidden', tier !== 'student');
+
+            document.getElementById('tab-school').classList.toggle('active', tier === 'school');
+            document.getElementById('tab-student').classList.toggle('active', tier === 'student');
+
+            if (tier === 'school') {
+                document.getElementById('tab-school').classList.remove('text-gray-400');
+                document.getElementById('tab-student').classList.add('text-gray-400');
+            } else {
+                document.getElementById('tab-student').classList.remove('text-gray-400');
+                document.getElementById('tab-school').classList.add('text-gray-400');
+            }
+
+            // Re-init icons for newly visible content
+            lucide.createIcons();
+        }
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Stat counter animation
+        const statObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const target = parseInt(el.dataset.stat);
+                    const suffix = el.dataset.suffix || '';
+                    const valueEl = el.querySelector('.stat-value');
+                    let current = 0;
+                    const step = Math.max(1, Math.floor(target / 30));
+                    const interval = setInterval(() => {
+                        current = Math.min(current + step, target);
+                        valueEl.textContent = current + suffix;
+                        if (current >= target) clearInterval(interval);
+                    }, 30);
+                    statObserver.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('[data-stat]').forEach(el => statObserver.observe(el));
+    </script>
+</body>
+</html>
