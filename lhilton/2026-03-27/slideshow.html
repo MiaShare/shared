@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Form Builder Test — PRAX-979</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .header .badge.warn { background: #f59e0b; color: #451a03; }
+
+        .slideshow {
+            max-width: 1200px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .controls button {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .controls button:hover { background: #475569; }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .controls .counter { font-size: 14px; color: #94a3b8; min-width: 80px; text-align: center; }
+
+        .slide {
+            display: none;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .slide.active { display: block; }
+
+        .slide-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .slide-header h2 { font-size: 16px; font-weight: 600; }
+        .slide-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .slide-body { padding: 24px; }
+        .slide-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .slide-body img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        /* Thumbnails */
+        .thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        .thumb {
+            flex: 0 0 120px;
+            height: 68px;
+            border-radius: 6px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            overflow: hidden;
+            opacity: 0.5;
+            transition: all 0.15s;
+        }
+        .thumb.active { border-color: #3b82f6; opacity: 1; }
+        .thumb:hover { opacity: 0.8; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Verification table */
+        .verification {
+            margin-top: 16px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .verification th, .verification td {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .verification th { color: #94a3b8; font-weight: 500; }
+        .verification td { color: #e2e8f0; }
+        .verification .field-type {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            background: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #a78bfa;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        kbd {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AI Form Builder Test &mdash; PRAX-979</h1>
+        <div>
+            <span class="badge">PASS</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 27, 2026 &bull; Branch: prax-979-ai-tool-alignment</span>
+        </div>
+    </div>
+
+    <div class="slideshow">
+        <div class="controls">
+            <button onclick="prev()" id="prevBtn">&larr; Previous</button>
+            <span class="counter" id="counter">1 / 9</span>
+            <button onclick="next()" id="nextBtn">Next &rarr;</button>
+        </div>
+
+        <!-- Slide 1: Login -->
+        <div class="slide active" data-index="0">
+            <div class="slide-header">
+                <h2>Login Page</h2>
+                <span class="step-badge">Step 1</span>
+            </div>
+            <div class="slide-body">
+                <p>Navigate to <code>wwa.moab.test/login</code> — the Western Welding Academy login page. <span class="status-tag info">INFO</span></p>
+                <img src="01-login-page.png" alt="Login page">
+            </div>
+        </div>
+
+        <!-- Slide 2: Credentials -->
+        <div class="slide" data-index="1">
+            <div class="slide-header">
+                <h2>Enter Credentials</h2>
+                <span class="step-badge">Step 2</span>
+            </div>
+            <div class="slide-body">
+                <p>Login as <code>derrick+wwa@joinlumion.com</code> (School Owner, School Admin). Password: <code>password</code> (sanitized dev env). <span class="status-tag info">INFO</span></p>
+                <img src="02-login-filled.png" alt="Login form filled">
+            </div>
+        </div>
+
+        <!-- Slide 3: Dashboard -->
+        <div class="slide" data-index="2">
+            <div class="slide-header">
+                <h2>School Dashboard</h2>
+                <span class="step-badge">Step 3</span>
+            </div>
+            <div class="slide-body">
+                <p>Successfully logged in. The School Dashboard shows Western Welding Academy data. The AI Assistant "Beta" trigger is visible in the top-right toolbar. <span class="status-tag pass">PASS</span></p>
+                <img src="03-school-dashboard.png" alt="School Dashboard">
+            </div>
+        </div>
+
+        <!-- Slide 4: AI Drawer -->
+        <div class="slide" data-index="3">
+            <div class="slide-header">
+                <h2>AI Assistant Drawer Opens</h2>
+                <span class="step-badge">Step 4</span>
+            </div>
+            <div class="slide-body">
+                <p>Clicked the "Beta" AI trigger button. Mia opens in a drawer on the right side with a greeting: "Hi, Derrick! I'm Mia." Quick action chips are visible (New Leads, Applications, Recent Payments, Enrollment Changes). <span class="status-tag pass">PASS</span></p>
+                <img src="04-assistant-drawer-open.png" alt="AI Assistant drawer open">
+            </div>
+        </div>
+
+        <!-- Slide 5: Prompt -->
+        <div class="slide" data-index="4">
+            <div class="slide-header">
+                <h2>Enrollment Form Prompt Entered</h2>
+                <span class="step-badge">Step 5</span>
+            </div>
+            <div class="slide-body">
+                <p>Typed the full enrollment form creation prompt into the "Ask Mia anything..." text area. The send button becomes active. <span class="status-tag pass">PASS</span></p>
+                <img src="05-prompt-typed.png" alt="Prompt typed in chat">
+            </div>
+        </div>
+
+        <!-- Slide 6: AI Processing -->
+        <div class="slide" data-index="5">
+            <div class="slide-header">
+                <h2>AI Processing &amp; Streaming</h2>
+                <span class="step-badge">Step 6</span>
+            </div>
+            <div class="slide-body">
+                <p>After clicking Send, the AI immediately streams a response: <em>"I'm going to generate a 5 page enrollment form with the exact sections you listed: student info, address, program selection, emergency contact + address, and a mandatory agreement."</em> The AI then calls the <code>generate-enrollment-form</code> MCP tool. <span class="status-tag pass">PASS</span></p>
+                <img src="06-message-sent.png" alt="AI streaming response">
+            </div>
+        </div>
+
+        <!-- Slide 7: AI Response + Form Builder -->
+        <div class="slide" data-index="6">
+            <div class="slide-header">
+                <h2>Form Generated &amp; Builder Loaded</h2>
+                <span class="step-badge">Step 7</span>
+            </div>
+            <div class="slide-body">
+                <p>The AI successfully generated the form and navigated to the <strong>Create Application Form</strong> page in School Settings &gt; Enrollment. The AI response shows a structured summary with all 5 pages listed. The form builder is pre-populated with the AI-generated data: <em>"AI Generated Form — Mar 27, 2026 9:19 PM"</em>. <span class="status-tag pass">PASS</span></p>
+                <img src="07-ai-response-streaming.png" alt="Form generated, builder loaded">
+            </div>
+        </div>
+
+        <!-- Slide 8: Full Form Builder Page -->
+        <div class="slide" data-index="7">
+            <div class="slide-header">
+                <h2>Full Form Builder View</h2>
+                <span class="step-badge">Step 8</span>
+            </div>
+            <div class="slide-body">
+                <p>The complete Create Application Form page showing all sections: General Details, Enable Test Mode, Program, Approvals, Completion Messages, Reminders, and the <strong>Pages</strong> section at the bottom with all 5 generated pages visible. <span class="status-tag pass">PASS</span></p>
+                <img src="12-pages-list-tall.png" alt="Full form builder page with all 5 pages">
+            </div>
+        </div>
+
+        <!-- Slide 9: Verification -->
+        <div class="slide" data-index="8">
+            <div class="slide-header">
+                <h2>Form Structure Verification</h2>
+                <span class="step-badge">Verification</span>
+            </div>
+            <div class="slide-body">
+                <p>Extracted the form data from the Livewire component state to verify all pages and fields match the prompt requirements. <span class="status-tag pass">ALL CHECKS PASS</span></p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number">5</div>
+                        <div class="label">Pages Generated</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">12</div>
+                        <div class="label">Total Fields</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">10</div>
+                        <div class="label">Well-Known Types</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">11</div>
+                        <div class="label">Required Fields</div>
+                    </div>
+                </div>
+
+                <table class="verification">
+                    <thead>
+                        <tr><th>Page</th><th>Title</th><th>Fields</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><strong>Student Info</strong></td>
+                            <td>
+                                <span class="field-type">student-first-name</span>
+                                <span class="field-type">student-last-name</span>
+                                <span class="field-type">student-email</span>
+                                <span class="field-type">student-phone</span>
+                                <span class="field-type">student-birthdate</span>
+                            </td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><strong>Student Address</strong></td>
+                            <td>
+                                <span class="field-type">student-address</span>
+                            </td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td><strong>Program Selection</strong></td>
+                            <td>
+                                <span class="field-type">program-group-select</span>
+                                <span class="field-type">start-date</span>
+                            </td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td><strong>Emergency Contact</strong></td>
+                            <td>
+                                <span class="field-type">emergency-contact-details</span>
+                                <span class="field-type">text</span> <span style="color:#94a3b8">"Emergency Contact Email"</span>
+                                <span class="field-type">emergency-contact-address</span>
+                            </td>
+                            <td><span class="status-tag pass">PASS</span> <span class="status-tag note">+1 extra</span></td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td><strong>Agreement</strong></td>
+                            <td>
+                                <span class="field-type">static-agreement</span> <span style="color:#94a3b8">"Acknowledgment"</span>
+                            </td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 16px;">
+                    <strong>Notes:</strong> Page 4 includes an extra <span class="field-type">text</span> field for "Emergency Contact Email" — the AI proactively added this since the well-known <code>emergency-contact-details</code> type collects name/phone but not email. This is a reasonable addition. All other fields match the prompt exactly using well-known types.
+                </p>
+
+                <h3 style="margin-top: 24px; margin-bottom: 12px; font-size: 14px; color: #94a3b8;">Prompt Used</h3>
+                <div style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.6; color: #cbd5e1;">
+                    Create a student enrollment form. On the first page, collect the student's first name, last name, email address, phone number, and birthdate. On the second page, get their full address. The third page should let them select a program and choose their desired start date. On the fourth page, collect emergency contact details and the emergency contact's address. The last page should have a mandatory agreement the student needs to accept before submitting.
+                </div>
+            </div>
+        </div>
+
+        <!-- Thumbnails -->
+        <div class="thumbnails" id="thumbnails"></div>
+        <div class="keyboard-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const images = [
+            '01-login-page.png', '02-login-filled.png', '03-school-dashboard.png',
+            '04-assistant-drawer-open.png', '05-prompt-typed.png', '06-message-sent.png',
+            '07-ai-response-streaming.png', '12-pages-list-tall.png', null
+        ];
+        let current = 0;
+
+        // Build thumbnails
+        const thumbsContainer = document.getElementById('thumbnails');
+        images.forEach((img, i) => {
+            const div = document.createElement('div');
+            div.className = 'thumb' + (i === 0 ? ' active' : '');
+            div.onclick = () => goTo(i);
+            if (img) {
+                div.innerHTML = `<img src="${img}" alt="Step ${i+1}">`;
+            } else {
+                div.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#0f172a;color:#3b82f6;font-size:11px;font-weight:600">Verify</div>`;
+            }
+            thumbsContainer.appendChild(div);
+        });
+
+        function goTo(index) {
+            slides[current].classList.remove('active');
+            document.querySelectorAll('.thumb')[current].classList.remove('active');
+            current = index;
+            slides[current].classList.add('active');
+            document.querySelectorAll('.thumb')[current].classList.add('active');
+            document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+            document.getElementById('prevBtn').disabled = current === 0;
+            document.getElementById('nextBtn').disabled = current === slides.length - 1;
+        }
+
+        function next() { if (current < slides.length - 1) goTo(current + 1); }
+        function prev() { if (current > 0) goTo(current - 1); }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+
+        // Init button state
+        document.getElementById('prevBtn').disabled = true;
+    </script>
+</body>
+</html>

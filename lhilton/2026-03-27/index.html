@@ -3,54 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026-03-27 — lhilton</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>2026-03-27 — lhilton — Shared</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { font-family: 'Inter', sans-serif; background-color: #11142B; color: #ffffff; height: 100%; }
         body { display: flex; flex-direction: column; }
         header { background-color: #051014; border-bottom: 1px solid #2a2e4d; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
-        .logo svg { width: 100%; height: 100%; fill: white; }
+        .logo { display: flex; align-items: center; justify-content: center; }
+        .logo svg { height: 32px; width: auto; fill: white; }
         .header-label { font-size: 18px; font-weight: 600; color: white; }
         main { flex: 1; padding: 32px 24px; overflow-y: auto; }
-        main::-webkit-scrollbar { width: 8px; }
-        main::-webkit-scrollbar-track { background: #11142B; }
-        main::-webkit-scrollbar-thumb { background: #3a3e5d; border-radius: 4px; }
-        main::-webkit-scrollbar-thumb:hover { background: #4a4e6d; }
         .breadcrumbs { font-size: 13px; color: #7a7f9e; margin-bottom: 32px; max-width: 900px; margin-left: auto; margin-right: auto; }
         .breadcrumbs a { color: #5261CE; text-decoration: none; transition: color 0.25s ease; }
         .breadcrumbs a:hover { color: #FE6D73; }
         .breadcrumb-separator { margin: 0 6px; }
         .cards-container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
         .card { display: flex; flex-direction: row; background-color: #1a1e3d; border: 1px solid #2a2e4d; border-radius: 8px; overflow: hidden; text-decoration: none; color: inherit; transition: all 0.25s ease; }
-        .card:hover { background-color: #1e2245; border-color: #3a3e5d; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
-        .card-left { width: 80px; background-color: rgba(82, 97, 206, 0.1); border-right: 3px solid #5261CE; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .card:hover { background-color: #1e2245; border-color: #3a3e5d; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+        .card-left { width: 80px; background-color: rgba(82,97,206,0.1); border-right: 3px solid #5261CE; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .card-left.file { border-right-color: #FE6D73; }
+        .card-left.image { border-right-color: #4CAF50; }
         .card-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
         .card-icon svg { width: 44px; height: 44px; }
         .folder-icon { fill: #5261CE; }
         .file-icon { fill: #FE6D73; }
+        .image-icon { fill: #4CAF50; }
         .card-right { flex: 1; padding: 20px 24px; display: flex; flex-direction: column; justify-content: center; }
         .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .card-name { font-size: 18px; font-weight: 600; color: white; transition: color 0.25s ease; }
         .card:hover .card-name { color: #FE6D73; }
-        .card-badge { background-color: rgba(82, 97, 206, 0.2); color: #5261CE; font-size: 12px; padding: 4px 12px; border-radius: 12px; white-space: nowrap; margin-left: 12px; }
+        .card-badge { background-color: rgba(82,97,206,0.2); color: #5261CE; font-size: 12px; padding: 4px 12px; border-radius: 12px; white-space: nowrap; margin-left: 12px; }
         .card-summary { font-size: 14px; color: #7a7f9e; margin-bottom: 8px; word-break: break-word; }
         .card-date { font-size: 12px; color: #5a5f7e; }
         footer { padding: 24px; text-align: center; color: #7a7f9e; font-size: 13px; border-top: 1px solid #2a2e4d; }
-        footer a { color: #5261CE; text-decoration: none; transition: color 0.25s ease; }
-        footer a:hover { color: #FE6D73; }
-        @media (max-width: 768px) {
-            header { padding: 16px 20px; }
-            main { padding: 24px 20px; }
-            .cards-container { max-width: 100%; }
-            .card { flex-direction: column; }
-            .card-left { width: 100%; height: 60px; border-right: none; border-bottom: 3px solid #5261CE; }
-            .card-left.file { border-bottom-color: #FE6D73; }
-            .card-right { padding: 16px 20px; }
-            .breadcrumbs { margin-bottom: 24px; }
-        }
+        footer a { color: #5261CE; text-decoration: none; }
+        @media (max-width: 768px) { header { padding: 16px 20px; } main { padding: 24px 20px; } .cards-container { max-width: 100%; } .card { flex-direction: column; } .card-left { width: 100%; height: 60px; border-right: none; border-bottom: 3px solid #5261CE; } .card-left.file { border-bottom-color: #FE6D73; } .card-left.image { border-bottom-color: #4CAF50; } .card-right { padding: 16px 20px; } .breadcrumbs { margin-bottom: 24px; } }
     </style>
 </head>
 <body>
@@ -62,34 +52,172 @@
     </header>
     <main>
         <div class="breadcrumbs">
-            <a href="/shared/">Shared</a>
+            <a href="../../">Shared</a>
             <span class="breadcrumb-separator">/</span>
-            <a href="/shared/lhilton/">lhilton</a>
+            <a href="../">lhilton</a>
             <span class="breadcrumb-separator">/</span>
             2026-03-27
         </div>
         <div class="cards-container">
-            <a href="ai-assistant-technical-overview.html" class="card">
+
+            <!-- HTML files (alphabetically) -->
+
+            <a class="card" href="ai-assistant-technical-overview.html">
                 <div class="card-left file">
                     <div class="card-icon">
-                        <svg class="file-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-                        </svg>
+                        <svg class="file-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
                     </div>
                 </div>
                 <div class="card-right">
                     <div class="card-top">
-                        <div class="card-name">ai-assistant-technical-overview.html</div>
-                        <div class="card-badge">HTML</div>
+                        <span class="card-name">ai-assistant-technical-overview.html</span>
+                        <span class="card-badge">HTML</span>
                     </div>
-                    <div class="card-summary">Technical marketing overview of the Lumion AI Assistant (Mia) — two-tier agentic architecture, 17 MCP tools, RAG pipeline, security features, and implementation progress.</div>
-                    <div class="card-date">Published Mar 27, 2026</div>
+                    <div class="card-summary">Technical marketing overview of the Lumion AI Assistant (Mia) — two-tier agentic architecture, 17 MCP tools, RAG pipeline, security features, and implementation progress</div>
                 </div>
             </a>
+
+            <a class="card" href="slideshow.html">
+                <div class="card-left file">
+                    <div class="card-icon">
+                        <svg class="file-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">slideshow.html</span>
+                        <span class="card-badge">HTML</span>
+                    </div>
+                    <div class="card-summary">AI form builder test walkthrough — 9-slide screenshot sequence showing the PRAX-979 enrollment form generation flow from login through verification</div>
+                </div>
+            </a>
+
+            <!-- PNG images (alphabetically) -->
+
+            <a class="card" href="01-login-page.png">
+                <div class="card-left image">
+                    <div class="card-icon">
+                        <svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">01-login-page.png</span>
+                        <span class="card-badge">PNG</span>
+                    </div>
+                    <div class="card-summary">Login page. Used by slideshow.html</div>
+                </div>
+            </a>
+
+            <a class="card" href="02-login-filled.png">
+                <div class="card-left image">
+                    <div class="card-icon">
+                        <svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">02-login-filled.png</span>
+                        <span class="card-badge">PNG</span>
+                    </div>
+                    <div class="card-summary">Login filled. Used by slideshow.html</div>
+                </div>
+            </a>
+
+            <a class="card" href="03-school-dashboard.png">
+                <div class="card-left image">
+                    <div class="card-icon">
+                        <svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">03-school-dashboard.png</span>
+                        <span class="card-badge">PNG</span>
+                    </div>
+                    <div class="card-summary">School dashboard. Used by slideshow.html</div>
+                </div>
+            </a>
+
+            <a class="card" href="04-assistant-drawer-open.png">
+                <div class="card-left image">
+                    <div class="card-icon">
+                        <svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">04-assistant-drawer-open.png</span>
+                        <span class="card-badge">PNG</span>
+                    </div>
+                    <div class="card-summary">Assistant drawer open. Used by slideshow.html</div>
+                </div>
+            </a>
+
+            <a class="card" href="05-prompt-typed.png">
+                <div class="card-left image">
+                    <div class="card-icon">
+                        <svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">05-prompt-typed.png</span>
+                        <span class="card-badge">PNG</span>
+                    </div>
+                    <div class="card-summary">Prompt typed. Used by slideshow.html</div>
+                </div>
+            </a>
+
+            <a class="card" href="06-message-sent.png">
+                <div class="card-left image">
+                    <div class="card-icon">
+                        <svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">06-message-sent.png</span>
+                        <span class="card-badge">PNG</span>
+                    </div>
+                    <div class="card-summary">Message sent. Used by slideshow.html</div>
+                </div>
+            </a>
+
+            <a class="card" href="07-ai-response-streaming.png">
+                <div class="card-left image">
+                    <div class="card-icon">
+                        <svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">07-ai-response-streaming.png</span>
+                        <span class="card-badge">PNG</span>
+                    </div>
+                    <div class="card-summary">AI response streaming. Used by slideshow.html</div>
+                </div>
+            </a>
+
+            <a class="card" href="12-pages-list-tall.png">
+                <div class="card-left image">
+                    <div class="card-icon">
+                        <svg class="image-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    </div>
+                </div>
+                <div class="card-right">
+                    <div class="card-top">
+                        <span class="card-name">12-pages-list-tall.png</span>
+                        <span class="card-badge">PNG</span>
+                    </div>
+                    <div class="card-summary">Pages list tall. Used by slideshow.html</div>
+                </div>
+            </a>
+
         </div>
     </main>
     <footer>
-        Powered by MiaShare &middot; Generated 2026-03-27 21:44 UTC
+        Powered by <a href="#">MiaShare</a> &middot; Generated 2026-03-27 21:53 UTC
     </footer>
 </body>
 </html>
