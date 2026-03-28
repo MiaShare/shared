@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-596 — Solution Evidence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .slideshow {
+            max-width: 1200px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .controls button {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .controls button:hover { background: #475569; }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .controls .counter { font-size: 14px; color: #94a3b8; min-width: 80px; text-align: center; }
+
+        .slide {
+            display: none;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .slide.active { display: block; }
+
+        .slide-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .slide-header h2 { font-size: 16px; font-weight: 600; }
+        .slide-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .slide-body { padding: 24px; }
+        .slide-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .slide-body p:last-child { margin-bottom: 0; }
+        .slide-body img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        .thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        .thumb {
+            flex: 0 0 120px;
+            height: 68px;
+            border-radius: 6px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            overflow: hidden;
+            opacity: 0.5;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+        }
+        .thumb.active { border-color: #3b82f6; opacity: 1; }
+        .thumb:hover { opacity: 0.8; }
+        .thumb-label { font-size: 10px; font-weight: 600; color: #3b82f6; text-align: center; padding: 4px; line-height: 1.3; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        kbd {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+        .evidence-table .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+        }
+
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre;
+        }
+        .code-block .line-removed { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-added { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-context { color: #64748b; display: block; }
+
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        blockquote {
+            border-left: 3px solid #475569;
+            padding: 8px 16px;
+            margin: 12px 0;
+            color: #cbd5e1;
+            font-style: italic;
+            background: #0f172a;
+            border-radius: 0 8px 8px 0;
+        }
+    </style>
+<meta name="share-summary" content="Solution evidence report for CRTX-596: Proves the AI prompt fix prevents hallucination of Lumion platform processes (servicing, collections, disbursements) with 4 browser-verified test cases and automated test coverage.">
+<meta name="share-hash" content="195b2818f8b69699a50b795d793b77100b9e900329b1439da186c4810cdc11b3">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-596 — Fix AI Hallucination of Platform Processes</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 28, 2026 &bull; Branch: lhilton/crtx-596-ai-hallucination</span>
+        </div>
+    </div>
+
+    <div class="slideshow">
+        <div class="controls">
+            <button onclick="prev()" id="prevBtn" disabled>&#8592; Previous</button>
+            <span class="counter" id="counter">1 / 8</span>
+            <button onclick="next()" id="nextBtn">Next &#8594;</button>
+        </div>
+
+        <!-- Slide 1: Problem Summary -->
+        <div class="slide active" data-index="0">
+            <div class="slide-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">Overview</span>
+            </div>
+            <div class="slide-body">
+                <p>During a QA session on March 24, 2026, multiple testers discovered that the AI Assistant <strong>fabricated an entire payment plan servicing process</strong> when asked how plans are serviced. The AI described steps and procedures that don't exist and &mdash; critically &mdash; told school users that <em>they</em> service payment plans, when in reality <strong>Lumion handles plan servicing at the platform level</strong>. <span class="status-tag fail">HALLUCINATION</span></p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">2</div>
+                        <div class="label">Reporters</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">3+</div>
+                        <div class="label">Fabricated Processes</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">High</div>
+                        <div class="label">Severity</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">4</div>
+                        <div class="label">Files Changed</div>
+                    </div>
+                </div>
+
+                <h3 class="section-title">What Was Reported</h3>
+
+                <blockquote>"I asked about how we service plans and it made up a process."<br>&mdash; Akir Rowe, QA session</blockquote>
+
+                <blockquote>"This may be a problem because schools cannot service payment plans we are servicing."<br>&mdash; Akir Rowe, follow-up</blockquote>
+
+                <blockquote>"It still told me what to do even though it said it could help."<br>&mdash; Jeff Buhler, same QA session</blockquote>
+
+                <h3 class="section-title">Why This Is Dangerous</h3>
+                <p>The AI confidently described a business process that: (1) doesn't exist in Lumion, (2) misattributes responsibilities (schools vs. Lumion), and (3) could mislead school administrators into thinking they have servicing capabilities they don't. If a school admin follows these fabricated instructions, they could create confusion with students or attempt actions that aren't available to them. This is particularly harmful because payment plan servicing involves financial operations.</p>
+
+                <h3 class="section-title">Root Cause</h3>
+                <p>The AI had no MCP tool or knowledge base entry for "how do we service plans." Instead of saying "I don't have information on that process," it <strong>confabulated</strong> one based on general LLM knowledge of payment processing. The system prompt's Data Grounding rule only covered "numbers, metrics, and data points" &mdash; not platform operational processes. And the prompt claimed expertise in "institutional operations" without guardrails against fabricating Lumion's internal platform processes.</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Solution Summary -->
+        <div class="slide" data-index="1">
+            <div class="slide-header">
+                <h2>Solution: Platform Process Boundaries</h2>
+                <span class="step-badge">Fix</span>
+            </div>
+            <div class="slide-body">
+                <p><strong>Three targeted changes</strong> to prevent the AI from fabricating Lumion-internal operational processes while keeping all CRM features fully functional. <span class="status-tag pass">4 FILES CHANGED</span></p>
+
+                <h3 class="section-title">Change 1: New "Platform Process Boundaries" Section</h3>
+                <p>Added a new prompt section between OUT-OF-SCOPE and Domain Relevance Check. Tells the LLM that Lumion handles servicing/collections/disbursements, not schools. Includes explicit carve-out so CRM feature guidance, tool capability descriptions, and data queries are NOT blocked.</p>
+
+                <div class="code-block"><span class="line-added">+ # Platform Process Boundaries</span>
+<span class="line-added">+ - Lumion (the platform) handles payment plan servicing, collections,</span>
+<span class="line-added">+   and payment disbursements at the platform level. Schools interact</span>
+<span class="line-added">+   with these through CRM tools but do not perform servicing directly.</span>
+<span class="line-added">+ - NEVER describe how Lumion's internal financial processing works</span>
+<span class="line-added">+   (how disbursements clear, how collections are managed, how</span>
+<span class="line-added">+   servicing decisions are made, how payments are processed behind</span>
+<span class="line-added">+   the scenes) unless the information comes directly from tool</span>
+<span class="line-added">+   results or the knowledge base.</span>
+<span class="line-added">+ - When asked about platform-level processes you have no knowledge</span>
+<span class="line-added">+   base results for, respond: "I don't have documentation on that</span>
+<span class="line-added">+   process. For questions about how Lumion's platform operations</span>
+<span class="line-added">+   work, please contact Lumion support..."</span>
+<span class="line-added">+ - This restriction does NOT apply to helping users navigate CRM</span>
+<span class="line-added">+   features, explaining your own tool capabilities, or guiding</span>
+<span class="line-added">+   users through actions they can perform in the application.</span></div>
+
+                <h3 class="section-title">Change 2: Broadened Data Grounding Rule</h3>
+                <p>Extended the critical Data Grounding rule from covering only "numbers, metrics, and data points" to also cover "Lumion platform operational details."</p>
+
+                <div class="code-block"><span class="line-context"> # Data Grounding &mdash; CRITICAL</span>
+<span class="line-removed">- - You may ONLY cite numbers, metrics, and data points that appear</span>
+<span class="line-removed">-   in tool results</span>
+<span class="line-added">+ - You may ONLY cite numbers, metrics, data points, and Lumion</span>
+<span class="line-added">+   platform operational details that appear in tool results or</span>
+<span class="line-added">+   the knowledge base. Analytical interpretation drawn from</span>
+<span class="line-added">+   tool-result data is permitted &mdash; clearly label it as</span>
+<span class="line-added">+   analysis, not fact.</span></div>
+
+                <h3 class="section-title">Change 3: Hardened Fallback System Prompt</h3>
+                <p><code>AgentOrchestrator::buildFallbackSystemPrompt()</code> now includes minimum anti-fabrication guardrails. This fires when the prompt DB record is missing &mdash; ensuring even fallback mode doesn't allow hallucination of platform processes.</p>
+
+                <h3 class="section-title">Change 4: Seeder Sync</h3>
+                <p><code>AiAssistantSchoolPromptSeeder</code> updated to match the migration's final prompt text for <code>migrate:fresh --seed</code> scenarios.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Links -->
+        <div class="slide" data-index="2">
+            <div class="slide-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">Links</span>
+            </div>
+            <div class="slide-body">
+                <h3 class="section-title">Issue & PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-596/bug-ai-fabricating-payment-plan-servicing-process-wrong-domain" target="_blank">CRTX-596: Bug: AI fabricating payment plan servicing process &mdash; wrong domain knowledge</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5539" target="_blank">PR #5539: CRTX-596 - Add platform process boundaries to prevent AI hallucination</a>
+                        <span class="link-label">GitHub Pull Request</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Evidence Threads</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0ANJS3DEQN/p1774382132205609" target="_blank">Akir Rowe &mdash; "I asked about how we service plans and it made up a process" (Mar 24)</a>
+                        <span class="link-label">#lumion-ai-testing &bull; Fabricated servicing process with 3 screenshots</span>
+                    </li>
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0ANJS3DEQN/p1774382383046299" target="_blank">Jeff Buhler &mdash; "It still told me what to do even though it said it could help" (Mar 24)</a>
+                        <span class="link-label">#lumion-ai-testing &bull; AI described actions despite acknowledging it couldn't help</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 4: Evidence - Service Payment Plans -->
+        <div class="slide" data-index="3">
+            <div class="slide-header">
+                <h2>Post-Fix: "How do we service payment plans?"</h2>
+                <span class="step-badge">Evidence 1</span>
+            </div>
+            <div class="slide-body">
+                <p>After applying the fix, asking "How do we service payment plans?" no longer produces a fabricated process. The AI correctly identifies this as a platform-level process and redirects the user to Lumion support. <span class="status-tag pass">NO FABRICATION</span></p>
+                <p>Previously, this exact question caused the AI to generate a multi-step servicing process that doesn't exist, telling school users they could perform servicing actions that are actually handled by Lumion at the platform level.</p>
+                <img src="01-service-payment-plans-response.png" alt="Post-fix response to 'How do we service payment plans?'">
+            </div>
+        </div>
+
+        <!-- Slide 5: Evidence - Collections Process -->
+        <div class="slide" data-index="4">
+            <div class="slide-header">
+                <h2>Post-Fix: "What is the process for collections?"</h2>
+                <span class="step-badge">Evidence 2</span>
+            </div>
+            <div class="slide-body">
+                <p>Another platform-level process question: "What is the process for collections?" The AI correctly recognizes this falls under the Platform Process Boundaries and redirects to Lumion support rather than fabricating a collections workflow. <span class="status-tag pass">NO FABRICATION</span></p>
+                <p>Collections management is another Lumion platform responsibility that schools do not perform directly. This test confirms the boundaries cover the full range of platform financial processes, not just servicing.</p>
+                <img src="02-collections-process-response.png" alt="Post-fix response to 'What is the process for collections?'">
+            </div>
+        </div>
+
+        <!-- Slide 6: Evidence - Capabilities (regression) -->
+        <div class="slide" data-index="5">
+            <div class="slide-header">
+                <h2>Regression: "What can you help me with?"</h2>
+                <span class="step-badge">Evidence 3</span>
+            </div>
+            <div class="slide-body">
+                <p>Critical regression test: asking "What can you help me with?" still produces a full capability description. The Platform Process Boundaries explicitly carve out "helping users navigate CRM features" and "explaining your own tool capabilities" &mdash; so the AI's ability to describe what it can do is <strong>not blocked</strong>. <span class="status-tag pass">NOT BLOCKED</span></p>
+                <p>This verifies the guardrails are surgically scoped &mdash; they block fabrication of Lumion-internal processes but do not interfere with the AI's core job of helping school administrators use the CRM.</p>
+                <img src="03-capabilities-response.png" alt="Regression test: AI still describes its capabilities">
+            </div>
+        </div>
+
+        <!-- Slide 7: Evidence - Data Query (regression) -->
+        <div class="slide" data-index="6">
+            <div class="slide-header">
+                <h2>Regression: "How many payment plans are past due?"</h2>
+                <span class="step-badge">Evidence 4</span>
+            </div>
+            <div class="slide-body">
+                <p>Second regression test: asking "How many payment plans are past due?" triggers normal tool usage. The AI calls the appropriate MCP tools and returns real data from the database. <span class="status-tag pass">NOT BLOCKED</span></p>
+                <p>This confirms that the word "payment plans" in a data query context is correctly handled &mdash; the boundaries only block fabrication of <em>operational processes</em>, not data retrieval about payment plans. The Domain Relevance Check and tool pipeline remain fully functional.</p>
+                <img src="04-data-query-response.png" alt="Regression test: AI still handles data queries with tools">
+            </div>
+        </div>
+
+        <!-- Slide 8: Test Coverage -->
+        <div class="slide" data-index="7">
+            <div class="slide-header">
+                <h2>Test Coverage: Prompt Guardrails Verified</h2>
+                <span class="step-badge">Evidence 5</span>
+            </div>
+            <div class="slide-body">
+                <p>Automated test coverage verifies the system prompt contains the new guardrail sections. The test in <code>PromptSeederTest.php</code> asserts both the new "Platform Process Boundaries" heading and the specific anti-fabrication rule are present in the seeded prompt. <span class="status-tag pass">TESTS PASS</span></p>
+
+                <div class="code-block" style="font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  App\Domains\AI\Tests\Feature\PromptSeederTest
+
+<span style="color: #94a3b8;">  // Key assertion from the test:</span>
+<span style="color: #e2e8f0;">  expect($prompt->system_prompt)</span>
+<span style="color: #e2e8f0;">      ->toContain('CRM assistant')</span>
+<span style="color: #e2e8f0;">      ->toContain('Do NOT guess or fabricate CRM data')</span>
+<span style="color: #e2e8f0;">      ->toContain('# Platform Process Boundaries')</span>
+<span style="color: #4ade80;">      ->toContain('NEVER describe how Lumion\'s internal</span>
+<span style="color: #4ade80;">         financial processing works')</span>
+<span style="color: #e2e8f0;">      ->toContain('# Data Grounding')</span>
+<span style="color: #e2e8f0;">      ->toContain('ask for confirmation')</span>
+<span style="color: #e2e8f0;">      ->toContain('ONLY access data belonging to');</span></div>
+
+                <h3 class="section-title">Verification Summary</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Test</th><th>What It Checks</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Platform process question</td>
+                            <td>"How do we service payment plans?" &rarr; redirect, no fabrication</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>Collections process question</td>
+                            <td>"What is the process for collections?" &rarr; redirect, no fabrication</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>Capabilities regression</td>
+                            <td>"What can you help me with?" &rarr; full capability list (not blocked)</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>Data query regression</td>
+                            <td>"How many payment plans are past due?" &rarr; tools called, real data returned</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>Seeder contains guardrails</td>
+                            <td>Prompt text includes "Platform Process Boundaries" and anti-fabrication rule</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="color: #64748b; font-size: 13px; margin-top: 16px;"><strong>Note:</strong> Prompt changes are probabilistic mitigations, not hard guarantees. Browser verification used confidence sampling (multiple runs per question). The student prompt has the same "school operations" vulnerability &mdash; noted as a follow-up ticket (not this PR).</p>
+            </div>
+        </div>
+
+        <!-- Thumbnails -->
+        <div class="thumbnails" id="thumbnails">
+            <div class="thumb active"><div class="thumb-label">Problem</div></div>
+            <div class="thumb"><div class="thumb-label">Solution</div></div>
+            <div class="thumb"><div class="thumb-label">Links</div></div>
+            <div class="thumb"><img src="01-service-payment-plans-response.png" alt="Evidence 1"></div>
+            <div class="thumb"><img src="02-collections-process-response.png" alt="Evidence 2"></div>
+            <div class="thumb"><img src="03-capabilities-response.png" alt="Evidence 3"></div>
+            <div class="thumb"><img src="04-data-query-response.png" alt="Evidence 4"></div>
+            <div class="thumb"><div class="thumb-label">Tests</div></div>
+        </div>
+        <div class="keyboard-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let current = 0;
+
+        function goTo(index) {
+            slides[current].classList.remove('active');
+            document.querySelectorAll('.thumb')[current].classList.remove('active');
+            current = index;
+            slides[current].classList.add('active');
+            document.querySelectorAll('.thumb')[current].classList.add('active');
+            document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+            document.getElementById('prevBtn').disabled = current === 0;
+            document.getElementById('nextBtn').disabled = current === slides.length - 1;
+        }
+
+        function next() { if (current < slides.length - 1) goTo(current + 1); }
+        function prev() { if (current > 0) goTo(current - 1); }
+
+        document.querySelectorAll('.thumb').forEach((thumb, i) => {
+            thumb.onclick = () => goTo(i);
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+
+        document.getElementById('prevBtn').disabled = true;
+    </script>
+</body>
+</html>
