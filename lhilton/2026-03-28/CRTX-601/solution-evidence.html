@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-601 — Solution Evidence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .header .badge.warn { background: #f59e0b; color: #451a03; }
+
+        .slideshow {
+            max-width: 1200px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .controls button {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .controls button:hover { background: #475569; }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .controls .counter { font-size: 14px; color: #94a3b8; min-width: 80px; text-align: center; }
+
+        .slide {
+            display: none;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .slide.active { display: block; }
+
+        .slide-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .slide-header h2 { font-size: 16px; font-weight: 600; }
+        .slide-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .slide-body { padding: 24px; }
+        .slide-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .slide-body p:last-child { margin-bottom: 0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        .thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        .thumb {
+            flex: 0 0 120px;
+            height: 68px;
+            border-radius: 6px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            overflow: hidden;
+            opacity: 0.5;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+        }
+        .thumb.active { border-color: #3b82f6; opacity: 1; }
+        .thumb:hover { opacity: 0.8; }
+        .thumb-label { font-size: 10px; font-weight: 600; color: #3b82f6; text-align: center; padding: 4px; line-height: 1.3; }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        kbd {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        /* Summary grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        /* Tables */
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+        .evidence-table .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+        }
+
+        /* Code block */
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre;
+        }
+        .code-block .line-removed { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-added { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-context { color: #64748b; display: block; }
+
+        /* Links list */
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Affected institutions list */
+        .institution-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px;
+            margin: 16px 0;
+        }
+        .institution-chip {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+        .institution-chip .inst-name { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+        .institution-chip .inst-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+        /* Verification checkmark table */
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+    </style>
+<meta name="share-summary" content="Solution evidence report for CRTX-601: Proves the StudentMcpPolicy fix resolves authorization failures across 5 institutions and 5 MCP tools, with root cause confirmation, 25/25 policy checks passing, security negative cases, and 4/4 automated tests.">
+<meta name="share-hash" content="1c708fb5eb03ab1bec69362877741a2f31512f08ba74804015738aec68409b5d">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-601 — Fix Student Tool Authorization Failures</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 28, 2026 &bull; Branch: lhilton/crtx-601-ai-chat-fix</span>
+        </div>
+    </div>
+
+    <div class="slideshow">
+        <div class="controls">
+            <button onclick="prev()" id="prevBtn" disabled>&larr; Previous</button>
+            <span class="counter" id="counter">1 / 7</span>
+            <button onclick="next()" id="nextBtn">Next &rarr;</button>
+        </div>
+
+        <!-- Slide 1: Problem Summary -->
+        <div class="slide active" data-index="0">
+            <div class="slide-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">Overview</span>
+            </div>
+            <div class="slide-body">
+                <p>The Student AI Assistant's backend MCP tools were returning <span class="status-tag fail">AUTH ERROR</span> for most institution/student combinations. Students asking about payment schedules, school contact info, or course schedules received fallback responses like "check your portal" or "call your school" &mdash; exactly the experience the assistant was designed to replace.</p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">6+</div>
+                        <div class="label">Reported Incidents</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">5</div>
+                        <div class="label">Institutions Affected</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">5</div>
+                        <div class="label">Tools Blocked</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">48h</div>
+                        <div class="label">Window (Mar 26&ndash;28)</div>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Affected Institutions</h3>
+                <div class="institution-list">
+                    <div class="institution-chip">
+                        <div class="inst-name">Collectiv Academy</div>
+                        <div class="inst-meta">ID: 225 &bull; collectivacademy</div>
+                    </div>
+                    <div class="institution-chip">
+                        <div class="inst-name">TripleTen</div>
+                        <div class="inst-meta">ID: 327 &bull; tripleten</div>
+                    </div>
+                    <div class="institution-chip">
+                        <div class="inst-name">IronCircle</div>
+                        <div class="inst-meta">ID: 590 &bull; ironcircleimpact</div>
+                    </div>
+                    <div class="institution-chip">
+                        <div class="inst-name">Medical Career Academy</div>
+                        <div class="inst-meta">ID: 298 &bull; mcaidaho</div>
+                    </div>
+                    <div class="institution-chip">
+                        <div class="inst-name">Derrick's Test Institution</div>
+                        <div class="inst-meta">ID: 395 &bull; derricks-test-institution</div>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Affected Tools</h3>
+                <p>All five student-tier MCP tools were blocked: <strong>Payment Schedule</strong>, <strong>School Contact Info</strong>, <strong>Course Schedule</strong>, <strong>Enrollment Data</strong>, and <strong>Knowledge Search</strong>.</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Solution Summary -->
+        <div class="slide" data-index="1">
+            <div class="slide-header">
+                <h2>Solution: Remove Enrollment Requirement</h2>
+                <span class="step-badge">Fix</span>
+            </div>
+            <div class="slide-body">
+                <p><strong>Root cause:</strong> <code>StudentMcpPolicy::isAuthenticatedStudent()</code> required an active Course Scheduling enrollment. Most institutions don't use the Course Scheduling module, so their students had zero active enrollments &mdash; causing all tool authorization to fail. <span class="status-tag info">ROOT CAUSE</span></p>
+
+                <p><strong>Fix:</strong> Simplified the guard to check only that the user has a student role and an associated Contact record. Institution scoping is enforced upstream in <code>AuthorizedMcpTool::resolveStudent()</code>. Each tool handles empty data gracefully. <span class="status-tag pass">2 FILES CHANGED</span></p>
+
+                <div class="code-block"><span class="line-context"> protected function isAuthenticatedStudent(User $user, Institution $institution, ?Contact $student): bool</span><span class="line-context"> {</span><span class="line-removed">-    if (!$user->is_student_user) {</span><span class="line-removed">-        return false;</span><span class="line-removed">-    }</span><span class="line-removed">-</span><span class="line-removed">-    if (!$student instanceof Contact) {</span><span class="line-removed">-        return false;</span><span class="line-removed">-    }</span><span class="line-removed">-</span><span class="line-removed">-    return Enrollment::query()</span><span class="line-removed">-        ->active()</span><span class="line-removed">-        ->whereHas('enrollee', fn ($query) => $query</span><span class="line-removed">-            ->where('contact_id', $student->getKey())</span><span class="line-removed">-            ->where('institution_id', $institution->getKey())</span><span class="line-removed">-        )</span><span class="line-removed">-        ->exists();</span><span class="line-added">+    return $user->is_student_user && $student instanceof Contact;</span><span class="line-context"> }</span></div>
+
+                <p style="color: #64748b; font-size: 13px;"><strong>Why it's safe:</strong> The old code had three concerns mixed into one check: (1) is the user a student? (2) do they have a contact? (3) do they have a Course Scheduling enrollment? Concern #3 was an accidental hard dependency on an optional module. The fix removes only #3. Institution-level scoping happens in <code>AuthorizedMcpTool</code>, not in the policy.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Links -->
+        <div class="slide" data-index="2">
+            <div class="slide-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">Links</span>
+            </div>
+            <div class="slide-body">
+                <h3 class="section-title">Issue &amp; PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-601/fix-student-tier-tool-authorization-failures-across-institutions" target="_blank">CRTX-601: Fix student-tier tool authorization failures across institutions</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5537" target="_blank">PR #5537: CRTX-601 - Fix student-tier tool authorization failures across institutions</a>
+                        <span class="link-label">GitHub Pull Request</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Evidence Threads</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774574248058459" target="_blank">John Doe &mdash; Derrick's Test Institution (Mar 26, 6:17pm)</a>
+                        <span class="link-label">Payment schedule auth error</span>
+                    </li>
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774574369210729" target="_blank">John Doe &mdash; Derrick's Test Institution (Mar 26, 6:19pm)</a>
+                        <span class="link-label">Payment + course schedule + school contact &mdash; all 3 tools failed</span>
+                    </li>
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774630386851479" target="_blank">Jasmine Evans &mdash; Collectiv Academy (Mar 27)</a>
+                        <span class="link-label">Payment schedule auth error</span>
+                    </li>
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774636832651179" target="_blank">Andre Cyrus &mdash; TripleTen (Mar 27)</a>
+                        <span class="link-label">Payment schedule failed twice &mdash; Derrick escalated to Lee</span>
+                    </li>
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774678939793579" target="_blank">Narbeh Dermehrabian &mdash; IronCircle (Mar 27)</a>
+                        <span class="link-label">Payment info + school contact info unavailable</span>
+                    </li>
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774698810674539" target="_blank">Deborah Rondon &mdash; Medical Career Academy (Mar 28)</a>
+                        <span class="link-label">Payment schedule + school contact info auth errors</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 4: Root Cause Confirmation -->
+        <div class="slide" data-index="3">
+            <div class="slide-header">
+                <h2>Root Cause: No Course Scheduling Enrollments</h2>
+                <span class="step-badge">Evidence 1</span>
+            </div>
+            <div class="slide-body">
+                <p>Queried all students at the 5 affected institutions for active Course Scheduling enrollments. <strong>Every single student returned <code>has_active_enrollment: false</code></strong>. This confirms the root cause: the old policy required something that didn't exist for these institutions. <span class="status-tag info">ROOT CAUSE CONFIRMED</span></p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Institution</th><th>Student</th><th>Contact ID</th><th>Active Enrollment?</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Collectiv Academy</td><td>Mindy Buie</td><td class="mono">17973</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>Collectiv Academy</td><td>Madison Large</td><td class="mono">17974</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>TripleTen</td><td>Dominic Longedi</td><td class="mono">91504</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>TripleTen</td><td>Rustam Niyazov</td><td class="mono">1197</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>IronCircle</td><td>Gabriel Peterson</td><td class="mono">61763</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>IronCircle</td><td>Michael Pesta</td><td class="mono">63504</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>Medical Career Academy</td><td>Erica Arredondo</td><td class="mono">25706</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>Medical Career Academy</td><td>Sean Darcy</td><td class="mono">25863</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>Derrick's Test Institution</td><td>John Doe</td><td class="mono">75667</td><td><span class="cross">NO</span></td></tr>
+                        <tr><td>Derrick's Test Institution</td><td>John Doe</td><td class="mono">75695</td><td><span class="cross">NO</span></td></tr>
+                    </tbody>
+                </table>
+
+                <p style="color: #64748b; font-size: 13px;">These institutions do not use the Course Scheduling module. The old <code>isAuthenticatedStudent()</code> required an active enrollment from this module, causing all tool authorization to fail for every student at every non-Course-Scheduling institution.</p>
+            </div>
+        </div>
+
+        <!-- Slide 5: Fix Verification — All 25 Checks Pass -->
+        <div class="slide" data-index="4">
+            <div class="slide-header">
+                <h2>Fix Verification: All 25 Policy Checks Pass</h2>
+                <span class="step-badge">Evidence 2</span>
+            </div>
+            <div class="slide-body">
+                <p>After applying the fix, ran the updated <code>StudentMcpPolicy</code> against all 5 affected institutions with their real student data. All 5 tools now authorize successfully for every institution. <span class="status-tag pass">25/25 PASS</span></p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr>
+                            <th>Institution</th>
+                            <th>Payment Schedule</th>
+                            <th>School Contact</th>
+                            <th>Course Schedule</th>
+                            <th>Enrollment Data</th>
+                            <th>Knowledge Search</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Collectiv Academy</td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                        </tr>
+                        <tr>
+                            <td>TripleTen</td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                        </tr>
+                        <tr>
+                            <td>IronCircle</td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                        </tr>
+                        <tr>
+                            <td>Medical Career Academy</td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                        </tr>
+                        <tr>
+                            <td>Derrick's Test Institution</td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                            <td><span class="check">&check;</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="color: #64748b; font-size: 13px;">Verification method: Direct <code>StudentMcpPolicy</code> method calls via Laravel Tinker using real production-mirrored student/institution data from the local database. Each cell represents a call to the corresponding policy method (<code>studentViewPaymentSchedule</code>, <code>studentViewSchoolContact</code>, <code>studentViewCourseSchedule</code>, <code>studentViewEnrollment</code>, <code>studentKnowledgeSearch</code>).</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: Security — Negative Cases -->
+        <div class="slide" data-index="5">
+            <div class="slide-header">
+                <h2>Security: Negative Cases Still Denied</h2>
+                <span class="step-badge">Evidence 3</span>
+            </div>
+            <div class="slide-body">
+                <p>The fix does not weaken authorization. Non-student users and students without contact records are still correctly denied access. <span class="status-tag pass">SECURITY PRESERVED</span></p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Scenario</th><th>User</th><th>Role</th><th>Contact</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Non-student user with contact</td>
+                            <td class="mono">kpan@codingdojo.com</td>
+                            <td>School Representative</td>
+                            <td>Present</td>
+                            <td><span class="status-tag fail">DENIED</span> <span style="color: #4ade80; font-size: 12px;">(correct)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Student user with null contact</td>
+                            <td class="mono">johndoemiashare@gmail.com</td>
+                            <td>Enrollment Applicant</td>
+                            <td>null</td>
+                            <td><span class="status-tag fail">DENIED</span> <span style="color: #4ade80; font-size: 12px;">(correct)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Authorization Layers</h3>
+                <p>The fix only touches the policy layer. Two other authorization layers remain intact:</p>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Layer</th><th>What It Checks</th><th>Location</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1. MCP Route Middleware</strong></td>
+                            <td>User is authenticated + valid session</td>
+                            <td class="mono">routes/mcp.php</td>
+                        </tr>
+                        <tr>
+                            <td><strong>2. AuthorizedMcpTool</strong></td>
+                            <td>Student belongs to institution (subdomain scoping)</td>
+                            <td class="mono">AuthorizedMcpTool::resolveStudent()</td>
+                        </tr>
+                        <tr>
+                            <td><strong>3. StudentMcpPolicy</strong> (this fix)</td>
+                            <td>User has student role + contact exists</td>
+                            <td class="mono">StudentMcpPolicy::isAuthenticatedStudent()</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Slide 7: Automated Tests -->
+        <div class="slide" data-index="6">
+            <div class="slide-header">
+                <h2>Automated Tests: 4/4 Passing</h2>
+                <span class="step-badge">Evidence 4</span>
+            </div>
+            <div class="slide-body">
+                <p>Updated test suite covers the new behavior. All 4 tests pass. <span class="status-tag pass">ALL PASS</span></p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Test</th><th>Expectation</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Student user with a contact</td>
+                            <td><span class="check">&check;</span> Authorized</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>Funding applicant with no enrollment records</td>
+                            <td><span class="check">&check;</span> Authorized (new!)</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>Non-student role (School Rep)</td>
+                            <td><span class="cross">&cross;</span> Denied</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>Student with null contact</td>
+                            <td><span class="cross">&cross;</span> Denied</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="code-block" style="margin-top: 16px; font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  App\Domains\StudentMcp\Tests\Feature\Policies\StudentMcpPolicyTest
+<span style="color: #4ade80;">  &check;</span> it returns true for a student user with a contact                    5.24s
+<span style="color: #4ade80;">  &check;</span> it returns true for a funding applicant with no enrollment records   0.22s
+<span style="color: #4ade80;">  &check;</span> it returns false when user does not have a student role              0.24s
+<span style="color: #4ade80;">  &check;</span> it returns false when student contact is null                        0.23s
+
+  Tests:    4 passed (4 assertions)
+  Duration: 6.03s</div>
+
+                <h3 class="section-title">Key Change in Tests</h3>
+                <p>Removed 4 enrollment-dependent tests (enrollment at different institution, dropped enrollment, no enrollment record, enrollment setup boilerplate). Added 1 new test confirming funding applicants <em>without</em> enrollment records are now correctly authorized. Net: -83 lines of test code, simpler and more accurate coverage.</p>
+            </div>
+        </div>
+
+        <!-- Thumbnails -->
+        <div class="thumbnails" id="thumbnails">
+            <div class="thumb active"><div class="thumb-label">Problem</div></div>
+            <div class="thumb"><div class="thumb-label">Solution</div></div>
+            <div class="thumb"><div class="thumb-label">Links</div></div>
+            <div class="thumb"><div class="thumb-label">Root Cause</div></div>
+            <div class="thumb"><div class="thumb-label">25/25 Pass</div></div>
+            <div class="thumb"><div class="thumb-label">Security</div></div>
+            <div class="thumb"><div class="thumb-label">Tests</div></div>
+        </div>
+        <div class="keyboard-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let current = 0;
+
+        function goTo(index) {
+            slides[current].classList.remove('active');
+            document.querySelectorAll('.thumb')[current].classList.remove('active');
+            current = index;
+            slides[current].classList.add('active');
+            document.querySelectorAll('.thumb')[current].classList.add('active');
+            document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+            document.getElementById('prevBtn').disabled = current === 0;
+            document.getElementById('nextBtn').disabled = current === slides.length - 1;
+        }
+
+        function next() { if (current < slides.length - 1) goTo(current + 1); }
+        function prev() { if (current > 0) goTo(current - 1); }
+
+        // Thumbnail click handlers
+        document.querySelectorAll('.thumb').forEach((thumb, i) => {
+            thumb.onclick = () => goTo(i);
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+
+        document.getElementById('prevBtn').disabled = true;
+    </script>
+</body>
+</html>
