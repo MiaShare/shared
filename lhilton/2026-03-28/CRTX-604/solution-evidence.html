@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-604 — Solution Evidence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h2 { font-size: 16px; font-weight: 600; }
+        .section-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-body { padding: 24px; }
+        .section-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .section-body p:last-child { margin-bottom: 0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        /* Summary grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        /* Tables */
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+        .evidence-table .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+        }
+
+        /* Code block */
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre;
+        }
+        .code-block .line-removed { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-added { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-context { color: #64748b; display: block; }
+
+        /* Links list */
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        .truncated-text {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #94a3b8;
+            margin: 8px 0;
+            line-height: 1.5;
+            position: relative;
+        }
+        .truncated-text .cutoff {
+            color: #f87171;
+            font-weight: 700;
+            background: rgba(248, 113, 113, 0.15);
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .truncated-text::after {
+            content: '  TRUNCATED';
+            color: #f87171;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .before-after .panel {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .before-after .panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        .before-after .panel-title.before { color: #f87171; }
+        .before-after .panel-title.after { color: #4ade80; }
+        .before-after .detail {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .before-after .detail strong { color: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            .before-after { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+<meta name="share-summary" content="Solution evidence report for CRTX-604: Proves the AI response truncation fix works by raising max_output_tokens from 2048 to 16384, adding truncation detection with ephemeral UI notices, and preventing ContextSummaryService from caching truncated summaries. 7 new tests all pass (34 total AI domain tests).">
+<meta name="share-hash" content="830170f48cd6bc2242271dc377e62fb70ace4e957dd32bc624b955373a3dbd14">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-604 — Fix AI Response Truncation</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 28, 2026 &bull; Branch: lhilton/crtx-604-ai-truncation</span>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Section 1: Problem Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">1 &mdash; Problem</span>
+            </div>
+            <div class="section-body">
+                <p>The AI Assistant's responses were being <strong>truncated mid-sentence</strong> during complex, multi-tool analytical outputs. Users received incomplete analyses that ended abruptly &mdash; mid-word or mid-number &mdash; making it obvious something failed. This was a distinct failure mode from silent failures (CRTX-602): the AI <em>started</em> generating a response but the output was cut off before finishing.</p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">3 of 6</div>
+                        <div class="label">AI Replies Truncated</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">2048</div>
+                        <div class="label">Prism Default Token Limit</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">VIP</div>
+                        <div class="label">Customer Impact (TripleTen)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">0</div>
+                        <div class="label">User-Visible Warnings</div>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Truncated Responses from Slack Evidence</h3>
+                <p>Three of six AI responses in the TripleTen conversation (Anton Stozhko, Mar 25) were truncated mid-sentence. Each response hit the 2048 token ceiling and was silently cut off:</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Reply</th><th>Context</th><th>Truncation Point</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Reply 2</strong></td>
+                            <td>Payment cohort analysis &mdash; listing pre/post change metrics</td>
+                            <td class="mono" style="color: #f87171;">"Paid (late): $1,931,306.39 &mdash; Paid (late<span style="color: #f87171; font-weight: 700;"> &cong;</span>"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reply 4</strong></td>
+                            <td>Collection rate comparison with analysis</td>
+                            <td class="mono" style="color: #f87171;">"it does NOT break out performance by payment sequence (1st,"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reply 10</strong></td>
+                            <td>Explaining date-slicing strategy for full cohort pull</td>
+                            <td class="mono" style="color: #f87171;">"Nov 2025: 2025-11-01 &rarr; 11-07"</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Escalation</h3>
+                <p>Josh Haghani flagged this as a <em>"very important customer"</em> and asked the team to reach out. Derrick Ontiveros responded: <em>"please immediately get the beta flag up and enhance the guardrails."</em> The truncation directly contributed to a poor experience with a key account.</p>
+
+                <h3 class="section-title">Root Cause</h3>
+                <p><strong>Prism defaults <code>max_output_tokens</code> to 2048</strong> (defined in <code>vendor/echolabsdev/prism/src/Concerns/ConfiguresModels.php:9</code>). The <code>AgentOrchestrator</code> never called <code>-&gt;withMaxTokens()</code> to override this default. Additionally, <code>processChunk()</code> ignored <code>$chunk-&gt;finishReason</code>, so truncation was completely invisible to both the system and the user. <span class="status-tag info">ROOT CAUSE</span></p>
+            </div>
+        </div>
+
+        <!-- Section 2: Solution Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Solution Summary</h2>
+                <span class="step-badge">2 &mdash; Solution</span>
+            </div>
+            <div class="section-body">
+                <p>Two-part fix: (1) raise the token ceiling 8&times; and make it configurable, and (2) detect when truncation still occurs and notify the user instead of silently cutting off. <span class="status-tag pass">6 FILES CHANGED</span></p>
+
+                <div class="before-after">
+                    <div class="panel">
+                        <div class="panel-title before">Before (Broken)</div>
+                        <div class="detail"><strong>max_output_tokens:</strong> 2048 (Prism default, not configurable)</div>
+                        <div class="detail"><strong>Truncation detection:</strong> None &mdash; <code>finishReason</code> ignored</div>
+                        <div class="detail"><strong>User notification:</strong> None &mdash; response silently cut off</div>
+                        <div class="detail"><strong>Summary service:</strong> 2048 default, truncated summaries cached as valid</div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-title after">After (Fixed)</div>
+                        <div class="detail"><strong>max_output_tokens:</strong> 16384 via <code>config('ai.max_output_tokens')</code></div>
+                        <div class="detail"><strong>Truncation detection:</strong> Tracks <code>FinishReason::Length</code> per chunk</div>
+                        <div class="detail"><strong>User notification:</strong> Ephemeral notice streamed (not persisted to DB)</div>
+                        <div class="detail"><strong>Summary service:</strong> 4096 limit, truncated summaries blocked with sentinel</div>
+                    </div>
+                </div>
+
+                <h3 class="section-title">AgentOrchestrator Changes</h3>
+                <div class="code-block"><span class="line-context"> $stream = Prism::text()</span><span class="line-context">     ->using('openai', $model->value)</span><span class="line-context">     ->withSystemPrompt($systemPrompt)</span><span class="line-context">     ->withMessages($messages)</span><span class="line-context">     ->withTools($tools)</span><span class="line-context">     ->withMaxSteps($maxSteps)</span><span class="line-added">+    ->withMaxTokens($maxOutputTokens)</span><span class="line-context">     ->asStream();</span></div>
+
+                <div class="code-block"><span class="line-context"> // Post-persist ephemeral notice</span><span class="line-added">+ if ($finishReason === FinishReason::Length && $accumulatedText !== '') {</span><span class="line-added">+     $onTextDelta("\n\n---\n*This response was truncated due to length...");</span><span class="line-added">+ }</span></div>
+
+                <h3 class="section-title">ContextSummaryService Changes</h3>
+                <div class="code-block"><span class="line-context"> $result = Prism::text()</span><span class="line-context">     ->using('openai', $prompt->model ?? AiModel::GPT_5_NANO->value)</span><span class="line-context">     ->withSystemPrompt($prompt->system_prompt ?? '')</span><span class="line-context">     ->withMessages([new UserMessage($userPrompt)])</span><span class="line-added">+    ->withMaxTokens(4096)</span><span class="line-context">     ->generate();</span><span class="line-context"></span><span class="line-removed">- return $result->text;</span><span class="line-added">+ if ($result->finishReason === FinishReason::Stop && $result->text !== '') {</span><span class="line-added">+     return $result->text;</span><span class="line-added">+ }</span><span class="line-added">+ // Truncated or empty &rarr; return sentinel to prevent retry loop</span><span class="line-added">+ return '';</span></div>
+
+                <p style="color: #64748b; font-size: 13px;"><strong>Key design decision:</strong> The truncation notice is <em>ephemeral</em> &mdash; it is streamed after the message is already persisted to the database. This means it appears in the active session but disappears on reload. This prevents the truncation hint from polluting conversation context on subsequent AI turns.</p>
+            </div>
+        </div>
+
+        <!-- Section 3: Links -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">3 &mdash; Links</span>
+            </div>
+            <div class="section-body">
+                <h3 class="section-title">Issue &amp; PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-604/fix-ai-response-truncation-during-complexlong-outputs" target="_blank">CRTX-604: Fix AI response truncation during complex/long outputs</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5541" target="_blank">PR #5541: CRTX-604 - Fix AI response truncation during complex/long outputs</a>
+                        <span class="link-label">GitHub Pull Request</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Evidence Thread</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774446526418119" target="_blank">Anton Stozhko &mdash; TripleTen cohort analysis (Mar 25)</a>
+                        <span class="link-label">Multiple AI responses truncated mid-sentence during complex payment analysis</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 4: Evidence -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Verification Evidence</h2>
+                <span class="step-badge">4 &mdash; Evidence</span>
+            </div>
+            <div class="section-body">
+                <p>This is a backend code fix (token limit configuration + truncation detection). Evidence is provided via automated test results confirming the fix works correctly. <span class="status-tag pass">7 NEW TESTS &mdash; ALL PASS</span></p>
+
+                <h3 class="section-title">Test Results: AgentOrchestrator (2 new tests)</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Test</th><th>What It Verifies</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>it passes configured max_output_tokens to Prism</td>
+                            <td>Config value <code>ai.max_output_tokens</code> flows through to <code>->withMaxTokens()</code></td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>it streams truncation notice on FinishReason::Length without persisting</td>
+                            <td>Truncation detected &rarr; ephemeral notice streamed &rarr; NOT saved to DB</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Test Results: ContextSummaryService (4 new tests)</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Test</th><th>What It Verifies</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>it does not cache truncated summaries as valid text</td>
+                            <td>Truncated LLM output &rarr; sentinel cached, not the broken text</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>it skips LLM call on subsequent resume when truncation sentinel is cached</td>
+                            <td>Sentinel prevents infinite retry loop at same message count</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>it retries summarization when new messages invalidate truncation sentinel</td>
+                            <td>New messages arrive &rarr; sentinel invalidated &rarr; fresh LLM call</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>it does not cache sentinel on transient Prism exception</td>
+                            <td>Transient errors (network) &rarr; no sentinel &rarr; retry allowed</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Test Results: Config (1 new test)</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Test</th><th>What It Verifies</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>it has max output tokens configured</td>
+                            <td><code>config('ai.max_output_tokens')</code> exists and equals 16384</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Full Test Output</h3>
+                <div class="code-block" style="font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  App\Domains\AI\Tests\Unit\AgentOrchestratorTest
+<span style="color: #4ade80;">  &#10003;</span> it passes configured max_output_tokens to Prism                      5.05s
+<span style="color: #4ade80;">  &#10003;</span> it streams truncation notice on FinishReason::Length without persis&hellip; 0.20s
+
+<span style="color: #4ade80;">  PASS</span>  App\Domains\AI\Tests\Feature\ContextSummaryServiceTest
+<span style="color: #4ade80;">  &#10003;</span> it does not cache truncated summaries as valid text                  4.94s
+<span style="color: #4ade80;">  &#10003;</span> it skips LLM call on subsequent resume when truncation sentinel is&hellip;  0.25s
+<span style="color: #4ade80;">  &#10003;</span> it retries summarization when new messages invalidate truncation se&hellip; 0.23s
+<span style="color: #4ade80;">  &#10003;</span> it does not cache sentinel on transient Prism exception              0.22s
+
+<span style="color: #4ade80;">  PASS</span>  App\Domains\AI\Tests\Unit\ConfigTest
+<span style="color: #4ade80;">  &#10003;</span> it has max output tokens configured                                  0.09s
+
+  Tests:    <span style="color: #4ade80;">7 passed</span> (13 assertions)
+  Duration: 11.04s</div>
+
+                <h3 class="section-title">Full AI Domain Test Suite</h3>
+                <p>All 34 tests in the AI domain pass, including the 7 new tests added in this PR:</p>
+                <div class="code-block" style="font-size: 12px;">  Tests:    <span style="color: #4ade80;">34 passed</span> (76 assertions)
+  Duration: 11.51s</div>
+
+                <h3 class="section-title">Why This Fix Resolves the TripleTen Issue</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Factor</th><th>Before</th><th>After</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Token ceiling</strong></td>
+                            <td><span class="cross">2048 tokens (~500 words)</span></td>
+                            <td><span class="check">16384 tokens (~4000 words)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Truncation detection</strong></td>
+                            <td><span class="cross">None &mdash; finishReason ignored</span></td>
+                            <td><span class="check">FinishReason::Length tracked per chunk</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>User notification</strong></td>
+                            <td><span class="cross">Silent cutoff &mdash; looks broken</span></td>
+                            <td><span class="check">Ephemeral "truncated" notice + "ask me to continue"</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Summary caching</strong></td>
+                            <td><span class="cross">Truncated summaries cached as valid</span></td>
+                            <td><span class="check">Sentinel prevents caching broken text</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Retry loop</strong></td>
+                            <td><span class="cross">Potential infinite LLM calls for summaries</span></td>
+                            <td><span class="check">Sentinel stops retries at same msg count</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Configurability</strong></td>
+                            <td><span class="cross">Hardcoded Prism default</span></td>
+                            <td><span class="check">config('ai.max_output_tokens') &mdash; adjustable per environment</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="color: #64748b; font-size: 13px;">The TripleTen conversation had complex analytical responses that regularly exceeded 500 words. With 2048 tokens, every response approaching ~500 words was silently cut off. The 16384 ceiling provides ~4000 words of headroom, which is sufficient for even the most complex multi-tool analytical outputs. If truncation still occurs at this ceiling, the user now sees a clear notice and can ask the AI to continue.</p>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
