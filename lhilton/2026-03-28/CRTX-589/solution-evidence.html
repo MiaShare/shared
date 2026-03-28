@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-589 — Solution Evidence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h2 { font-size: 16px; font-weight: 600; }
+        .section-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-body { padding: 24px; }
+        .section-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .section-body p:last-child { margin-bottom: 0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        /* Summary grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        /* Tables */
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+        .evidence-table .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+        }
+
+        /* Code block */
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre;
+        }
+        .code-block .line-removed { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-added { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-context { color: #64748b; display: block; }
+
+        /* Links list */
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        .quote-block {
+            background: #0f172a;
+            border-left: 3px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: #fbbf24;
+            font-style: italic;
+        }
+        .quote-block .attribution {
+            display: block;
+            margin-top: 6px;
+            font-style: normal;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .role-chip {
+            display: inline-block;
+            background: #172554;
+            border: 1px solid #1e40af;
+            color: #60a5fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+    </style>
+<meta name="share-summary" content="Solution evidence report for CRTX-589: Proves the invoice search fix resolves wrong student name (Andria Washburn staff creator vs Ryan Hinz actual student) at Western Welding Academy, with database verification, search-by-name confirmation, and 15/15 automated tests passing.">
+<meta name="share-hash" content="50136d4a4ef49da5febb47bcf553a813cf2ec2b9f6e3c788562792954dcc2384">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-589 — Fix Late Invoice Returning Wrong Student Name</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 28, 2026 &bull; Branch: lhilton/crtx-589-late-invoice-bug</span>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Section 1: Problem Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">Overview</span>
+            </div>
+            <div class="section-body">
+                <p>The AI assistant's <code>invoice-search</code> MCP tool returned the <strong>wrong student name</strong> for late invoices. When Josh Haghani (CEO) asked "how many late invoices do I have?" at Western Welding Academy, the AI returned <strong>"Andria Washburn"</strong> (a staff member who <em>created</em> the invoice) instead of <strong>"Ryan Hinz"</strong> (the actual student with the late invoice). <span class="status-tag fail">WRONG DATA</span></p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">1</div>
+                        <div class="label">Reported Incident</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">1</div>
+                        <div class="label">Institution Affected (WWA)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">High</div>
+                        <div class="label">Priority &mdash; Wrong Data</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">CEO</div>
+                        <div class="label">Reported by Josh Haghani</div>
+                    </div>
+                </div>
+
+                <div class="quote-block">
+                    "One more for now: when I ask how many late invoices do I have it gives me 1 for Andria $1,000"
+                    <span class="attribution">&mdash; Josh Haghani, CEO &bull; March 26, 2026</span>
+                </div>
+                <div class="quote-block">
+                    "However the actually late one is Ryan Hinz for $1,000"
+                    <span class="attribution">&mdash; Josh Haghani, CEO &bull; March 26, 2026</span>
+                </div>
+
+                <p><strong>Impact:</strong> The AI returned wrong data with full confidence. School admins making collection decisions based on AI-reported delinquency data would contact the wrong student &mdash; real financial and relationship consequences. This is the most dangerous category of AI bug: <em>confidently wrong answers</em>.</p>
+            </div>
+        </div>
+
+        <!-- Section 2: Solution Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Solution: Fix Name Resolution Path</h2>
+                <span class="step-badge">Fix</span>
+            </div>
+            <div class="section-body">
+                <p><strong>Root cause:</strong> <code>InvoiceSearchTool</code> used <code>$invoice-&gt;user-&gt;full_name</code> to get the student name. But <code>Invoice.user()</code> is a <code>belongsTo(User::class)</code> via <code>user_id</code> &mdash; the <strong>staff member who created the invoice</strong>, not the student. The correct path is <code>$invoice-&gt;application-&gt;applicant-&gt;full_name</code>, which the existing invoice UI already uses. <span class="status-tag info">ROOT CAUSE</span></p>
+
+                <p><strong>Fix:</strong> Changed 3 files to use the correct relationship path. <span class="status-tag pass">3 FILES CHANGED</span></p>
+
+                <h3 class="section-title">InvoiceSearchTool.php &mdash; Name Resolution</h3>
+                <div class="code-block"><span class="line-context"> $first = $results->take(3)->map(function (Invoice $invoice): string {</span><span class="line-removed">-    $name = $invoice->user?->full_name ?? 'Unknown';</span><span class="line-added">+    $name = $invoice->application?->applicant?->full_name ?: 'Unknown';</span><span class="line-context">     $amount = Number::currency((float) $invoice->amount);</span></div>
+
+                <h3 class="section-title">InvoiceSearchService.php &mdash; Eager Loading &amp; Search Query</h3>
+                <div class="code-block"><span class="line-context"> $query = Invoice::withoutGlobalScope(InstitutionScope::class)</span><span class="line-context">     ->where('invoices.institution_id', $institutionId)</span><span class="line-removed">-    ->with('user');</span><span class="line-added">+    ->with('application.applicant');</span><span class="line-context"></span><span class="line-context"> // Search by name now searches applicant, not creator:</span><span class="line-removed">- $q->whereHas('user', function ($userQuery) use ($prepared): void {</span><span class="line-removed">-     $userQuery->where('name', 'LIKE', $prepared);</span><span class="line-removed">- })</span><span class="line-added">+ $q->whereHas('application', function ($appQuery) use ($prepared): void {</span><span class="line-added">+     $appQuery->whereHas('applicant', function ($applicantQuery) use ($prepared): void {</span><span class="line-added">+         $applicantQuery->where('searchable_full_name', 'LIKE', $prepared);</span><span class="line-added">+     });</span><span class="line-added">+ })</span></div>
+
+                <p style="color: #64748b; font-size: 13px;"><strong>Why it was wrong:</strong> <code>Invoice.user_id</code> stores who <em>created</em> the invoice (a staff member). The <em>student</em> the invoice is for is reached via <code>Invoice &rarr; Application &rarr; Applicant</code>. The existing invoice show page (<code>show.blade.php:44</code>) already used the correct path &mdash; the MCP tool simply used the wrong one.</p>
+            </div>
+        </div>
+
+        <!-- Section 3: Reference Links -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">Links</span>
+            </div>
+            <div class="section-body">
+                <h3 class="section-title">Issue &amp; PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-589/bug-late-invoice-query-returns-wrong-student-andria-instead-of-ryan" target="_blank">CRTX-589: Bug &mdash; Late invoice query returns wrong student (Andria instead of Ryan Hinz)</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5540" target="_blank">PR #5540: CRTX-589 &mdash; Fix invoice search returning staff creator name instead of student</a>
+                        <span class="link-label">GitHub Pull Request</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Source</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C08P00CQTCZ/p1774540791867899" target="_blank">Josh Haghani &mdash; Late invoice bug report (Mar 26, 8:59am PDT)</a>
+                        <span class="link-label">CEO reported wrong name returned for late invoices at WWA</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 4: Evidence -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Verification Evidence</h2>
+                <span class="step-badge">Evidence</span>
+            </div>
+            <div class="section-body">
+                <p>No browser screenshots were collected. The following data evidence was gathered via Laravel Tinker queries and automated test execution against the local database (seeded from production). <span class="status-tag info">DATA EVIDENCE</span></p>
+
+                <h3 class="section-title">Evidence 1: Old vs New Name Resolution</h3>
+                <p>Queried the specific WWA overdue invoice referenced in the bug report. The old code path returns the staff creator; the fixed code path returns the correct student.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Field</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Invoice ID</td><td class="mono">a0e25dfa-ef23-4c7e-a214-8f893fe46615</td></tr>
+                        <tr><td>Institution</td><td>Western Welding Academy (ID: 3)</td></tr>
+                        <tr><td>Amount</td><td><strong>$1,000.00</strong></td></tr>
+                        <tr><td>Due Date</td><td>2026-03-18 <span class="status-tag fail">OVERDUE</span></td></tr>
+                        <tr><td>Status</td><td>Open</td></tr>
+                        <tr>
+                            <td>OLD: <code>$invoice->user->full_name</code></td>
+                            <td><span class="cross">&cross;</span> <strong>Andria Washburn</strong> <span style="color: #f87171;">(WRONG &mdash; staff creator)</span></td>
+                        </tr>
+                        <tr>
+                            <td>NEW: <code>$invoice->application->applicant->full_name</code></td>
+                            <td><span class="check">&check;</span> <strong>Ryan Hinz</strong> <span style="color: #4ade80;">(CORRECT &mdash; student)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Evidence 2: Staff Creator Confirmation</h3>
+                <p>Andria Washburn (user_id: 25830) is confirmed as a <strong>staff member</strong>, not a student. She should never have been returned as the student name on an invoice.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Field</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Name</td><td>Andria Washburn</td></tr>
+                        <tr><td>Email</td><td class="mono">andria@applytoweld.com</td></tr>
+                        <tr><td>Institution</td><td>Western Welding Academy (ID: 3)</td></tr>
+                        <tr><td>Is Student?</td><td><span class="cross">&cross;</span> <strong>No</strong></td></tr>
+                        <tr>
+                            <td>Roles</td>
+                            <td>
+                                <span class="role-chip">School Representative</span>
+                                <span class="role-chip">School Admin</span>
+                                <span class="role-chip">School Finance Manager</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Evidence 3: Search-by-Name Verification</h3>
+                <p>Ran <code>InvoiceSearchService::searchInvoices()</code> with different search terms at WWA to confirm the fix corrects both name display and name search.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Search Term</th><th>Results</th><th>Expected?</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>"Ryan"</code> (student first name)</td>
+                            <td>3 invoices found (Ryan Hinz + Bryan Zepeda + Bryan Gutierrez)</td>
+                            <td><span class="check">&check;</span> Yes &mdash; matches student names</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>"Hinz"</code> (student last name)</td>
+                            <td>1 invoice found (Ryan Hinz)</td>
+                            <td><span class="check">&check;</span> Yes &mdash; exact student match</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>"Andria"</code> (staff creator name)</td>
+                            <td>0 results</td>
+                            <td><span class="check">&check;</span> Yes &mdash; staff creators should not be searchable</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Evidence 4: Overdue Invoice Query</h3>
+                <p>Ran the exact query the AI assistant uses (<code>InvoiceSearchService::searchInvoices(overdueOnly: true)</code>) at WWA. Returns exactly 1 invoice with the correct student name.</p>
+
+                <div class="code-block"><span style="color: #94a3b8;">// InvoiceSearchService::searchInvoices(institutionId: 3, overdueOnly: true)</span>
+<span style="color: #94a3b8;">// Returns:</span>
+{
+    "count": <span style="color: #fbbf24;">1</span>,
+    "results": [{
+        "invoice_id": <span style="color: #a78bfa;">"a0e25dfa-ef23-4c7e-a214-8f893fe46615"</span>,
+        "student_name": <span style="color: #4ade80;">"Ryan Hinz"</span>,    <span style="color: #94a3b8;">// ← CORRECT (was "Andria Washburn")</span>
+        "amount": <span style="color: #fbbf24;">"$1,000.00"</span>,
+        "due_date": <span style="color: #fbbf24;">"2026-03-18"</span>,
+        "status": <span style="color: #fbbf24;">"Open"</span>
+    }]
+}</div>
+
+                <h3 class="section-title">Evidence 5: Automated Tests &mdash; 15/15 Passing</h3>
+                <p>Full test suite passes, including a new regression test that specifically verifies <code>contact_name</code> returns the applicant (student) name, not the invoice creator (staff) name. <span class="status-tag pass">ALL PASS</span></p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Test</th><th>Expectation</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>finds invoices by applicant name</td>
+                            <td>Search by student name finds their invoice</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>returns applicant name as contact_name, not the invoice creator name</strong></td>
+                            <td><code>contact_name</code> = applicant name, NOT creator name</td>
+                            <td><span class="status-tag pass">PASS</span> <span class="status-tag note">NEW</span></td>
+                        </tr>
+                        <tr>
+                            <td>finds invoices by partial UUID</td>
+                            <td>Search by invoice ID still works</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>returns overdue invoices when overdue_only is true</td>
+                            <td>Overdue filter works correctly</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>only returns invoices for the authenticated institution</td>
+                            <td>Tenant isolation preserved</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="code-block" style="margin-top: 16px; font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  App\Domains\InstitutionMcp\Tests\Feature\InvoiceSearchToolTest
+<span style="color: #4ade80;">  ✓</span> finds invoices by applicant name
+<span style="color: #4ade80;">  ✓</span> logs audit trail for invoice search
+<span style="color: #4ade80;">  ✓</span> returns applicant name as contact_name, not the invoice creator name      <span style="color: #fbbf24;">← NEW</span>
+<span style="color: #4ade80;">  ✓</span> finds invoices by partial UUID
+<span style="color: #4ade80;">  ✓</span> finds invoices by numeric ID prefix
+<span style="color: #4ade80;">  ✓</span> returns 200 with empty results for no matches
+<span style="color: #4ade80;">  ✓</span> requires a search_term or overdue_only filter
+<span style="color: #4ade80;">  ✓</span> rejects search terms shorter than 2 characters
+<span style="color: #4ade80;">  ✓</span> rejects overly long search terms
+<span style="color: #4ade80;">  ✓</span> rejects invalid limit values
+<span style="color: #4ade80;">  ✓</span> accepts valid limit values
+<span style="color: #4ade80;">  ✓</span> applies rate limiting
+<span style="color: #4ade80;">  ✓</span> returns overdue invoices without search_term when overdue_only is true
+<span style="color: #4ade80;">  ✓</span> only returns invoices for the authenticated institution
+<span style="color: #4ade80;">  ✓</span> logs audit trail for overdue-only invoice search
+
+  Tests:    <span style="color: #4ade80;">15 passed</span> (58 assertions)
+  Duration: 8.80s</div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
