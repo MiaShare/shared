@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-586 — Solution Evidence</title>
+    <meta name="share-summary" content="Solution evidence for CRTX-586: Proves the AI drawer blank page on load and non-functional + button in history view are fixed. Browser testing at WWA shows welcome screen renders on open, session restore loads messages, and + button works from history view. 27/27 automated tests passing.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h2 { font-size: 16px; font-weight: 600; }
+        .section-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-body { padding: 24px; }
+        .section-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .section-body p:last-child { margin-bottom: 0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+        .evidence-table .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+        }
+
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre;
+        }
+        .code-block .line-removed { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-added { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-context { color: #64748b; display: block; }
+
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        .quote-block {
+            background: #0f172a;
+            border-left: 3px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: #fbbf24;
+            font-style: italic;
+        }
+        .quote-block .attribution {
+            display: block;
+            margin-top: 6px;
+            font-style: normal;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        /* Slideshow styles */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .controls button {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .controls button:hover { background: #475569; }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .controls .counter { font-size: 14px; color: #94a3b8; min-width: 80px; text-align: center; }
+
+        .slide {
+            display: none;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .slide.active { display: block; }
+
+        .slide-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+        }
+        .slide-header h2 { font-size: 16px; font-weight: 600; }
+        .slide-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .slide-body { padding: 24px; }
+        .slide-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .slide-body img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        .thumb {
+            flex: 0 0 120px;
+            height: 68px;
+            border-radius: 6px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            overflow: hidden;
+            opacity: 0.5;
+            transition: all 0.15s;
+        }
+        .thumb.active { border-color: #3b82f6; opacity: 1; }
+        .thumb:hover { opacity: 0.8; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        kbd {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+<meta name="share-hash" content="60fdcdcaef4032a2c99a603e188ecf596535695d81b97b8061753da7f2ef2019">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-586 — Fix AI Drawer Blank Page on Load + "+" Button in History View</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 29, 2026 &bull; Branch: lhilton/crtx-586-fix</span>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Section 1: Problem Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">Overview</span>
+            </div>
+            <div class="section-body">
+                <p>Two related bugs in the AI Assistant drawer reported by Josh Haghani (CEO) at Western Welding Academy. Both bugs block core drawer usability &mdash; the drawer either renders blank on open, or traps users in the history view with no way to start a new conversation. <span class="status-tag fail">UI STATE BUGS</span></p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">2</div>
+                        <div class="label">Bugs Reported</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">High</div>
+                        <div class="label">Severity &mdash; CEO-reported</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">WWA</div>
+                        <div class="label">Institution (ID: 3)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number success">27/27</div>
+                        <div class="label">Tests Passing</div>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Bug A: Blank Page on Load</h3>
+                <div class="quote-block">
+                    "When I click on ai assistant I get blank page sometimes, then I need to press the + button to get the rich starting experience"
+                    <span class="attribution">&mdash; Josh Haghani (CEO) &bull; March 26, 2026 at 8:57 AM PDT</span>
+                </div>
+
+                <h3 class="section-title">Bug B: "+" Button Non-Functional in History</h3>
+                <div class="quote-block">
+                    "Also, we have a small issue around the + button not working when in history"
+                    <span class="attribution">&mdash; Josh Haghani (CEO) &bull; March 26, 2026 at 8:52 AM PDT</span>
+                </div>
+
+                <h3 class="section-title">Reproduction Steps</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Bug</th><th>Steps</th><th>Expected</th><th>Actual (Before Fix)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>A</strong></td>
+                            <td>Navigate to School Dashboard &rarr; Click AI Assistant icon</td>
+                            <td>Welcome screen or active conversation renders</td>
+                            <td><span class="status-tag fail">BLANK PAGE</span> &mdash; had to press "+" manually</td>
+                        </tr>
+                        <tr>
+                            <td><strong>B</strong></td>
+                            <td>Open AI drawer &rarr; Go to history view &rarr; Press "+" button</td>
+                            <td>"+" creates new conversation, returns to welcome screen</td>
+                            <td><span class="status-tag fail">NO RESPONSE</span> &mdash; button disabled, user trapped in history</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Solution Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Solution: Fix Session Restore &amp; "+" Button State Management</h2>
+                <span class="step-badge">Fix</span>
+            </div>
+            <div class="section-body">
+                <h3 class="section-title">Bug A Root Cause</h3>
+                <p><strong>Root cause:</strong> <code>restoreConversationUuid()</code> (called from Alpine <code>init()</code> via sessionStorage) set the conversation UUID <strong>without loading messages</strong>. The view template skipped the welcome screen (because UUID was set) but rendered an empty message loop &mdash; producing a blank area. Additionally, it didn't filter by Active status, so closed/timed-out conversations were restored, hiding the welcome screen. <span class="status-tag info">STATE DESYNC</span></p>
+
+                <div class="code-block"><span class="line-context">// restoreConversationUuid() &mdash; BEFORE</span>
+<span class="line-removed">- $conversation = $this-&gt;ownedConversationQuery($uuid)-&gt;first();</span>
+<span class="line-removed">- $this-&gt;conversationUuid = $uuid;</span>
+<span class="line-removed">- // No message loading! View shows empty message loop = blank page</span>
+<span class="line-context"></span>
+<span class="line-context">// restoreConversationUuid() &mdash; AFTER</span>
+<span class="line-added">+ $conversation = $this-&gt;ownedConversationQuery($uuid)</span>
+<span class="line-added">+     -&gt;active()           // Only restore Active conversations</span>
+<span class="line-added">+     -&gt;first();</span>
+<span class="line-added">+ $this-&gt;conversationUuid = $uuid;</span>
+<span class="line-added">+ $this-&gt;messages = $this-&gt;loadMessagesForConversation($conversation);</span>
+<span class="line-added">+ // Zero-message orphan? Close it and show welcome screen</span>
+<span class="line-added">+ if (empty($this-&gt;messages)) { /* close orphan, clear state */ }</span></div>
+
+                <h3 class="section-title">Bug B Root Cause</h3>
+                <p><strong>Root cause:</strong> The "+" button's <code>x-bind:disabled</code> included <code>!$wire.conversationUuid</code>. When browsing history without an active conversation, <code>conversationUuid</code> was null &mdash; permanently disabling the button and trapping users in history view. <span class="status-tag info">BINDING BUG</span></p>
+
+                <div class="code-block"><span class="line-context">// Blade template &mdash; "+" button disabled binding</span>
+<span class="line-removed">- x-bind:disabled="!$wire.conversationUuid || $wire.isStreaming || $wire.isRestoringContext"</span>
+<span class="line-added">+ x-bind:disabled="$wire.isStreaming || $wire.isRestoringContext"</span>
+<span class="line-context"></span>
+<span class="line-context">// startNewConversation() &mdash; PHP method</span>
+<span class="line-removed">- if (!$this-&gt;conversationUuid) { return; }  // Blocked when null!</span>
+<span class="line-added">+ if (!$this-&gt;conversationUuid) {</span>
+<span class="line-added">+     $this-&gt;reset(['drawerView', 'historyConversations', ...]);</span>
+<span class="line-added">+     return;  // Clean welcome-screen reset for history-to-welcome nav</span>
+<span class="line-added">+ }</span></div>
+
+                <h3 class="section-title">Additional Fix: Shared Message Loading</h3>
+                <p>Extracted <code>loadMessagesForConversation()</code> as a shared private method to eliminate duplication between <code>restoreConversationUuid()</code> and <code>resumeConversation()</code>. <span class="status-tag pass">4 FILES, +87/-24 LINES</span></p>
+            </div>
+        </div>
+
+        <!-- Section 3: Reference Links -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">Links</span>
+            </div>
+            <div class="section-body">
+                <h3 class="section-title">Issue &amp; PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-586/bug-ai-drawer-blank-page-on-load-button-non-functional-in-history-view" target="_blank">CRTX-586: Bug: AI Drawer blank page on load + "+" button non-functional in history view</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5552" target="_blank">PR #5552: CRTX-586 &mdash; Fix AI drawer blank page on load and non-functional "+" button in history view</a>
+                        <span class="link-label">GitHub Pull Request</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Source</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C08P00CQTCZ/p1774540654043869" target="_blank">Josh/WWA &mdash; "blank page sometimes" when opening AI Assistant (Mar 26, 8:57 AM)</a>
+                        <span class="link-label">Bug A &mdash; Blank page on load</span>
+                    </li>
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C08P00CQTCZ/p1774540326797569" target="_blank">Josh/WWA &mdash; "+" button not working when in history (Mar 26, 8:52 AM)</a>
+                        <span class="link-label">Bug B &mdash; "+" button non-functional in history view</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 4: Evidence Slideshow -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Verification Evidence</h2>
+                <span class="step-badge">Evidence</span>
+            </div>
+            <div class="section-body">
+                <p>Local browser testing on branch <code>lhilton/crtx-586-fix</code> at <code>wwa.biarritz.test</code> (1920&times;1080). Logged in as Tyler Sasse (School Admin, WWA). Verified both Bug A (blank page) and Bug B ("+" button) fixes across multiple scenarios. <span class="status-tag pass">VERIFIED</span></p>
+
+                <div class="controls">
+                    <button onclick="prev()" id="prevBtn" disabled>&larr; Previous</button>
+                    <span class="counter" id="counter">1 / 7</span>
+                    <button onclick="next()" id="nextBtn">Next &rarr;</button>
+                </div>
+
+                <!-- Slide 1: Welcome Screen -->
+                <div class="slide active" data-index="0">
+                    <div class="slide-header">
+                        <h2>Bug A Fix: Drawer Opens with Welcome Screen</h2>
+                        <span class="step-badge">Step 1</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Opened the AI drawer on the WWA School Dashboard. The welcome screen renders immediately with "Hi, Tyler! I'm Mia" greeting and quick action chips. <strong>Before the fix</strong>, this would sometimes show a blank page when a stale conversation UUID was in sessionStorage. <span class="status-tag pass">BUG A &mdash; FIXED</span></p>
+                        <img src="01-drawer-welcome-screen.png" alt="AI drawer opens with welcome screen, not blank">
+                    </div>
+                </div>
+
+                <!-- Slide 2: Active Conversation -->
+                <div class="slide" data-index="1">
+                    <div class="slide-header">
+                        <h2>Active Conversation Established</h2>
+                        <span class="step-badge">Step 2</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Sent "How many students are enrolled?" and received a detailed response from Mia listing enrollment counts by status. This creates an Active conversation with messages in sessionStorage &mdash; the exact state that triggered the blank page bug on reload. <span class="status-tag info">SETUP</span></p>
+                        <img src="02-active-conversation.png" alt="Active conversation with messages">
+                    </div>
+                </div>
+
+                <!-- Slide 3: Session Restored -->
+                <div class="slide" data-index="2">
+                    <div class="slide-header">
+                        <h2>Bug A Fix: Session Restore Loads Messages</h2>
+                        <span class="step-badge">Step 3</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Reloaded the page and reopened the drawer. The conversation was <strong>restored with all messages visible</strong> &mdash; both the user's question and Mia's response. <strong>Before the fix</strong>, <code>restoreConversationUuid()</code> set the UUID without loading messages, causing a blank area where the message loop was empty. <span class="status-tag pass">BUG A &mdash; SESSION RESTORE WORKS</span></p>
+                        <img src="03-session-restored.png" alt="Session restored with messages after page reload">
+                    </div>
+                </div>
+
+                <!-- Slide 4: History View -->
+                <div class="slide" data-index="3">
+                    <div class="slide-header">
+                        <h2>Bug B Setup: Navigated to History View</h2>
+                        <span class="step-badge">Step 4</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Clicked the clock icon to navigate to conversation history view. The "+" button is visible in the header bar. <strong>Before the fix</strong>, the "+" button was disabled in this state because <code>conversationUuid</code> was null &mdash; the <code>!$wire.conversationUuid</code> condition in <code>x-bind:disabled</code> permanently locked it. <span class="status-tag info">BUG B SCENARIO</span></p>
+                        <img src="04-history-view.png" alt="History view with + button visible">
+                    </div>
+                </div>
+
+                <!-- Slide 5: Plus Button Works -->
+                <div class="slide" data-index="4">
+                    <div class="slide-header">
+                        <h2>Bug B Fix: "+" Button Returns to Welcome Screen</h2>
+                        <span class="step-badge">Step 5</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Clicked the "+" button from the history view. The drawer successfully returned to the welcome screen with the greeting and quick action chips. <strong>Before the fix</strong>, nothing would happen &mdash; the button was disabled and unresponsive, trapping the user in the history view. <span class="status-tag pass">BUG B &mdash; FIXED</span></p>
+                        <img src="05-plus-button-works.png" alt="Plus button from history returns to welcome screen">
+                    </div>
+                </div>
+
+                <!-- Slide 6: History Without Active Conv -->
+                <div class="slide" data-index="5">
+                    <div class="slide-header">
+                        <h2>Bug B Edge Case: History with No Active Conversation</h2>
+                        <span class="step-badge">Step 6</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Navigated back to history view after the previous conversation was closed by the "+" button. Now <code>conversationUuid</code> is null. <strong>This is the exact condition</strong> that disabled the "+" button before the fix &mdash; <code>!$wire.conversationUuid</code> evaluated to true, setting <code>disabled</code> on the button. <span class="status-tag note">EDGE CASE</span></p>
+                        <img src="06-history-no-active-conv.png" alt="History view with no active conversation">
+                    </div>
+                </div>
+
+                <!-- Slide 7: Plus Button Works Without Active Conv -->
+                <div class="slide" data-index="6">
+                    <div class="slide-header">
+                        <h2>Bug B Edge Case: "+" Works Even Without Active Conversation</h2>
+                        <span class="step-badge">Step 7</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Clicked "+" from history with no active conversation (the worst-case scenario for the old bug). The button worked and returned to the welcome screen. The new <code>startNewConversation()</code> handles null <code>conversationUuid</code> with a clean <code>reset()</code> instead of early-returning. <span class="status-tag pass">BUG B &mdash; EDGE CASE FIXED</span></p>
+                        <img src="07-plus-works-no-active-conv.png" alt="Plus button works even without active conversation">
+                    </div>
+                </div>
+
+                <div class="thumbnails" id="thumbnails"></div>
+                <div class="keyboard-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+
+                <h3 class="section-title" style="margin-top: 32px;">Automated Test Results</h3>
+                <p>All 27 AssistantDrawer tests pass with 52 assertions, including the new orphan-close and startNewConversation tests added as part of this fix. <span class="status-tag pass">ALL PASS</span></p>
+
+                <div class="code-block" style="font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  AssistantDrawer Tests
+<span style="color: #4ade80;">  &#10003;</span> opens and closes the drawer via toggleDrawer
+<span style="color: #4ade80;">  &#10003;</span> closes the drawer via closeDrawer
+<span style="color: #4ade80;">  &#10003;</span> resolves custom assistant name from institution
+<span style="color: #4ade80;">  &#10003;</span> falls back to default assistant name when institution has none
+<span style="color: #4ade80;">  &#10003;</span> locks the tier property against frontend tampering
+<span style="color: #4ade80;">  &#10003;</span> aborts 403 when feature is disabled
+<span style="color: #4ade80;">  &#10003;</span> renders with correct ARIA attributes
+<span style="color: #4ade80;">  &#10003;</span> renders the assistant name in the header
+<span style="color: #4ade80;">  &#10003;</span> renders the AI disclaimer text
+<span style="color: #4ade80;">  &#10003;</span> renders welcome screen content
+<span style="color: #4ade80;">  &#10003;</span> restores conversation UUID from session storage bridge
+<span style="color: #4ade80;">  &#10003;</span> ignores empty or null conversation UUID restoration
+<span style="color: #4ade80;">  &#10003;</span> rejects conversation UUID belonging to another user
+<span style="color: #4ade80;">  &#10003;</span> <strong>closes zero-message orphan conversation on restore and clears session storage</strong>
+<span style="color: #4ade80;">  &#10003;</span> ... and 13 more tests
+
+  Tests:    <span style="color: #4ade80;">27 passed</span> (52 assertions)
+  Duration: 14.80s
+  Parallel: 14 processes</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const images = [
+            '01-drawer-welcome-screen.png', '02-active-conversation.png', '03-session-restored.png',
+            '04-history-view.png', '05-plus-button-works.png', '06-history-no-active-conv.png',
+            '07-plus-works-no-active-conv.png'
+        ];
+        let current = 0;
+
+        const thumbsContainer = document.getElementById('thumbnails');
+        images.forEach((img, i) => {
+            const div = document.createElement('div');
+            div.className = 'thumb' + (i === 0 ? ' active' : '');
+            div.onclick = () => goTo(i);
+            div.innerHTML = `<img src="${img}" alt="Step ${i+1}">`;
+            thumbsContainer.appendChild(div);
+        });
+
+        function goTo(index) {
+            slides[current].classList.remove('active');
+            document.querySelectorAll('.thumb')[current].classList.remove('active');
+            current = index;
+            slides[current].classList.add('active');
+            document.querySelectorAll('.thumb')[current].classList.add('active');
+            document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+            document.getElementById('prevBtn').disabled = current === 0;
+            document.getElementById('nextBtn').disabled = current === slides.length - 1;
+        }
+
+        function next() { if (current < slides.length - 1) goTo(current + 1); }
+        function prev() { if (current > 0) goTo(current - 1); }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+
+        document.getElementById('prevBtn').disabled = true;
+    </script>
+</body>
+</html>
