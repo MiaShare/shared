@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-587 &mdash; Solution Evidence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h2 { font-size: 16px; font-weight: 600; }
+        .section-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-body { padding: 24px; }
+        .section-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .section-body p:last-child { margin-bottom: 0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+        .evidence-table .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+        }
+
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre;
+        }
+        .code-block .line-removed { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-added { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-context { color: #64748b; display: block; }
+
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        .quote-block {
+            background: #0f172a;
+            border-left: 3px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: #fbbf24;
+            font-style: italic;
+        }
+        .quote-block .attribution {
+            display: block;
+            margin-top: 6px;
+            font-style: normal;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        /* Slideshow styles */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .controls button {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .controls button:hover { background: #475569; }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .controls .counter { font-size: 14px; color: #94a3b8; min-width: 80px; text-align: center; }
+
+        .slide {
+            display: none;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .slide.active { display: block; }
+
+        .slide-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+        }
+        .slide-header h2 { font-size: 16px; font-weight: 600; }
+        .slide-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .slide-body { padding: 24px; }
+        .slide-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .slide-body img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        .thumb {
+            flex: 0 0 120px;
+            height: 68px;
+            border-radius: 6px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            overflow: hidden;
+            opacity: 0.5;
+            transition: all 0.15s;
+        }
+        .thumb.active { border-color: #3b82f6; opacity: 1; }
+        .thumb:hover { opacity: 0.8; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        kbd {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+<meta name="share-summary" content="Solution evidence for CRTX-587: Proves the new payment-plan-search MCP tool correctly routes payment plan queries away from invoice-search. Browser testing on WWA shows 3 scenarios passing — payment plan queries, installment synonym queries, and invoice regression test — with actual payment period data returned (50 past-due installments, $9,080 across 7 students).">
+<meta name="share-hash" content="bb29cab0e1e90e8e8bbe8bdb07e08fed759335453237fb7228d64ef03f47198c">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-587 &mdash; Fix Payment Plan Queries Misrouted to Invoice Tools</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 29, 2026 &bull; Branch: lhilton/crtx-587-fix</span>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Section 1: Problem Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">Overview</span>
+            </div>
+            <div class="section-body">
+                <p>When school admins asked the AI Assistant about <strong>payment plans</strong>, the system incorrectly routed the query to <strong>invoice tools</strong> and returned invoice data instead of payment plan data. Payment plans and invoices are completely different domain concepts &mdash; payment plans are scheduled installments on funding contracts, while invoices are billing documents. The AI returned data with confidence, but it was the <em>wrong data</em>. <span class="status-tag fail">SEMANTIC ROUTING BUG</span></p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">1</div>
+                        <div class="label">Confirmed Occurrence</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">0</div>
+                        <div class="label">Payment Plan Tools (Before Fix)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">High</div>
+                        <div class="label">Priority &mdash; Trust-Eroding</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number success">7,781</div>
+                        <div class="label">Payment Periods in WWA ($7M+)</div>
+                    </div>
+                </div>
+
+                <div class="quote-block">
+                    "Another one I just tested: I asked about payment plans and it for some reason went to invoices"
+                    <span class="attribution">&mdash; Josh Haghani (CEO) &bull; Western Welding Academy &bull; March 26, 2026</span>
+                </div>
+
+                <h3 class="section-title">Root Cause</h3>
+                <p>The Institution MCP server had 12 tools but <strong>none for searching payment plans/periods</strong>. The LLM's only financial search tool was <code>invoice-search</code>, so &ldquo;payment plan&rdquo; queries got routed there by default &mdash; returning invoice data (Draft/Open/Paid billing documents) instead of payment period data (installment schedules with due dates and amounts).</p>
+
+                <h3 class="section-title">Data Scale</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Data Type</th><th>Records (WWA)</th><th>Total Value</th><th>Had MCP Tool?</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Payment Periods</strong></td>
+                            <td>7,781 across 332 students</td>
+                            <td>$7M+</td>
+                            <td><span class="cross">&cross;</span> No &mdash; queries went to invoice-search</td>
+                        </tr>
+                        <tr>
+                            <td>Invoices</td>
+                            <td>459</td>
+                            <td>&mdash;</td>
+                            <td><span class="check">&check;</span> Yes (invoice-search)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Solution Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Solution: New payment-plan-search MCP Tool</h2>
+                <span class="step-badge">Fix</span>
+            </div>
+            <div class="section-body">
+                <p><strong>Root cause:</strong> No dedicated MCP tool existed for payment plan/period queries. The LLM had no choice but to route to <code>invoice-search</code> &mdash; the closest available financial search tool. <span class="status-tag info">ROOT CAUSE</span></p>
+
+                <p><strong>Fix:</strong> Added a dedicated <code>payment-plan-search</code> MCP tool that searches <code>PaymentPeriod</code> records by contact name, ID, type, status, or overdue filter. Also updated the system prompt with routing hints and added negative guidance to invoice-search. <span class="status-tag pass">9 FILES, +1,449 LINES, 20 TESTS</span></p>
+
+                <h3 class="section-title">Changes Made</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Change</th><th>Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>New <code>PaymentPlanSearchTool</code></strong></td>
+                            <td>Searches PaymentPeriod records with institution-scoped <code>whereHas</code> chains, <code>withTrashed()</code> for soft-deleted ISAs, and derived status (Suspended &gt; Serviced &gt; Paid Externally &gt; Past Due &gt; Upcoming)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Updated <code>InvoiceSearchTool</code> description</strong></td>
+                            <td>Added negative routing: &ldquo;Do NOT use this for payment plan, payment period, or installment queries &mdash; use payment-plan-search instead&rdquo;</td>
+                        </tr>
+                        <tr>
+                            <td><strong>System prompt migration</strong></td>
+                            <td>Added &ldquo;payment plan&rdquo; and &ldquo;installment&rdquo; routing hints to the Domain Relevance Check section</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Policy &amp; Gate</strong></td>
+                            <td><code>searchPaymentPlans</code> ability with <code>isInstitutionStaffOrAdmin</code> access control</td>
+                        </tr>
+                        <tr>
+                            <td><strong>20 Pest tests</strong></td>
+                            <td>Search, filters, validation, institution scoping, soft-deletes edge case, authorization, rate limiting</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Key Code: Negative Routing Guidance</h3>
+                <div class="code-block"><span class="line-context">// InvoiceSearchTool.php - description() method</span>
+<span class="line-added">+ "Do NOT use this for payment plan, payment period,</span>
+<span class="line-added">+  or installment queries — use payment-plan-search instead."</span></div>
+
+                <h3 class="section-title">Key Code: System Prompt Routing Hints</h3>
+                <div class="code-block"><span class="line-context">// Domain Relevance Check section additions:</span>
+<span class="line-added">+ "payment plan" → routes to payment-plan-search (NOT invoice-search)</span>
+<span class="line-added">+ "installment" → routes to payment-plan-search</span>
+<span class="line-added">+ "what's due" → routes to payment-plan-search</span>
+<span class="line-added">+ "payment schedule" → routes to payment-plan-search</span></div>
+            </div>
+        </div>
+
+        <!-- Section 3: Reference Links -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">Links</span>
+            </div>
+            <div class="section-body">
+                <h3 class="section-title">Issue &amp; PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-587/bug-payment-plan-queries-misrouted-to-invoice-tools" target="_blank">CRTX-587: Bug &mdash; Payment plan queries misrouted to invoice tools</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5553" target="_blank">PR #5553: CRTX-587 &mdash; Add payment-plan-search MCP tool to fix misrouted queries</a>
+                        <span class="link-label">GitHub Pull Request</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Sources</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774540395372599" target="_blank">Josh/WWA &mdash; Late payment plans query returned invoice data</a>
+                        <span class="link-label">#ai-conversations &mdash; Misrouted payment plan query</span>
+                    </li>
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C08P00CQTCZ" target="_blank">Josh Haghani bug reports &mdash; Group DM</a>
+                        <span class="link-label">Source: CEO bug report thread</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 4: Evidence Slideshow -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Verification Evidence</h2>
+                <span class="step-badge">Evidence</span>
+            </div>
+            <div class="section-body">
+                <p>Local browser testing on branch <code>lhilton/crtx-587-fix</code> at <code>wwa.west-monroe.test</code>. Logged in as Tyler Sasse (School Admin, WWA) and tested three scenarios: payment plan query, installment synonym query, and invoice regression check. All three routed to the correct tool. <span class="status-tag pass">VERIFIED</span></p>
+
+                <h3 class="section-title">Test Results Summary</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Query</th><th>Expected Tool</th><th>Actual Tool</th><th>Result</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>&ldquo;Show me all past-due payment plans&rdquo;</td>
+                            <td class="mono">payment-plan-search</td>
+                            <td class="mono">payment-plan-search</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>&ldquo;Show me overdue installments&rdquo;</td>
+                            <td class="mono">payment-plan-search</td>
+                            <td class="mono">payment-plan-search</td>
+                            <td><span class="status-tag pass">PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>&ldquo;Show me the invoices&rdquo;</td>
+                            <td class="mono">invoice-search</td>
+                            <td class="mono">invoice-search</td>
+                            <td><span class="status-tag pass">PASS</span> (regression)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="controls">
+                    <button onclick="prev()" id="prevBtn">&larr; Previous</button>
+                    <span class="counter" id="counter">1 / 7</span>
+                    <button onclick="next()" id="nextBtn">Next &rarr;</button>
+                </div>
+
+                <!-- Slide 1: Login -->
+                <div class="slide active" data-index="0">
+                    <div class="slide-header">
+                        <h2>Logged in as School Admin @ WWA</h2>
+                        <span class="step-badge">Step 1</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Logged in to Western Welding Academy as Tyler Sasse (School Admin) at <code>wwa.west-monroe.test</code>. Dashboard shows institution name, support numbers, and financial overview with $464K in last 30-day payments. <span class="status-tag pass">PASS</span></p>
+                        <img src="01-wwa-dashboard-logged-in.png" alt="Logged in as Tyler Sasse at WWA School Dashboard">
+                    </div>
+                </div>
+
+                <!-- Slide 2: AI Drawer Open -->
+                <div class="slide" data-index="1">
+                    <div class="slide-header">
+                        <h2>AI Assistant Drawer Opened</h2>
+                        <span class="step-badge">Step 2</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Opened the Mia AI Assistant drawer. The assistant displays the greeting with quick action chips: New Leads, Applications, Recent Payments, Enrollment Changes. Ready for input. <span class="status-tag pass">PASS</span></p>
+                        <img src="02-ai-drawer-open.png" alt="AI Assistant drawer open with greeting">
+                    </div>
+                </div>
+
+                <!-- Slide 3: Query Typed -->
+                <div class="slide" data-index="2">
+                    <div class="slide-header">
+                        <h2>Payment Plans Query Entered</h2>
+                        <span class="step-badge">Step 3</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Typed <em>&ldquo;Tell me about payment plans&rdquo;</em> in the input field &mdash; replicating the exact type of query that Josh reported as broken. This is the scenario that previously misrouted to invoice-search. <span class="status-tag info">REPLICATING BUG SCENARIO</span></p>
+                        <img src="03-query-typed-payment-plans.png" alt="Payment plans query typed in AI assistant input">
+                    </div>
+                </div>
+
+                <!-- Slide 4: Payment Plan Summary Stats -->
+                <div class="slide" data-index="3">
+                    <div class="slide-header">
+                        <h2>Payment Plan Tool Called &mdash; Summary Stats</h2>
+                        <span class="step-badge">Step 4</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>After asking &ldquo;Show me all past-due payment plans,&rdquo; the AI correctly called <code>payment-plan-search</code> (not invoice-search). Response shows: <strong>50 past-due payment period installments</strong>, <strong>$9,080 total amount due</strong>, oldest due date 2020-11-13. This is payment period data &mdash; exactly what was missing before the fix. <span class="status-tag pass">CORRECT TOOL CALLED</span></p>
+                        <img src="05-payment-plan-summary-stats.png" alt="AI response showing payment plan summary statistics">
+                    </div>
+                </div>
+
+                <!-- Slide 5: Payment Plan Data Table -->
+                <div class="slide" data-index="4">
+                    <div class="slide-header">
+                        <h2>Payment Plan Data Table &mdash; Real Student Data</h2>
+                        <span class="step-badge">Step 5</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>The AI returned a structured table of past-due payment plan installments with <strong>Student names</strong>, <strong>Type</strong> (Deposit), <strong>Amount Due</strong>, <strong>Due Date</strong>, and <strong>Payment Period ID</strong>. This is unmistakably payment period data &mdash; not invoices. Students include Lawrence Nadeau III ($1,040), Harley Reeves ($3,000), Damian Marquez ($1,000), Cole Eggers ($3,000), Liam Baird ($1,040). <span class="status-tag pass">PAYMENT PERIOD DATA CONFIRMED</span></p>
+                        <img src="06-payment-plan-data-table.png" alt="AI response showing past-due payment plan data table with student names and amounts">
+                    </div>
+                </div>
+
+                <!-- Slide 6: Installments Synonym Test -->
+                <div class="slide" data-index="5">
+                    <div class="slide-header">
+                        <h2>Synonym Test: &ldquo;Installments&rdquo; Routes Correctly</h2>
+                        <span class="step-badge">Step 6</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>In a new conversation, asked <em>&ldquo;Show me overdue installments&rdquo;</em> &mdash; using the synonym &ldquo;installments&rdquo; instead of &ldquo;payment plans.&rdquo; The AI correctly routed to <code>payment-plan-search</code> and returned the same payment period data with student names, types, due dates, and amounts. The system prompt routing hints for &ldquo;installment&rdquo; are working. <span class="status-tag pass">SYNONYM ROUTING WORKS</span></p>
+                        <img src="07-installments-data-table.png" alt="AI response to installments query showing payment plan data">
+                    </div>
+                </div>
+
+                <!-- Slide 7: Invoice Negative Test -->
+                <div class="slide" data-index="6">
+                    <div class="slide-header">
+                        <h2>Regression Check: Invoices Still Route Correctly</h2>
+                        <span class="step-badge">Step 7</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>In a new conversation, asked <em>&ldquo;Show me the invoices&rdquo;</em> to verify invoice queries still route to <code>invoice-search</code> (not the new payment-plan-search). The AI returned invoice-specific data: <strong>Invoice IDs</strong>, <strong>Status</strong> (Open/Paid), <strong>Amount</strong>, <strong>Remaining</strong>, <strong>Due Date</strong>. This is clearly a different data schema from payment plans &mdash; confirming the tools are properly disambiguated. <span class="status-tag pass">NO REGRESSION</span></p>
+                        <img src="08-invoice-negative-test.png" alt="AI response to invoice query showing invoice-specific data">
+                    </div>
+                </div>
+
+                <div class="thumbnails" id="thumbnails"></div>
+                <div class="keyboard-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+
+                <h3 class="section-title" style="margin-top: 32px;">Automated Test Results</h3>
+                <p>All 20 new PaymentPlanSearchTool tests pass with 74 assertions. All 15 existing InvoiceSearchTool tests pass with no regression. Full domain test suite (236 tests) passes. <span class="status-tag pass">ALL PASS</span></p>
+
+                <div class="code-block" style="font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  PaymentPlanSearchToolTest
+<span style="color: #4ade80;">  &#10003;</span> 20 tests, 74 assertions &mdash; all passing
+
+<span style="color: #4ade80;">  PASS</span>  InvoiceSearchToolTest (regression)
+<span style="color: #4ade80;">  &#10003;</span> 15 tests &mdash; no regression
+
+<span style="color: #4ade80;">  PASS</span>  Full InstitutionMcp domain suite
+<span style="color: #4ade80;">  &#10003;</span> 236 tests &mdash; all passing</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const images = [
+            '01-wwa-dashboard-logged-in.png', '02-ai-drawer-open.png', '03-query-typed-payment-plans.png',
+            '05-payment-plan-summary-stats.png', '06-payment-plan-data-table.png', '07-installments-data-table.png',
+            '08-invoice-negative-test.png'
+        ];
+        let current = 0;
+
+        const thumbsContainer = document.getElementById('thumbnails');
+        images.forEach((img, i) => {
+            const div = document.createElement('div');
+            div.className = 'thumb' + (i === 0 ? ' active' : '');
+            div.onclick = () => goTo(i);
+            div.innerHTML = `<img src="${img}" alt="Step ${i+1}">`;
+            thumbsContainer.appendChild(div);
+        });
+
+        function goTo(index) {
+            slides[current].classList.remove('active');
+            document.querySelectorAll('.thumb')[current].classList.remove('active');
+            current = index;
+            slides[current].classList.add('active');
+            document.querySelectorAll('.thumb')[current].classList.add('active');
+            document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+            document.getElementById('prevBtn').disabled = current === 0;
+            document.getElementById('nextBtn').disabled = current === slides.length - 1;
+        }
+
+        function next() { if (current < slides.length - 1) goTo(current + 1); }
+        function prev() { if (current > 0) goTo(current - 1); }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+
+        document.getElementById('prevBtn').disabled = true;
+    </script>
+</body>
+</html>
