@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-605 — Solution Evidence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h2 { font-size: 16px; font-weight: 600; }
+        .section-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-body { padding: 24px; }
+        .section-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .section-body p:last-child { margin-bottom: 0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+        .evidence-table .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+        }
+
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre;
+        }
+        .code-block .line-removed { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-added { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-context { color: #64748b; display: block; }
+
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        .quote-block {
+            background: #0f172a;
+            border-left: 3px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: #fbbf24;
+            font-style: italic;
+        }
+        .quote-block .attribution {
+            display: block;
+            margin-top: 6px;
+            font-style: normal;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        /* Slideshow styles */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .controls button {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .controls button:hover { background: #475569; }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .controls .counter { font-size: 14px; color: #94a3b8; min-width: 80px; text-align: center; }
+
+        .slide {
+            display: none;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .slide.active { display: block; }
+
+        .slide-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+        }
+        .slide-header h2 { font-size: 16px; font-weight: 600; }
+        .slide-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .slide-body { padding: 24px; }
+        .slide-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .slide-body img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        .thumb {
+            flex: 0 0 120px;
+            height: 68px;
+            border-radius: 6px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            overflow: hidden;
+            opacity: 0.5;
+            transition: all 0.15s;
+        }
+        .thumb.active { border-color: #3b82f6; opacity: 1; }
+        .thumb:hover { opacity: 0.8; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        kbd {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+<meta name="share-summary" content="Solution evidence for CRTX-605: Proves the wire:key fix prevents AI draft cards from vanishing in the Livewire drawer. Local browser test shows both email and SMS drafts persisting 4+ minutes past the original failure window, with 26/26 automated tests passing and database evidence from 3 conversations.">
+<meta name="share-hash" content="dabdb073041f9f7b28a248ceecf5b52fd47083a90287b202be4791189d6cef6a">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-605 &mdash; Fix Draft Cards Disappearing from AI Drawer UI</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 29, 2026 &bull; Branch: lhilton/crtx-605-draft-cards-vanish</span>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Section 1: Problem Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">Overview</span>
+            </div>
+            <div class="section-body">
+                <p>Email and SMS draft cards generated by the AI Assistant disappear from the drawer UI after being successfully created. The user sees draft cards initially, but they vanish ~3&ndash;4 minutes later &mdash; requiring the user to ask the AI to regenerate them. The AI successfully regenerates on the second attempt, confirming the draft <em>data</em> is intact but the <strong>UI component is being unmounted</strong> during Livewire re-renders. <span class="status-tag fail">UI STATE BUG</span></p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">1</div>
+                        <div class="label">Confirmed Occurrence</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">0</div>
+                        <div class="label">Action Confirmations (Conv #30)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">High</div>
+                        <div class="label">Priority &mdash; Blocks AI Actions</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">3:46</div>
+                        <div class="label">Minutes Until Cards Vanished</div>
+                    </div>
+                </div>
+
+                <div class="quote-block">
+                    "the draft cards disappeared try again, thanks"
+                    <span class="attribution">&mdash; Josh (School User, WWA) &bull; Conversation #30 &bull; March 27, 2026 at 9:13 PM PDT</span>
+                </div>
+
+                <h3 class="section-title">Database Evidence: Conversation Comparison</h3>
+                <p>Three consecutive conversations at Western Welding Academy demonstrate the pattern. Conv #30 has <strong>zero</strong> action confirmations &mdash; the draft cards vanished before Josh could click Send.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Conversation</th><th>User</th><th>Messages</th><th>Action Confirmations</th><th>Outcome</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>#29</strong> (Derrick)</td>
+                            <td>Derrick Ontiveros</td>
+                            <td>4</td>
+                            <td><span class="check">&check;</span> <strong>2</strong> (email: executed, sms: executed)</td>
+                            <td><span class="status-tag pass">WORKED</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>#30</strong> (Josh)</td>
+                            <td>Josh Haghani</td>
+                            <td>10</td>
+                            <td><span class="cross">&cross;</span> <strong>0</strong> &mdash; drafts vanished</td>
+                            <td><span class="status-tag fail">BUG</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>#31</strong> (Josh)</td>
+                            <td>Josh Haghani</td>
+                            <td>12</td>
+                            <td><strong>1</strong> (sms: queued, never resolved)</td>
+                            <td><span class="status-tag note">PARTIAL</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Timeline: Conversation #30</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Time (PDT)</th><th>Event</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="mono">9:08:21 PM</td><td>Josh opens conversation: "Tell me about Josh Haghani"</td></tr>
+                        <tr><td class="mono">9:09:56 PM</td><td>Josh requests: "ok draft me an email and sms to send for 1."</td></tr>
+                        <tr><td class="mono">9:10:12 PM</td><td>AI creates both draft cards (email + SMS). Says "Review them in the draft cards."</td></tr>
+                        <tr><td class="mono">9:13:58 PM</td><td style="color: #f87171;"><strong>"the draft cards disappeared try again, thanks"</strong> &mdash; 3 min 46 sec after creation</td></tr>
+                        <tr><td class="mono">9:14:09 PM</td><td>AI regenerates both drafts. Asks if on mobile or desktop.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Solution Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Solution: Add wire:key to Livewire Message Loop</h2>
+                <span class="step-badge">Fix</span>
+            </div>
+            <div class="section-body">
+                <p><strong>Root cause:</strong> The AI drawer's <code>@foreach ($messages ...)</code> loop lacked <code>wire:key</code> attributes on its elements. Without stable keys, Livewire's <strong>morph algorithm</strong> cannot reliably track DOM elements across re-renders. When streaming completes and the chat bubble transitions from a streaming placeholder to a static message, the morph algorithm loses track of the draft card DOM elements and removes them. <span class="status-tag info">ROOT CAUSE</span></p>
+
+                <p><strong>Fix:</strong> Added <code>wire:key</code> to all message loop elements using stable composite keys, and wrapped draft/confirmation sections in stable keyed containers. <span class="status-tag pass">2 FILES, +59/-41 LINES</span></p>
+
+                <h3 class="section-title">Message Loop Elements &mdash; wire:key Added</h3>
+                <div class="code-block"><span class="line-context"> @foreach ($messages as $index => $message)</span><span class="line-removed">-    {{-- Date separator (no wire:key) --}}</span><span class="line-removed">-    &lt;div class="flex justify-center"&gt;</span><span class="line-added">+    &lt;div wire:key="sep-{{ $message['timestamp'] }}-{{ $message['role'] }}-{{ $index }}"&gt;</span><span class="line-context"></span><span class="line-removed">-    {{-- Chat bubble (no wire:key) --}}</span><span class="line-removed">-    &lt;div class="ai-chat-bubble ..."&gt;</span><span class="line-added">+    &lt;div wire:key="msg-{{ $message['timestamp'] }}-{{ $message['role'] }}-{{ $index }}"&gt;</span><span class="line-context"></span><span class="line-removed">-    {{-- Tool indicators (no wire:key) --}}</span><span class="line-removed">-    &lt;div class="flex justify-center"&gt;</span><span class="line-added">+    &lt;div wire:key="tools-{{ $message['timestamp'] }}-{{ $message['role'] }}-{{ $index }}"&gt;</span></div>
+
+                <h3 class="section-title">Draft &amp; Confirmation Sections &mdash; Stable Containers</h3>
+                <div class="code-block"><span class="line-removed">-@foreach ($pendingDrafts as $draftKey => $draft)</span><span class="line-removed">-    &lt;div class="flex flex-col gap-3"&gt;</span><span class="line-added">+@if (count($pendingDrafts) > 0)</span><span class="line-added">+    &lt;div wire:key="drafts-section" class="flex flex-col gap-3"&gt;</span><span class="line-added">+        @foreach ($pendingDrafts as $draftKey => $draft)</span><span class="line-context">             {{-- Draft card content --}}</span><span class="line-added">+        @endforeach</span><span class="line-added">+    &lt;/div&gt;</span><span class="line-added">+@endif</span><span class="line-context"></span><span class="line-removed">-@foreach ($pendingConfirmations as $confirmKey => $confirmation)</span><span class="line-removed">-    &lt;div class="flex flex-col gap-3"&gt;</span><span class="line-added">+@if (count($pendingConfirmations) > 0)</span><span class="line-added">+    &lt;div wire:key="confirmations-section" class="flex flex-col gap-3"&gt;</span><span class="line-added">+        @foreach ($pendingConfirmations as $confirmKey => $confirmation)</span><span class="line-context">             {{-- Confirmation card content --}}</span><span class="line-added">+        @endforeach</span><span class="line-added">+    &lt;/div&gt;</span><span class="line-added">+@endif</span></div>
+
+                <p style="color: #64748b; font-size: 13px;"><strong>Why this works:</strong> <code>wire:key</code> gives Livewire's morphdom a stable identity for each element. During the streaming&rarr;static transition, the morph algorithm now matches elements by key rather than DOM position, preserving the draft card elements across re-renders. This is the <a href="https://livewire.laravel.com/docs/troubleshooting#dom-diffing-issues" style="color: #60a5fa;">documented Livewire solution</a> for morph instability in dynamic lists.</p>
+            </div>
+        </div>
+
+        <!-- Section 3: Reference Links -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">Links</span>
+            </div>
+            <div class="section-body">
+                <h3 class="section-title">Issue &amp; PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-605/fix-draft-cards-disappearing-from-ai-drawer-ui" target="_blank">CRTX-605: Fix draft cards disappearing from AI drawer UI</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5551" target="_blank">PR #5551: CRTX-605 &mdash; Fix draft cards disappearing from AI drawer UI</a>
+                        <span class="link-label">GitHub Pull Request</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Source</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774670903671989" target="_blank">Josh/WWA &mdash; AI conversation where draft cards disappeared (Mar 27, 9:08 PM PDT)</a>
+                        <span class="link-label">#ai-conversations &mdash; Draft cards vanished ~3:46 after creation</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 4: Evidence Slideshow -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Verification Evidence</h2>
+                <span class="step-badge">Evidence</span>
+            </div>
+            <div class="section-body">
+                <p>Local browser testing on branch <code>lhilton/crtx-605-draft-cards-vanish</code> at <code>wwa.riyadh-v1.test</code>. Logged in as Josh (the same user who experienced the bug) and requested email + SMS drafts for the same contact (Josh Haghani). Draft cards persisted for <strong>4+ minutes</strong> &mdash; past the ~3:46 window where they previously vanished. <span class="status-tag pass">VERIFIED</span></p>
+
+                <div class="controls">
+                    <button onclick="prev()" id="prevBtn">&larr; Previous</button>
+                    <span class="counter" id="counter">1 / 7</span>
+                    <button onclick="next()" id="nextBtn">Next &rarr;</button>
+                </div>
+
+                <!-- Slide 1: Login -->
+                <div class="slide active" data-index="0">
+                    <div class="slide-header">
+                        <h2>Logged in as Josh @ WWA</h2>
+                        <span class="step-badge">Step 1</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Logged in to Western Welding Academy as Josh (<code>josh+wwa@lumion.ai</code>) &mdash; the same user who reported the draft cards disappearing in Conversation #30. School Dashboard loaded successfully. <span class="status-tag pass">PASS</span></p>
+                        <img src="01-logged-in-dashboard.png" alt="Logged in as Josh at WWA">
+                    </div>
+                </div>
+
+                <!-- Slide 2: AI Drawer Open -->
+                <div class="slide" data-index="1">
+                    <div class="slide-header">
+                        <h2>AI Drawer Opened</h2>
+                        <span class="step-badge">Step 2</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Clicked the AI trigger button in the top toolbar. Mia opens in the right-side drawer with greeting and quick action chips. <span class="status-tag pass">PASS</span></p>
+                        <img src="02-ai-drawer-open.png" alt="AI drawer open">
+                    </div>
+                </div>
+
+                <!-- Slide 3: Message Typed -->
+                <div class="slide" data-index="2">
+                    <div class="slide-header">
+                        <h2>Draft Request Sent</h2>
+                        <span class="step-badge">Step 3</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Sent the same type of request that triggered the original bug: <em>"Draft me an email and SMS for Josh Haghani &mdash; a friendly lead check-in."</em> This replicates the exact scenario from Conversation #30. <span class="status-tag info">REPLICATING BUG SCENARIO</span></p>
+                        <img src="03-message-typed.png" alt="Draft request typed">
+                    </div>
+                </div>
+
+                <!-- Slide 4: AI Responding -->
+                <div class="slide" data-index="3">
+                    <div class="slide-header">
+                        <h2>AI Processing &amp; Streaming</h2>
+                        <span class="step-badge">Step 4</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>The AI is streaming its response and generating draft cards. The <code>wire:key</code> attributes on the message loop elements now give Livewire stable anchors during this streaming&rarr;static transition. <span class="status-tag info">STREAMING</span></p>
+                        <img src="04-ai-responding.png" alt="AI streaming response">
+                    </div>
+                </div>
+
+                <!-- Slide 5: Draft Cards Visible -->
+                <div class="slide" data-index="4">
+                    <div class="slide-header">
+                        <h2>Draft Cards Generated &mdash; Both Visible</h2>
+                        <span class="step-badge">Step 5</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Both draft cards appeared successfully: <strong>Email draft</strong> (Subject: "Quick check-in on welding training") and <strong>SMS draft</strong>. Each card has Edit, Cancel, and Send buttons. The <code>wire:key="drafts-section"</code> container stabilizes these cards in the DOM. <span class="status-tag pass">PASS</span></p>
+                        <img src="05b-draft-cards-closeup.png" alt="Both draft cards visible">
+                    </div>
+                </div>
+
+                <!-- Slide 6: Cards Persist at 90s -->
+                <div class="slide" data-index="5">
+                    <div class="slide-header">
+                        <h2>Draft Cards Persist &mdash; 90 Seconds</h2>
+                        <span class="step-badge">Step 6</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>After <strong>90 seconds</strong>, both draft cards are still visible with all interactive buttons intact. In the original bug, cards vanished within ~3:46 of creation. <span class="status-tag pass">PERSISTING</span></p>
+                        <img src="07-drafts-persist-90s.png" alt="Draft cards still visible at 90 seconds">
+                    </div>
+                </div>
+
+                <!-- Slide 7: Cards Persist at 4+ min -->
+                <div class="slide" data-index="6">
+                    <div class="slide-header">
+                        <h2>Draft Cards Persist &mdash; 4+ Minutes</h2>
+                        <span class="step-badge">Step 7</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>After <strong>4+ minutes</strong> (past the original 3:46 failure window), both draft cards remain visible and fully interactive. The <code>wire:key</code> fix prevents Livewire's morph algorithm from losing track of these elements during re-renders. <span class="status-tag pass">FIX CONFIRMED</span></p>
+                        <img src="09-drafts-persist-4min.png" alt="Draft cards persisting at 4+ minutes">
+                    </div>
+                </div>
+
+                <div class="thumbnails" id="thumbnails"></div>
+                <div class="keyboard-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+
+                <h3 class="section-title" style="margin-top: 32px;">Automated Test Results</h3>
+                <p>All 26 AssistantDrawer tests pass with 46 assertions, confirming the fix doesn't break any existing functionality. <span class="status-tag pass">ALL PASS</span></p>
+
+                <div class="code-block" style="font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  AssistantDrawer Tests
+<span style="color: #4ade80;">  ✓</span> 26 tests, 46 assertions &mdash; all passing
+
+  Tests:    <span style="color: #4ade80;">26 passed</span> (46 assertions)
+  Duration: 14.70s</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const images = [
+            '01-logged-in-dashboard.png', '02-ai-drawer-open.png', '03-message-typed.png',
+            '04-ai-responding.png', '05b-draft-cards-closeup.png', '07-drafts-persist-90s.png',
+            '09-drafts-persist-4min.png'
+        ];
+        let current = 0;
+
+        const thumbsContainer = document.getElementById('thumbnails');
+        images.forEach((img, i) => {
+            const div = document.createElement('div');
+            div.className = 'thumb' + (i === 0 ? ' active' : '');
+            div.onclick = () => goTo(i);
+            div.innerHTML = `<img src="${img}" alt="Step ${i+1}">`;
+            thumbsContainer.appendChild(div);
+        });
+
+        function goTo(index) {
+            slides[current].classList.remove('active');
+            document.querySelectorAll('.thumb')[current].classList.remove('active');
+            current = index;
+            slides[current].classList.add('active');
+            document.querySelectorAll('.thumb')[current].classList.add('active');
+            document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+            document.getElementById('prevBtn').disabled = current === 0;
+            document.getElementById('nextBtn').disabled = current === slides.length - 1;
+        }
+
+        function next() { if (current < slides.length - 1) goTo(current + 1); }
+        function prev() { if (current > 0) goTo(current - 1); }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+
+        document.getElementById('prevBtn').disabled = true;
+    </script>
+</body>
+</html>
