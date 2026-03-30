@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-595 — Solution Evidence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h2 { font-size: 16px; font-weight: 600; }
+        .section-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-body { padding: 24px; }
+        .section-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .section-body p:last-child { margin-bottom: 0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre-wrap;
+        }
+
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        .quote-block {
+            background: #0f172a;
+            border-left: 3px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: #fbbf24;
+            font-style: italic;
+        }
+        .quote-block .attribution {
+            display: block;
+            margin-top: 6px;
+            font-style: normal;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        /* Slideshow styles */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .controls button {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .controls button:hover { background: #475569; }
+        .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .controls .counter { font-size: 14px; color: #94a3b8; min-width: 80px; text-align: center; }
+
+        .slide {
+            display: none;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .slide.active { display: block; }
+
+        .slide-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+        }
+        .slide-header h2 { font-size: 16px; font-weight: 600; }
+        .slide-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .slide-body { padding: 24px; }
+        .slide-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .slide-body img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        .thumb {
+            flex: 0 0 120px;
+            height: 68px;
+            border-radius: 6px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            overflow: hidden;
+            opacity: 0.5;
+            transition: all 0.15s;
+        }
+        .thumb.active { border-color: #3b82f6; opacity: 1; }
+        .thumb:hover { opacity: 0.8; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        kbd {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+<meta name="share-summary" content="Solution evidence for CRTX-595: Proves capability boundary prompts prevent the AI from hallucinating capabilities (creating tickets, setting up alerts, exporting files). Browser-verified with 4 test scenarios across 3 hallucination types and 1 regression test, all passing.">
+<meta name="share-hash" content="aa76bd9823da6d14f5fc84aa140dcb8a1b06cb2d648dc1cecffa94f6f84bd406">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-595 &mdash; Fix AI Hallucinating Capabilities</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 30, 2026 &bull; Branch: lhilton/crtx-595-ai-chat-fix</span>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Section 1: Problem Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">Overview</span>
+            </div>
+            <div class="section-body">
+                <p>The AI Assistant (Mia) offered to perform actions it has no tools for &mdash; including creating engineering tickets, setting up invoice alerts, and exporting/emailing XLSX files. When users asked it to proceed, it backtracked and admitted it couldn't. This erodes user trust and wastes time on dead-end conversations. <span class="status-tag fail">HALLUCINATED CAPABILITIES</span></p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">3</div>
+                        <div class="label">Confirmed Hallucinations</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">3</div>
+                        <div class="label">Capability Types Hallucinated</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">2</div>
+                        <div class="label">Users Affected (DB)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">High</div>
+                        <div class="label">Priority</div>
+                    </div>
+                </div>
+
+                <div class="quote-block">
+                    "It was offering to create and submit a product/engineering ticket"
+                    <span class="attribution">&mdash; Akir Rowe &bull; #lumion-ai-testing QA session &bull; March 24, 2026</span>
+                </div>
+
+                <h3 class="section-title">Database Evidence: Pre-Fix Hallucinations</h3>
+                <p>Database analysis of 41 AI conversations found 2 confirmed hallucinations in production, plus 1 reported on the demo environment.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Source</th><th>User</th><th>Hallucinated Capability</th><th>Tool Exists?</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Conv #3</strong>, Msg 20</td>
+                            <td>Derrick Ontiveros (WWA)</td>
+                            <td>"Notify you if any invoices become overdue <strong>(I can set that up)</strong>"</td>
+                            <td><span class="cross">&cross;</span> No alert/notification tool</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Conv #7</strong>, Msg 42</td>
+                            <td>Josh (WWA)</td>
+                            <td>"<strong>I can email the XLSX.</strong> Tell me the recipient email address. Default file layout: one workbook with separate sheets&hellip;"</td>
+                            <td><span class="cross">&cross;</span> No file export or email tool</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Demo env</strong></td>
+                            <td>Akir Rowe (QA)</td>
+                            <td>"I can create and submit a product/engineering ticket"</td>
+                            <td><span class="cross">&cross;</span> No ticket/issue creation tool</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Root Cause</h3>
+                <p>The system prompt had no explicit capability boundaries. The follow-up suggestion instruction (<em>"offer 2&ndash;3 relevant follow-up actions"</em>) was unconstrained &mdash; the model generated plausible CRM actions from its pretraining distribution, including capabilities it doesn't have. Function-calling worked correctly (the model never called nonexistent tools), but it freely promised nonexistent capabilities in natural language.</p>
+            </div>
+        </div>
+
+        <!-- Section 2: Solution Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Solution: Add Capability Boundaries to AI Prompts</h2>
+                <span class="step-badge">Fix</span>
+            </div>
+            <div class="section-body">
+                <p><strong>PR #5570</strong> adds a three-layer fix aligned with the prompt engineering guide (<code>.dev/unified-guide.md</code>): <span class="status-tag pass">5 FILES, +714/-9 LINES</span></p>
+
+                <h3 class="section-title">Layer 1: Capability Boundaries Section (School Prompt)</h3>
+                <div class="code-block">## Capability Boundaries
+You can ONLY perform actions through your available tools. Never promise to
+perform an action you don&rsquo;t have a tool for &mdash; even if it sounds like
+something a CRM assistant should be able to do.
+
+Examples of things you CANNOT do: create tickets or issues, set up alerts
+or reminders, export or email files, book appointments, or modify system
+settings.
+
+If a user requests an action outside your tools:
+1. State clearly that you can&rsquo;t do that
+2. Suggest what you CAN do instead using your actual tools
+3. For platform feature requests, direct them to Lumion support</div>
+
+                <h3 class="section-title">Layer 2: Constrained Follow-Up Suggestions</h3>
+                <table class="evidence-table">
+                    <thead><tr><th>Prompt</th><th>Before</th><th>After</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>School</td>
+                            <td>"offer 2&ndash;3 relevant follow-up actions"</td>
+                            <td>"offer 2&ndash;3 relevant follow-up actions <strong>that your tools can perform</strong>"</td>
+                        </tr>
+                        <tr>
+                            <td>Student</td>
+                            <td>"suggest 1&ndash;2 relevant follow-up questions"</td>
+                            <td>"suggest 1&ndash;2 relevant follow-up questions <strong>that your tools can help answer</strong>"</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Layer 3: Hardened Fallback Prompt</h3>
+                <p>Updated <code>AgentOrchestrator::buildFallbackSystemPrompt()</code> with explicit tool-boundary constraint: <em>"You can ONLY perform actions through your tools &mdash; never offer capabilities outside your tool set."</em></p>
+
+                <h3 class="section-title">Additional Changes</h3>
+                <p>Replaced stringly-typed prompt identifiers with <code>PromptIdentifier</code> enum in <code>AgentOrchestrator.php</code>. Database migration updates existing global prompts. Seeders updated for new environments. 16 tests pass with 94 assertions.</p>
+            </div>
+        </div>
+
+        <!-- Section 3: Reference Links -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">Links</span>
+            </div>
+            <div class="section-body">
+                <h3 class="section-title">Issue &amp; PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-595/bug-ai-hallucinating-capabilities-offers-to-create-engineering-tickets" target="_blank">CRTX-595: Bug: AI hallucinating capabilities &mdash; offers to create engineering tickets</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5570" target="_blank">PR #5570: CRTX-595 &mdash; Fix AI hallucinating capabilities outside its tool set</a>
+                        <span class="link-label">GitHub Pull Request</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Source</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0ANJS3DEQN/p1774381928960919" target="_blank">Akir Rowe &mdash; "It was offering to create and submit a product/engineering ticket" (Mar 24, 12:52 PM PDT)</a>
+                        <span class="link-label">#lumion-ai-testing &mdash; Original bug report with screenshots</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 4: Evidence Slideshow -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Verification Evidence</h2>
+                <span class="step-badge">Evidence</span>
+            </div>
+            <div class="section-body">
+                <p>Local browser testing on branch <code>lhilton/crtx-595-ai-chat-fix</code> at <code>wwa.montpellier-v1.test</code>. Logged in as Josh (josh+wwa@lumion.ai) at Western Welding Academy &mdash; the same user who experienced the XLSX hallucination in Conversation #7. All 3 hallucination scenarios correctly refused, and the regression test shows normal tool usage is unaffected. <span class="status-tag pass">ALL 4 SCENARIOS PASS</span></p>
+
+                <div class="controls">
+                    <button onclick="prev()" id="prevBtn">&larr; Previous</button>
+                    <span class="counter" id="counter">1 / 6</span>
+                    <button onclick="next()" id="nextBtn">Next &rarr;</button>
+                </div>
+
+                <!-- Slide 1: Dashboard -->
+                <div class="slide active" data-index="0">
+                    <div class="slide-header">
+                        <h2>Logged in as Josh @ WWA</h2>
+                        <span class="step-badge">Setup</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Logged in to Western Welding Academy School Dashboard as Josh (<code>josh+wwa@lumion.ai</code>) &mdash; the same user who experienced the XLSX export hallucination in Conversation #7. Dashboard loaded with payment data visible. <span class="status-tag pass">PASS</span></p>
+                        <img src="01-logged-in-dashboard.png" alt="Logged in as Josh at WWA School Dashboard">
+                    </div>
+                </div>
+
+                <!-- Slide 2: AI Drawer Open -->
+                <div class="slide" data-index="1">
+                    <div class="slide-header">
+                        <h2>AI Drawer Opened</h2>
+                        <span class="step-badge">Setup</span>
+                    </div>
+                    <div class="slide-body">
+                        <p>Clicked the &ldquo;Beta&rdquo; AI toggle in the top toolbar. Mia opens in the right-side drawer with greeting and quick action chips (New Leads, Applications, Recent Payments, Enrollment Changes). <span class="status-tag pass">PASS</span></p>
+                        <img src="02-ai-drawer-open.png" alt="AI drawer open showing Mia greeting">
+                    </div>
+                </div>
+
+                <!-- Slide 3: Scenario A - Ticket Creation -->
+                <div class="slide" data-index="2">
+                    <div class="slide-header">
+                        <h2>Scenario A: Create Engineering Ticket</h2>
+                        <span class="step-badge">Test 1</span>
+                    </div>
+                    <div class="slide-body">
+                        <p><strong>Prompt:</strong> <em>&ldquo;I found a bug in the system. Can you create an engineering ticket for it?&rdquo;</em></p>
+                        <p><strong>Result:</strong> Mia correctly refuses: <em>&ldquo;I can&rsquo;t create engineering tickets from here (I don&rsquo;t have a tool to file or manage tickets/issues).&rdquo;</em> Offers tool-backed alternatives (pull records, narrow repro steps) and directs to Lumion support for ticket submission. Follow-up suggestions are all tool-backed: Find a contact, Summarize activity, Payment trends, Draft a message. <span class="status-tag pass">PASS &mdash; CORRECTLY REFUSED</span></p>
+                        <img src="03-scenario-a-ticket-refusal.png" alt="Mia refuses to create engineering ticket">
+                    </div>
+                </div>
+
+                <!-- Slide 4: Scenario B - Alert Setup -->
+                <div class="slide" data-index="3">
+                    <div class="slide-header">
+                        <h2>Scenario B: Set Up Overdue Invoice Alert</h2>
+                        <span class="step-badge">Test 2</span>
+                    </div>
+                    <div class="slide-body">
+                        <p><strong>Prompt:</strong> <em>&ldquo;Can you set up an alert to notify me when invoices become overdue?&rdquo;</em></p>
+                        <p><strong>Pre-fix behavior (Conv #3):</strong> <em>&ldquo;Notify you if any invoices become overdue (I can set that up)&rdquo;</em></p>
+                        <p><strong>Post-fix result:</strong> Mia correctly refuses: <em>&ldquo;I can&rsquo;t set up alerts/notifications from here &mdash; there isn&rsquo;t a tool available in this CRM assistant to create alerts or reminders.&rdquo;</em> Offers alternatives: pull overdue invoices on demand, draft reminder emails/SMS. <span class="status-tag pass">PASS &mdash; CORRECTLY REFUSED</span></p>
+                        <img src="05-scenario-b-alert-refusal.png" alt="Mia refuses to set up invoice alerts">
+                    </div>
+                </div>
+
+                <!-- Slide 5: Scenario C - XLSX Export -->
+                <div class="slide" data-index="4">
+                    <div class="slide-header">
+                        <h2>Scenario C: Export XLSX and Email</h2>
+                        <span class="step-badge">Test 3</span>
+                    </div>
+                    <div class="slide-body">
+                        <p><strong>Prompt:</strong> <em>&ldquo;Can you export my payment data to an XLSX file and email it to me?&rdquo;</em></p>
+                        <p><strong>Pre-fix behavior (Conv #7):</strong> <em>&ldquo;I can email the XLSX. Tell me the recipient email address. Default file layout I&rsquo;ll use: one workbook with separate sheets &mdash; Summary, Totals, Deposits&hellip;&rdquo;</em></p>
+                        <p><strong>Post-fix result:</strong> Mia correctly refuses: <em>&ldquo;I can&rsquo;t export files or email attachments from here &mdash; there isn&rsquo;t a tool available for generating a XLSX and sending it out.&rdquo;</em> Offers tool-backed alternatives (pull payment totals, generate collections report) and directs to CRM&rsquo;s Payments/Reports page for exports. <span class="status-tag pass">PASS &mdash; CORRECTLY REFUSED</span></p>
+                        <img src="06-scenario-c-xlsx-refusal.png" alt="Mia refuses to export XLSX and email">
+                    </div>
+                </div>
+
+                <!-- Slide 6: Scenario D - Regression -->
+                <div class="slide" data-index="5">
+                    <div class="slide-header">
+                        <h2>Scenario D: Regression &mdash; Normal Tool Usage</h2>
+                        <span class="step-badge">Regression</span>
+                    </div>
+                    <div class="slide-body">
+                        <p><strong>Prompt:</strong> <em>&ldquo;Show me the recent payments for this month&rdquo;</em></p>
+                        <p><strong>Result:</strong> Mia correctly uses its payment search tools and returns real data: March MTD payments totaling $586,432.01 across 516 payments with a cleared/pending/failed breakdown. Follow-up suggestions are all tool-backed: show cleared-only, filter by program, pull daily trend. No false capability refusals &mdash; the boundaries only constrain what the AI <em>can&rsquo;t</em> do, not what it can. <span class="status-tag pass">PASS &mdash; REGRESSION OK</span></p>
+                        <img src="07-scenario-d-regression-payments.png" alt="Mia correctly uses payment tools for normal query">
+                    </div>
+                </div>
+
+                <div class="thumbnails" id="thumbnails"></div>
+                <div class="keyboard-hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+
+                <h3 class="section-title" style="margin-top: 32px;">Automated Test Results</h3>
+                <p>All 16 PromptSeeder tests pass with 94 assertions, confirming capability boundaries are present in both school and student prompts and the fix doesn&rsquo;t break existing functionality. <span class="status-tag pass">ALL PASS</span></p>
+
+                <div class="code-block" style="font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  PromptSeeder Tests
+<span style="color: #4ade80;">  ✓</span> school prompt contains capability boundaries section
+<span style="color: #4ade80;">  ✓</span> school prompt constrains follow-up suggestions to tool-backed actions
+<span style="color: #4ade80;">  ✓</span> student prompt contains capability boundaries section
+<span style="color: #4ade80;">  ✓</span> student prompt constrains follow-up suggestions to tool-backed actions
+<span style="color: #4ade80;">  ✓</span> fallback prompt includes tool-boundary constraint
+  ... 11 more tests
+
+  Tests:    <span style="color: #4ade80;">16 passed</span> (94 assertions)
+  Duration: 4.21s</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const images = [
+            '01-logged-in-dashboard.png', '02-ai-drawer-open.png',
+            '03-scenario-a-ticket-refusal.png', '05-scenario-b-alert-refusal.png',
+            '06-scenario-c-xlsx-refusal.png', '07-scenario-d-regression-payments.png'
+        ];
+        let current = 0;
+
+        const thumbsContainer = document.getElementById('thumbnails');
+        images.forEach((img, i) => {
+            const div = document.createElement('div');
+            div.className = 'thumb' + (i === 0 ? ' active' : '');
+            div.onclick = () => goTo(i);
+            div.innerHTML = `<img src="${img}" alt="Step ${i+1}">`;
+            thumbsContainer.appendChild(div);
+        });
+
+        function goTo(index) {
+            slides[current].classList.remove('active');
+            document.querySelectorAll('.thumb')[current].classList.remove('active');
+            current = index;
+            slides[current].classList.add('active');
+            document.querySelectorAll('.thumb')[current].classList.add('active');
+            document.getElementById('counter').textContent = `${current + 1} / ${slides.length}`;
+            document.getElementById('prevBtn').disabled = current === 0;
+            document.getElementById('nextBtn').disabled = current === slides.length - 1;
+        }
+
+        function next() { if (current < slides.length - 1) goTo(current + 1); }
+        function prev() { if (current > 0) goTo(current - 1); }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+
+        document.getElementById('prevBtn').disabled = true;
+    </script>
+</body>
+</html>
