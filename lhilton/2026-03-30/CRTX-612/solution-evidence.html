@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRTX-612 — Solution Evidence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #475569;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .badge {
+            background: #22c55e;
+            color: #052e16;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header h2 { font-size: 16px; font-weight: 600; }
+        .section-header .step-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-body { padding: 24px; }
+        .section-body p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .section-body p:last-child { margin-bottom: 0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.pass { background: #14532d; color: #4ade80; border: 1px solid #166534; }
+        .status-tag.fail { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .status-tag.info { background: #172554; color: #60a5fa; border: 1px solid #1e40af; }
+        .status-tag.note { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .summary-card .number { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .summary-card .number.danger { color: #f87171; }
+        .summary-card .number.success { color: #4ade80; }
+        .summary-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .evidence-table th, .evidence-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            font-size: 13px;
+        }
+        .evidence-table th { color: #94a3b8; font-weight: 500; }
+        .evidence-table td { color: #e2e8f0; }
+        .evidence-table .mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+        }
+
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin: 16px 0;
+            white-space: pre;
+        }
+        .code-block .line-removed { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-added { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; margin: 0 -16px; padding: 0 16px; }
+        .code-block .line-context { color: #64748b; display: block; }
+
+        .links-list {
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #0f172a;
+        }
+        .links-list li a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links-list li a:hover { text-decoration: underline; }
+        .links-list .link-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .check { color: #4ade80; font-weight: 700; }
+        .cross { color: #f87171; font-weight: 700; }
+
+        h3.section-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 12px 0;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        .quote-block {
+            background: #0f172a;
+            border-left: 3px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: #fbbf24;
+            font-style: italic;
+        }
+        .quote-block .attribution {
+            display: block;
+            margin-top: 6px;
+            font-style: normal;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .role-chip {
+            display: inline-block;
+            background: #172554;
+            border: 1px solid #1e40af;
+            color: #60a5fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+    </style>
+<meta name="share-summary" content="Solution evidence for CRTX-612: Proves the payment method lookup fix resolves 'No payment method on file' for 128 Molloy University students whose payment methods had applicant_id=NULL. Database evidence shows old code returned zero methods while fixed code correctly returns VISA/Mastercard via user_id lookup, with 12/12 automated tests passing.">
+<meta name="share-hash" content="8c3428a3d7830e8c6af03d5fe1c4b212ec3cc462f90550dd5ef0add63e5ee3e1">
+</head>
+<body>
+    <div class="header">
+        <h1>CRTX-612 &mdash; Fix Payment Method Lookup in Student Payment Schedule Tool</h1>
+        <div>
+            <span class="badge">VERIFIED</span>
+            <span style="margin-left: 8px; font-size: 13px; color: #94a3b8;">March 30, 2026 &bull; PR #5557 (merged)</span>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Section 1: Problem Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Problem Summary</h2>
+                <span class="step-badge">Overview</span>
+            </div>
+            <div class="section-body">
+                <p>A student at Molloy University asked the AI assistant for her payment schedule. The AI returned <strong>"No payment method on file"</strong> despite having active payment methods with completed payments, and <strong>"No upcoming payments found"</strong> despite 4 consecutive monthly payments. <span class="status-tag fail">WRONG DATA</span></p>
+
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="number danger">1</div>
+                        <div class="label">Reported Incident</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">128</div>
+                        <div class="label">Students Affected at Molloy</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number danger">76.3%</div>
+                        <div class="label">Payment Methods Invisible</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="number">High</div>
+                        <div class="label">Priority</div>
+                    </div>
+                </div>
+
+                <div class="quote-block">
+                    AI returned: "No payment method on file" and "No upcoming payments found" &mdash; despite 4 completed payments ($901.25 + 3 &times; $875.00) from Nov 2025 through Feb 2026.
+                    <span class="attribution">&mdash; Alana Rodney, Molloy University (student ID: 87604) &bull; March 29, 2026</span>
+                </div>
+
+                <h3 class="section-title">Two Issues Investigated</h3>
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Issue</th><th>Root Cause</th><th>Verdict</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>"No payment method on file"</strong></td>
+                            <td>Tool used <code>applicant_id</code> FK to find payment methods. 76.3% (242/317) of Molloy's active payment methods have <code>applicant_id = NULL</code> &mdash; they're linked only via <code>user_id</code>.</td>
+                            <td><span class="status-tag fail">BUG &mdash; Fixed in PR #5557</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>"No upcoming payments found"</strong></td>
+                            <td>Molloy's standard plan is $3,500 across 4 monthly installments of $875. All Molloy students with exactly 4 completed $875 payments have <code>is_active=0, is_satisfied=1</code> &mdash; the plan was genuinely complete.</td>
+                            <td><span class="status-tag pass">LEGITIMATE &mdash; Not a bug</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Scope of Impact</h3>
+                <p>At Molloy University, <strong>242 out of 317</strong> active payment methods (76.3%) have <code>applicant_id = NULL</code>, affecting <strong>128 unique students</strong>. Every one of these students would have been told "No payment method on file" by the AI assistant, regardless of their actual payment status.</p>
+            </div>
+        </div>
+
+        <!-- Section 2: Solution Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Solution: Switch to PaymentBrokerInterface Lookup</h2>
+                <span class="step-badge">Fix</span>
+            </div>
+            <div class="section-body">
+                <p><strong>Root cause:</strong> <code>PaymentScheduleTool</code> eager-loaded <code>paymentMethods</code> via the <code>Applicant</code> model's relationship, which joins on <code>applicant_id</code>. But Molloy's Finix-based payment methods are linked only via <code>user_id</code> (with <code>applicant_id = NULL</code>). The student dashboard, payment forms, and autopay all use <code>PaymentBrokerInterface::getPaymentMethodOptionsForUser()</code> which queries by <code>user_id</code> &mdash; the canonical lookup. <span class="status-tag info">ROOT CAUSE</span></p>
+
+                <p><strong>Fix:</strong> Switched from applicant-based eager loading to <code>PaymentBrokerInterface::getPaymentMethodOptionsForUser($user, $institution)</code>. Also selects the <strong>default</strong> payment method (via <code>is_default</code>) rather than the newest by date. <span class="status-tag pass">2 FILES, +61/-59 LINES</span></p>
+
+                <h3 class="section-title">Payment Method Lookup &mdash; Before &amp; After</h3>
+                <div class="code-block"><span class="line-context"> // Eager loading</span><span class="line-removed">- $eagerLoads = ['paymentMethods', ...($includeHistory ? ['isas.payments'] : [])];</span><span class="line-added">+ $eagerLoads = $includeHistory ? ['isas.payments'] : [];</span><span class="line-context"></span><span class="line-context"> // Method call</span><span class="line-removed">- $paymentMethod = $this->getPaymentMethod($applicants);</span><span class="line-added">+ $paymentMethod = $this->getPaymentMethod($user, $institution);</span><span class="line-context"></span><span class="line-context"> // Implementation</span><span class="line-removed">- private function getPaymentMethod(Collection $applicants): ?array</span><span class="line-removed">- {</span><span class="line-removed">-     $newestMethod = $applicants</span><span class="line-removed">-         ->map(fn (Applicant $applicant) => $applicant->paymentMethods</span><span class="line-removed">-             ->sortByDesc('created_at')->first())</span><span class="line-removed">-         ->filter()->sortByDesc('created_at')->first();</span><span class="line-removed">- }</span><span class="line-added">+ private function getPaymentMethod(User $user, Institution $institution): ?array</span><span class="line-added">+ {</span><span class="line-added">+     $methods = app(PaymentBrokerInterface::class)</span><span class="line-added">+         ->getPaymentMethodOptionsForUser($user, $institution);</span><span class="line-added">+     $bestMethod = $methods->sortByDesc('is_default')->first();</span><span class="line-added">+ }</span></div>
+
+                <p style="color: #64748b; font-size: 13px;"><strong>Why the old code failed:</strong> <code>Applicant::paymentMethods()</code> queries <code>payment_methods.applicant_id = applicant.id</code>. When <code>applicant_id</code> is NULL (as it is for 76.3% of Molloy's Finix-based methods), the relationship returns zero results. The <code>PaymentBrokerInterface</code> uses <code>user_id</code> instead &mdash; the same lookup used by the student dashboard and payment forms.</p>
+            </div>
+        </div>
+
+        <!-- Section 3: Reference Links -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Reference Links</h2>
+                <span class="step-badge">Links</span>
+            </div>
+            <div class="section-body">
+                <h3 class="section-title">Issue &amp; PR</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://linear.app/lumion/issue/CRTX-612/investigate-student-payment-schedule-shows-no-upcoming-payments-or" target="_blank">CRTX-612: Investigate &mdash; Student payment schedule shows no upcoming payments or payment method</a>
+                        <span class="link-label">Linear Issue</span>
+                    </li>
+                    <li>
+                        <a href="https://github.com/MiaShare/miashare-app/pull/5557" target="_blank">PR #5557: CRTX-612 &mdash; Fix payment method lookup in student payment schedule MCP tool</a>
+                        <span class="link-label">GitHub Pull Request (Merged)</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-title">Slack Source</h3>
+                <ul class="links-list">
+                    <li>
+                        <a href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774789708992769" target="_blank">Alana Rodney / Molloy &mdash; Payment schedule showing no payment method and no upcoming payments (Mar 29)</a>
+                        <span class="link-label">#ai-conversations &mdash; Flagged for investigation by Josh</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 4: Evidence -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Verification Evidence</h2>
+                <span class="step-badge">Evidence</span>
+            </div>
+            <div class="section-body">
+                <p>Evidence gathered via Laravel Tinker queries against the local database (seeded from sanitized production dump). Each test compares the <strong>old code path</strong> (applicant_id lookup) against the <strong>fixed code path</strong> (PaymentBrokerInterface user_id lookup) for real Molloy University students. <span class="status-tag info">DATA EVIDENCE</span></p>
+
+                <h3 class="section-title">Evidence 1: Sherlie Legagneur &mdash; Old vs New Code Path</h3>
+                <p>Sherlie has 2 VISA debit cards, 4 upcoming payments ($375/mo), and an active contract. Both payment methods have <code>applicant_id = NULL</code> &mdash; exactly the bug pattern reported in CRTX-612.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Field</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Student</td><td><strong>Sherlie Legagneur</strong> (user ID: 100731)</td></tr>
+                        <tr><td>Email</td><td class="mono">sherlie43.sp@gmail.com</td></tr>
+                        <tr><td>Institution</td><td>Core Education Services, PBC on behalf of Molloy University (ID: 501)</td></tr>
+                        <tr><td>Payment Methods</td><td>2 &times; VISA debit cards (IDs: 92361, 92365)</td></tr>
+                        <tr><td><code>applicant_id</code> on both</td><td class="mono"><span class="status-tag fail">NULL</span> &mdash; invisible to old code</td></tr>
+                        <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+                        <tr>
+                            <td>OLD: <code>Applicant::paymentMethods</code></td>
+                            <td><span class="cross">&cross;</span> <strong>0 results</strong> &rarr; "No payment method on file" <span style="color: #f87171;">(WRONG)</span></td>
+                        </tr>
+                        <tr>
+                            <td>NEW: <code>PaymentBrokerInterface</code></td>
+                            <td><span class="check">&check;</span> <strong>1 result</strong> &rarr; VISA debit ****7928 (default, autopay enabled) <span style="color: #4ade80;">(CORRECT)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Evidence 2: Karla Carrillo &mdash; Second Student Confirmation</h3>
+                <p>Independent verification with a different student, different card brand. Same <code>applicant_id = NULL</code> pattern, same result.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Field</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Student</td><td><strong>Karla Carrillo</strong> (user ID: 101735)</td></tr>
+                        <tr><td>Email</td><td class="mono">karla.crlo96@gmail.com</td></tr>
+                        <tr><td>Payment Method</td><td>1 &times; MASTERCARD credit ****6802</td></tr>
+                        <tr><td><code>applicant_id</code></td><td class="mono"><span class="status-tag fail">NULL</span></td></tr>
+                        <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+                        <tr>
+                            <td>OLD: <code>Applicant::paymentMethods</code></td>
+                            <td><span class="cross">&cross;</span> <strong>0 results</strong> &rarr; "No payment method on file" <span style="color: #f87171;">(WRONG)</span></td>
+                        </tr>
+                        <tr>
+                            <td>NEW: <code>PaymentBrokerInterface</code></td>
+                            <td><span class="check">&check;</span> <strong>1 result</strong> &rarr; MASTERCARD credit ****6802 <span style="color: #4ade80;">(CORRECT)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Evidence 3: Sherlie's Upcoming Payments</h3>
+                <p>Confirms the tool correctly returns upcoming payments for students with active plans. Unlike the original reporter (whose plan was complete), Sherlie has 4 remaining installments.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Due Date</th><th>Amount</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>2026-04-29</td><td>$375.00</td><td><span class="status-tag info">UPCOMING</span></td></tr>
+                        <tr><td>2026-05-29</td><td>$375.00</td><td><span class="status-tag info">UPCOMING</span></td></tr>
+                        <tr><td>2026-06-29</td><td>$375.00</td><td><span class="status-tag info">UPCOMING</span></td></tr>
+                        <tr><td>2026-07-29</td><td>$375.00</td><td><span class="status-tag info">UPCOMING</span></td></tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Evidence 4: Population-Level Impact</h3>
+                <p>Queried all Molloy payment methods to confirm this isn't an isolated data issue but a systemic pattern affecting the majority of students.</p>
+
+                <table class="evidence-table">
+                    <thead>
+                        <tr><th>Metric</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Total Molloy payment methods (active)</td><td><strong>317</strong></td></tr>
+                        <tr><td>With <code>applicant_id = NULL</code></td><td><strong>242</strong> (76.3%) <span class="status-tag fail">INVISIBLE TO OLD CODE</span></td></tr>
+                        <tr><td>With <code>applicant_id</code> set</td><td>75 (23.7%) <span class="status-tag pass">VISIBLE TO BOTH</span></td></tr>
+                        <tr><td>Unique students affected</td><td><strong>128 students</strong></td></tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-title">Evidence 5: Automated Tests &mdash; 12/12 Passing</h3>
+                <p>Full test suite passes, including tests for the payment method lookup via <code>PaymentBrokerInterface</code> and the <code>amount_due</code> accessor accuracy. <span class="status-tag pass">ALL PASS</span></p>
+
+                <div class="code-block" style="font-size: 12px;"><span style="color: #4ade80;">  PASS</span>  App\Domains\StudentMcp\Tests\Unit\PaymentScheduleToolTest
+<span style="color: #4ade80;">  ✓</span> payment schedule retrieval → it returns next payment, payment method and history
+<span style="color: #4ade80;">  ✓</span> payment schedule retrieval → it returns helpful message when no payment records exist
+<span style="color: #4ade80;">  ✓</span> monetary formatting → it formats amounts to 2 decimal places
+<span style="color: #4ade80;">  ✓</span> payment method masking → it displays masked payment method from display_name
+<span style="color: #4ade80;">  ✓</span> payment method masking → it handles no payment method gracefully
+<span style="color: #4ade80;">  ✓</span> payment method masking → it returns the default payment method via broker
+<span style="color: #4ade80;">  ✓</span> history control → it excludes history when include_history is false
+<span style="color: #4ade80;">  ✓</span> history control → it handles no upcoming payment gracefully
+<span style="color: #4ade80;">  ✓</span> response formatting → it includes structured JSON in response
+<span style="color: #4ade80;">  ✓</span> amount due accuracy → it shows remaining balance for partially paid periods
+<span style="color: #4ade80;">  ✓</span> audit logging → it audits successful payment schedule retrieval
+<span style="color: #4ade80;">  ✓</span> audit logging → it audits empty results as success
+
+  Tests:    <span style="color: #4ade80;">12 passed</span> (30 assertions)
+  Duration: 1.75s</div>
+
+                <h3 class="section-title">Why "No Upcoming Payments" Was Legitimate</h3>
+                <p>The original reporter's "No upcoming payments found" was <strong>correct behavior</strong>. Molloy's standard plan is $3,500 across 4 monthly installments of $875. Database analysis of Molloy students with exactly 4 completed $875 payments shows they all have <code>is_active=0, is_satisfied=1</code> &mdash; their plans are genuinely complete with zero remaining periods. The $901.25 first payment = $875 base + $26.25 late fee (3% of $875). <span class="status-tag pass">NOT A BUG</span></p>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
