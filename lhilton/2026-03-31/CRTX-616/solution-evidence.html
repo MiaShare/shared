@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRTX-616 &amp; CRTX-617 Solution Evidence Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0f1117;
+    --bg-secondary: #161922;
+    --bg-card: #1c1f2e;
+    --bg-code: #12141f;
+    --border: #2a2d3e;
+    --border-accent: #3a3d4e;
+    --text-primary: #e4e6f0;
+    --text-secondary: #9ca0b4;
+    --text-muted: #6b6f85;
+    --accent-teal: #4fd1c5;
+    --accent-blue: #5261ce;
+    --accent-indigo: #7c8cf5;
+    --accent-rose: #fe6d73;
+    --accent-amber: #f6ad55;
+    --accent-green: #48bb78;
+    --accent-red: #fc5c65;
+    --code-keyword: #c792ea;
+    --code-string: #c3e88d;
+    --code-function: #82aaff;
+    --code-variable: #f78c6c;
+    --code-comment: #546e7a;
+    --code-type: #ffcb6b;
+    --code-operator: #89ddff;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .report-header {
+    text-align: center;
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .report-header .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent-teal);
+    background: rgba(79, 209, 197, 0.1);
+    border: 1px solid rgba(79, 209, 197, 0.25);
+    border-radius: 4px;
+    padding: 4px 12px;
+    margin-bottom: 16px;
+  }
+  .report-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .report-header .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .section {
+    margin-bottom: 56px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent-teal);
+    display: inline-block;
+  }
+  .lead {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+    line-height: 1.7;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card:nth-child(1)::before { background: var(--accent-teal); }
+  .stat-card:nth-child(2)::before { background: var(--accent-blue); }
+  .stat-card:nth-child(3)::before { background: var(--accent-indigo); }
+  .stat-card:nth-child(4)::before { background: var(--accent-amber); }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-card:nth-child(1) .stat-value { color: var(--accent-teal); }
+  .stat-card:nth-child(2) .stat-value { color: var(--accent-blue); }
+  .stat-card:nth-child(3) .stat-value { color: var(--accent-indigo); }
+  .stat-card:nth-child(4) .stat-value { color: var(--accent-amber); }
+  .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+  }
+
+  .quote-block {
+    background: var(--bg-card);
+    border-left: 4px solid var(--accent-rose);
+    border-radius: 0 10px 10px 0;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+  .quote-text {
+    font-size: 15px;
+    font-style: italic;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .quote-attr {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .fix-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .fix-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+  .fix-card .fix-number {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--bg-primary);
+    background: var(--accent-teal);
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .fix-card p, .fix-card li {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .fix-card ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 12px;
+  }
+  .fix-card ul li {
+    padding: 4px 0 4px 20px;
+    position: relative;
+  }
+  .fix-card ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+  }
+
+  .diff-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .diff-panel {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .diff-header {
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .diff-header.old { color: var(--accent-red); background: rgba(252, 92, 101, 0.08); }
+  .diff-header.new { color: var(--accent-green); background: rgba(72, 187, 120, 0.08); }
+  .diff-panel pre {
+    padding: 14px;
+    font-size: 12px;
+    line-height: 1.65;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-primary);
+  }
+  .kw { color: var(--code-keyword); }
+  .fn { color: var(--code-function); }
+  .str { color: var(--code-string); }
+  .var { color: var(--code-variable); }
+  .op { color: var(--code-operator); }
+  .cm { color: var(--code-comment); }
+  .hl-add { background: rgba(72, 187, 120, 0.1); display: inline-block; width: 100%; }
+  .hl-rem { background: rgba(252, 92, 101, 0.1); display: inline-block; width: 100%; }
+
+  .links-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .link-card {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+  }
+  .link-card:hover {
+    border-color: var(--accent-teal);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .link-card .link-icon { font-size: 28px; margin-bottom: 10px; }
+  .link-card .link-label { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .link-card .link-desc { font-size: 11px; color: var(--text-muted); }
+
+  .evidence-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .evidence-table thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border);
+  }
+  .evidence-table tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    vertical-align: top;
+  }
+  .evidence-table tbody tr:hover td {
+    background: rgba(79, 209, 197, 0.04);
+  }
+  .evidence-table .good { color: var(--accent-green); font-weight: 600; }
+  .evidence-table .bad { color: var(--accent-rose); font-weight: 600; }
+  .evidence-table code {
+    background: var(--bg-code);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  .test-results {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 24px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .test-results .pass { color: var(--accent-green); }
+  .test-results .info { color: var(--accent-teal); }
+  .test-results .label { color: var(--text-muted); }
+
+  .tool-output {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .tool-output-header {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-teal);
+    background: rgba(79, 209, 197, 0.06);
+    border-bottom: 1px solid var(--border);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .tool-output pre {
+    padding: 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-primary);
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .diff-container { grid-template-columns: 1fr; }
+    .links-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<meta name="share-summary" content="Solution evidence for CRTX-616 and CRTX-617: Proves PaymentScheduleTool fixes for paid-period filtering and overdue payment detection. Verified with 21 unit tests (104 assertions) and direct tool invocation against production data showing correct behavior for both bug scenarios.">
+<meta name="share-hash" content="3300584caa74b0c7089e95ad49566767460abbef2d6d4f26bd38cecc67c3ac4c">
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header class="report-header">
+    <div class="tag">Solution Evidence Report</div>
+    <h1>CRTX-616 &amp; CRTX-617: Payment Schedule Paid-Period Filtering &amp; Overdue Detection</h1>
+    <div class="subtitle">Student MCP PaymentScheduleTool &mdash; Fix Verified March 31, 2026</div>
+  </header>
+
+  <!-- Section 1: Problem Summary -->
+  <section class="section">
+    <h2 class="section-title">1. Problem Summary</h2>
+    <p class="lead">
+      The student-facing AI assistant&rsquo;s <code>PaymentScheduleTool</code> had two data accuracy issues
+      discovered during the CRTX-612 investigation of Alana Rodney&rsquo;s payment schedule at Molloy University.
+      Both bugs affected every student who used the AI to check their payment schedule.
+    </p>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">2</div>
+        <div class="stat-label">Bugs Fixed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">All</div>
+        <div class="stat-label">Students Affected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">21</div>
+        <div class="stat-label">Tests Passing</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">Mar 29</div>
+        <div class="stat-label">Discovered, 2026</div>
+      </div>
+    </div>
+
+    <div class="quote-block">
+      <div class="quote-text">
+        <strong>CRTX-616 (Bug):</strong> Students who paid early still saw the already-paid period as their
+        &ldquo;next payment due&rdquo; with $0.00 amount. The tool used <code>-&gt;first()</code> which returned the
+        first period by date regardless of payment status.
+      </div>
+      <div class="quote-attr">Impact: Misleading $0.00 next payment for early-paying students</div>
+    </div>
+
+    <div class="quote-block">
+      <div class="quote-text">
+        <strong>CRTX-617 (Feature Gap):</strong> Overdue payments were completely invisible. The tool only queried
+        <code>due_date &gt;= now()</code>, so students with past-due balances saw &ldquo;No upcoming payments
+        found&rdquo; instead of being alerted to their overdue status.
+      </div>
+      <div class="quote-attr">Impact: Students unaware of overdue balances, potentially delaying payment action</div>
+    </div>
+
+    <h3 style="color:#fff; font-size:15px; margin-bottom:12px;">Production Data Confirming Both Scenarios</h3>
+    <table class="evidence-table">
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Period ID</th>
+          <th>Due Date</th>
+          <th>Amount</th>
+          <th>Paid</th>
+          <th>Old Behavior</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>CRTX-616</strong></td>
+          <td><code>#468372</code></td>
+          <td>2026-03-30</td>
+          <td>$366.58</td>
+          <td class="good">$366.58 (fully paid)</td>
+          <td class="bad">Shown as &ldquo;next payment&rdquo; with $0.00 due</td>
+        </tr>
+        <tr>
+          <td><strong>CRTX-616</strong></td>
+          <td><code>#865085</code></td>
+          <td>2026-03-30</td>
+          <td>$290.00</td>
+          <td class="good">$290.00 (fully paid)</td>
+          <td class="bad">Shown as &ldquo;next payment&rdquo; with $0.00 due</td>
+        </tr>
+        <tr>
+          <td><strong>CRTX-617</strong></td>
+          <td><code>#1108357</code></td>
+          <td>2025-06-30</td>
+          <td>$335.25</td>
+          <td class="bad">$0.00 (unpaid)</td>
+          <td class="bad">Completely invisible &mdash; tool never queried past-due periods</td>
+        </tr>
+        <tr>
+          <td><strong>CRTX-617</strong></td>
+          <td><code>#1603609</code></td>
+          <td>2026-03-29</td>
+          <td>$2,000.00</td>
+          <td class="bad">$0.00 (unpaid)</td>
+          <td class="bad">Completely invisible &mdash; student told &ldquo;No upcoming payments&rdquo;</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Section 2: Solution Summary -->
+  <section class="section">
+    <h2 class="section-title">2. Solution Summary</h2>
+    <p class="lead">Two targeted changes in PR #5589 to <code>PaymentScheduleTool.php</code> and its test file. The fixes went through 2 rounds of antagonistic review before implementation.</p>
+
+    <div class="fix-card">
+      <h3><span class="fix-number">FIX 1</span> Skip Already-Paid Periods (CRTX-616)</h3>
+      <ul>
+        <li><strong>Root cause:</strong> <code>getNextPayment()</code> used <code>-&gt;first()</code> which returned the first period by date, even if fully paid</li>
+        <li><strong>Fix:</strong> Changed to <code>-&gt;get()</code> then <code>firstUnpaidPeriod()</code> which filters by <code>amount_due &gt; 0</code></li>
+        <li>Added <code>-&gt;with('isa')</code> eager-loading and <code>-&gt;limit(10)</code> query cap</li>
+        <li>Try/catch handles ISA <code>payment_cap</code> null exceptions gracefully</li>
+      </ul>
+      <div class="diff-container">
+        <div class="diff-panel">
+          <div class="diff-header old">Before &mdash; Returns paid periods</div>
+          <pre><span class="var">$period</span> <span class="op">=</span> <span class="var">$applicant</span><span class="op">-></span><span class="fn">paymentPeriods</span>()
+    <span class="op">-></span><span class="fn">where</span>(<span class="str">'due_date'</span>, <span class="str">'>='</span>, <span class="fn">now</span>())
+    <span class="op">-></span><span class="fn">where</span>(<span class="str">'is_suspended'</span>, <span class="kw">false</span>)
+    <span class="op">-></span><span class="fn">orderBy</span>(<span class="str">'due_date'</span>)
+<span class="hl-rem">    <span class="op">-></span><span class="fn">first</span>();  <span class="cm">// Returns paid period!</span></span></pre>
+        </div>
+        <div class="diff-panel">
+          <div class="diff-header new">After &mdash; Skips to first unpaid</div>
+          <pre><span class="var">$periods</span> <span class="op">=</span> <span class="var">$applicant</span><span class="op">-></span><span class="fn">paymentPeriods</span>()
+<span class="hl-add">    <span class="op">-></span><span class="fn">with</span>(<span class="str">'isa'</span>)</span>
+    <span class="op">-></span><span class="fn">where</span>(<span class="str">'due_date'</span>, <span class="str">'>='</span>, <span class="fn">now</span>())
+    <span class="op">-></span><span class="fn">where</span>(<span class="str">'is_suspended'</span>, <span class="kw">false</span>)
+    <span class="op">-></span><span class="fn">orderBy</span>(<span class="str">'due_date'</span>)
+<span class="hl-add">    <span class="op">-></span><span class="fn">limit</span>(<span class="var">10</span>)<span class="op">-></span><span class="fn">get</span>();</span>
+<span class="hl-add"><span class="var">$period</span> <span class="op">=</span> <span class="var">$this</span><span class="op">-></span><span class="fn">firstUnpaidPeriod</span>(<span class="var">$periods</span>);</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="fix-card">
+      <h3><span class="fix-number">FIX 2</span> Surface Overdue Payments (CRTX-617)</h3>
+      <ul>
+        <li><strong>Root cause:</strong> Tool only queried <code>due_date &gt;= now()</code>, making all past-due periods invisible</li>
+        <li><strong>Fix:</strong> New <code>getOverduePayment()</code> method queries <code>due_date &lt; now()</code> to find the most recent unpaid overdue period</li>
+        <li>Returns <code>days_overdue</code> using existing <code>days_late_currently</code> model accessor</li>
+        <li>New &ldquo;Overdue Payment&rdquo; section in text summary and <code>overdue_payment</code> key in structured JSON</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Section 3: Reference Links -->
+  <section class="section">
+    <h2 class="section-title">3. Reference Links</h2>
+    <div class="links-grid">
+      <a class="link-card" href="https://linear.app/lumion/issue/CRTX-616" target="_blank" rel="noopener">
+        <div class="link-icon">&#9881;</div>
+        <div class="link-label">CRTX-616</div>
+        <div class="link-desc">Filter paid periods (Bug)</div>
+      </a>
+      <a class="link-card" href="https://linear.app/lumion/issue/CRTX-617" target="_blank" rel="noopener">
+        <div class="link-icon">&#9881;</div>
+        <div class="link-label">CRTX-617</div>
+        <div class="link-desc">Overdue detection (Feature)</div>
+      </a>
+      <a class="link-card" href="https://github.com/MiaShare/miashare-app/pull/5589" target="_blank" rel="noopener">
+        <div class="link-icon">&#10562;</div>
+        <div class="link-label">PR #5589</div>
+        <div class="link-desc">Code changes &amp; review</div>
+      </a>
+    </div>
+    <div class="links-grid" style="margin-top:16px;">
+      <a class="link-card" href="https://linear.app/lumion/issue/CRTX-612" target="_blank" rel="noopener">
+        <div class="link-icon">&#128269;</div>
+        <div class="link-label">CRTX-612</div>
+        <div class="link-desc">Parent investigation</div>
+      </a>
+      <a class="link-card" href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774789708992769" target="_blank" rel="noopener">
+        <div class="link-icon">&#128172;</div>
+        <div class="link-label">Slack Thread</div>
+        <div class="link-desc">Original bug report (Alana Rodney)</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Section 4: Verification Evidence -->
+  <section class="section">
+    <h2 class="section-title">4. Verification Evidence</h2>
+    <p class="lead">
+      Evidence collected via unit tests (21 passing, 104 assertions) and direct tool invocation against
+      production data. The student MCP is not browser-testable in the local environment (no enrolled students
+      with payment data), so verification used tinker-based tool execution with real <code>PaymentPeriod</code> records.
+    </p>
+
+    <h3 style="color:#fff; font-size:15px; margin-bottom:16px;">Unit Test Results</h3>
+    <div class="test-results">
+      <div><span class="label">$ php artisan test --compact --filter=PaymentScheduleToolTest</span></div>
+      <br>
+      <div><span class="pass">...</span><span class="pass">..................</span></div>
+      <br>
+      <div><span class="pass">Tests:    21 passed</span> <span class="info">(104 assertions)</span></div>
+      <div><span class="label">Duration: 7.30s</span></div>
+      <br>
+      <div style="color:var(--text-muted); font-size:12px; margin-top:8px;">
+        Includes 8 new test cases:
+      </div>
+      <div style="color:var(--text-secondary); font-size:12px; padding-left:16px; line-height:2;">
+        <span class="pass">&#10003;</span> skips fully paid periods and shows next unpaid period<br>
+        <span class="pass">&#10003;</span> shows no upcoming payment when all periods are fully paid<br>
+        <span class="pass">&#10003;</span> shows overdue payment when past-due period exists<br>
+        <span class="pass">&#10003;</span> does not show overdue section when no past-due periods exist<br>
+        <span class="pass">&#10003;</span> skips fully paid overdue periods<br>
+        <span class="pass">&#10003;</span> shows both overdue and upcoming payments when both exist<br>
+        <span class="pass">&#10003;</span> includes overdue payment in total_count<br>
+        <span class="pass">&#10003;</span> treats period due today as upcoming, not overdue
+      </div>
+    </div>
+
+    <h3 style="color:#fff; font-size:15px; margin-bottom:16px;">Tool Invocation: Michael Maggio Jr. (Spartan College &mdash; Tulsa)</h3>
+    <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+      Student with 10 overdue unpaid periods + 70 upcoming periods. Direct invocation of the fixed
+      <code>PaymentScheduleTool</code> logic against real production data.
+    </p>
+
+    <div class="tool-output">
+      <div class="tool-output-header">NEW: getOverduePayment() output</div>
+      <pre>{
+  <span class="str">"due_date"</span>: <span class="str">"2026-03-30"</span>,
+  <span class="str">"amount_due"</span>: <span class="str">"335.25"</span>,
+  <span class="str">"days_overdue"</span>: <span class="var">1</span>
+}</pre>
+    </div>
+
+    <div class="tool-output">
+      <div class="tool-output-header">NEW: getNextPayment() output (with paid-period skipping)</div>
+      <pre>{
+  <span class="str">"due_date"</span>: <span class="str">"2026-04-30"</span>,
+  <span class="str">"amount_due"</span>: <span class="str">"335.25"</span>
+}</pre>
+    </div>
+
+    <div class="tool-output">
+      <div class="tool-output-header">OLD: getNextPayment() output (no change for this student &mdash; first future period was already unpaid)</div>
+      <pre>{
+  <span class="str">"due_date"</span>: <span class="str">"2026-04-30"</span>,
+  <span class="str">"amount_due"</span>: <span class="str">"335.25"</span>
+}
+<span class="cm">// OLD had NO overdue detection at all &mdash; student would see
+// "No upcoming payments found" if all future periods were paid</span></pre>
+    </div>
+
+    <h3 style="color:#fff; font-size:15px; margin:24px 0 16px;">CRTX-616: Paid-Period Skip Evidence (Production Data)</h3>
+    <table class="evidence-table">
+      <thead>
+        <tr>
+          <th>Paid Period</th>
+          <th>Next Unpaid Period</th>
+          <th>Old Tool Output</th>
+          <th>New Tool Output</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>#468372</code> $366.58 due 2026-03-30<br><span class="good">Paid: $366.58</span></td>
+          <td><code>#468373</code> $366.58 due 2026-04-30</td>
+          <td class="bad">$366.58 due 2026-03-30<br>(amount_due = $0.00!)</td>
+          <td class="good">$366.58 due 2026-04-30<br>(correctly skipped paid period)</td>
+        </tr>
+        <tr>
+          <td><code>#865085</code> $290.00 due 2026-03-30<br><span class="good">Paid: $290.00</span></td>
+          <td><code>#865086</code> $290.00 due 2026-04-30</td>
+          <td class="bad">$290.00 due 2026-03-30<br>(amount_due = $0.00!)</td>
+          <td class="good">$290.00 due 2026-04-30<br>(correctly skipped paid period)</td>
+        </tr>
+        <tr>
+          <td><code>#1456358</code> $247.00 due 2026-03-30<br><span class="good">Paid: $247.00</span></td>
+          <td><code>#1456359</code> $247.00 due 2026-04-15</td>
+          <td class="bad">$247.00 due 2026-03-30<br>(amount_due = $0.00!)</td>
+          <td class="good">$247.00 due 2026-04-15<br>(correctly skipped paid period)</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+</body>
+</html>

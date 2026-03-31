@@ -1,110 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2026-03-29 — Shared</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', sans-serif; background: #11142B; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; }
-  header { background: #051014; border-bottom: 1px solid rgba(255,255,255,0.07); padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
-  header svg { height: 28px; width: auto; flex-shrink: 0; }
-  nav.breadcrumb { font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  nav.breadcrumb a { color: #94a3b8; text-decoration: none; transition: color 0.15s; }
-  nav.breadcrumb a:hover { color: #e2e8f0; }
-  nav.breadcrumb span.sep { color: #475569; }
-  nav.breadcrumb span.current { color: #e2e8f0; font-weight: 500; }
-  main { flex: 1; padding: 32px; max-width: 900px; width: 100%; margin: 0 auto; }
-  h1 { font-size: 22px; font-weight: 600; color: #f1f5f9; margin-bottom: 24px; }
-  .card-list { display: flex; flex-direction: column; gap: 10px; }
-  .card { display: flex; align-items: center; gap: 14px; background: #1a1e3d; border-radius: 8px; padding: 14px 16px; text-decoration: none; color: inherit; border-left: 3px solid transparent; transition: background 0.15s, border-color 0.15s; }
-  .card:hover { background: #1f2448; }
-  .card.folder { border-left-color: #5261CE; }
-  .card.file-html { border-left-color: #FE6D73; }
-  .card.file-png { border-left-color: #4CAF50; }
-  .card.file-other { border-left-color: #94a3b8; }
-  .card-icon { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
-  .card-icon svg { width: 20px; height: 20px; }
-  .folder .card-icon svg { color: #5261CE; }
-  .file-html .card-icon svg { color: #FE6D73; }
-  .file-png .card-icon svg { color: #4CAF50; }
-  .file-other .card-icon svg { color: #94a3b8; }
-  .card-body { flex: 1; min-width: 0; }
-  .card-name { font-size: 14px; font-weight: 500; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-summary { font-size: 12px; color: #94a3b8; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .card-badge { flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
-  .badge-folder { background: rgba(82,97,206,0.2); color: #818cf8; }
-  .badge-html { background: rgba(254,109,115,0.2); color: #FE6D73; }
-  .badge-png { background: rgba(76,175,80,0.2); color: #81C784; }
-  .badge-other { background: rgba(148,163,184,0.15); color: #94a3b8; }
-  footer { text-align: center; font-size: 11px; color: #475569; padding: 24px 16px; border-top: 1px solid rgba(255,255,255,0.05); }
-</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026-03-29 - Shared</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#11142B;color:#e2e8f0;font-family:Inter,sans-serif;min-height:100vh}a{color:#93b4ff;text-decoration:none}a:hover{text-decoration:underline}.header{background:#051014;padding:20px 32px;display:flex;align-items:center;gap:16px;border-bottom:1px solid rgba(82,97,206,0.2)}.breadcrumbs{padding:16px 32px;font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.breadcrumbs a{color:#93b4ff}.breadcrumbs span{color:#475569}.content{padding:0 32px 40px}.card{background:#1a1e3d;border-radius:8px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px;transition:background 0.15s}.card:hover{background:#222750}.card-file{border-right:4px solid #FE6D73}.card-folder{border-right:4px solid #5261CE}.card-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center}.card-info{flex:1;min-width:0}.card-name{font-size:15px;font-weight:600;color:#fff}.card-desc{font-size:13px;color:#94a3b8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card-meta{font-size:12px;color:#64748b;flex-shrink:0}.footer{text-align:center;padding:24px;font-size:12px;color:#475569;border-top:1px solid rgba(82,97,206,0.1);margin-top:20px}</style>
 </head>
 <body>
-<header>
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 692.92913 224.2329" fill="currentColor" style="color:#e2e8f0"><g><path d="M152.93366,76.30328l-7.00676-6.92973c-.98363-.97292-2.59625-.92509-3.52344.09567l-79.01676,86.81036c-.41925.46238-.40311,1.17213.0403,1.61076.44349.43863,1.1611.45452,1.62876.03981l87.78102-78.14202c1.04014-.92493,1.08051-2.51193.09689-3.48485Z"/><path d="M63.39441,128.56811c.44349.43863,1.153.46254,1.62065.04784l63.85033-56.61088c1.04014-.91706,1.08051-2.51201.09672-3.48485l-4.86997-4.81662c-.98363-.97284-2.59625-.93295-3.52344.09575l-57.23072,63.15785h.00803c-.41114.46254-.39501,1.16435.0484,1.61092Z"/><path d="M63.403,103.09777c.44341.43052,1.14489.45444,1.61254.05578l35.63813-30.48649c1.0643-.91706,1.12884-2.5279.12899-3.51672l-3.11222-3.07817c-.99984-.98882-2.63654-.92501-3.55579.12762l-30.82458,35.24725c-.41114.47049-.37887,1.16427.05651,1.59478l.05643.05594Z"/><path d="M153.78684,93.07349c-.98363-.97276-2.59625-.93287-3.52344.09583l-57.23874,63.15793c-.41925.46254-.39509,1.16427.04832,1.60281.44357.44657,1.153.46254,1.62073.04792l.00795.00803,63.8586-56.61096c1.04006-.91714,1.08035-2.51193.09664-3.48485l-4.87005-4.8167Z"/><path d="M153.16027,120.95263c-.99984-.9889-2.6286-.92509-3.55579.12753l-30.82458,35.24717c-.40311.46254-.37895,1.1564.05643,1.59487l.05651.05594c.43538.43052,1.13678.46254,1.61262.05578l35.63805-30.48649c1.0643-.90904,1.12884-2.5279.12899-3.51672l-3.11222-3.07809Z"/><path d="M603.33263,88.93556c-8.81899,0-16.94728,4.82887-20.39443,11.31276l-1.68567-8.46355c-.13678-.69142-.74388-1.19418-1.4559-1.19418h-11.37608c-.82763,0-1.48776.67043-1.48776,1.48744v66.01225c0,.82739.67083,1.48736,1.48776,1.48736h13.15612c.82755,0,1.48776-.67034,1.48776-1.48736v-26.65844c0-18.90708,7.43752-27.87338,16.94858-27.87338s13.78447,6.76669,13.78447,19.0432v35.48862c0,.82739.67083,1.48736,1.48776,1.48736h13.15612c.82763,0,1.48776-.67034,1.48776-1.48736v-39.35389c0-19.31554-8.82029-29.80083-26.5965-29.80083Z"/><path d="M516.48538,88.93556c-20.94965,0-36.3786,16.00541-36.3786,36.14851s15.42895,36.14859,36.3786,36.14859,36.37998-16.00549,36.37998-36.14859-15.43025-36.14851-36.37998-36.14851ZM516.48538,146.60985c-11.84632,0-19.83914-9.23881-19.83914-21.52578s8.12829-21.52562,19.83914-21.52562,19.83922,9.23881,19.83922,21.52562-8.12829,21.52578-19.83922,21.52578Z"/><path d="M403.64208,88.93556c-8.81899,0-16.94728,4.96499-20.52991,11.31276-3.17481-7.44749-9.23881-11.31276-20.1221-11.31276-8.82029,0-16.8131,4.96499-20.39435,11.31276l-1.68705-8.46355c-.13548-.69142-.74388-1.19418-1.4559-1.19418h-11.37608c-.82763,0-1.48647.67043-1.48647,1.48744v66.03325c0,.82739.66953,1.48736,1.48647,1.48736h13.15742c.82626,0,1.48647-.67043,1.48647-1.48736v-26.65844c0-18.90708,7.02832-27.87354,16.25789-27.87354,7.02832,0,11.30173,4.69274,11.30173,15.58657v38.93488c0,.82747.67083,1.48736,1.48776,1.48736h13.15612c.82755,0,1.48776-.67043,1.48776-1.48736v-26.65844c0-18.907,7.0284-27.87346,16.25651-27.87346,7.0284,0,11.30181,4.69274,11.30181,15.58649v38.93496c0,.82739.67083,1.48736,1.48776,1.48736h13.15612c.82755,0,1.48776-.67034,1.48776-1.48736v-39.35389c0-19.31554-8.68351-29.80083-26.45972-29.80083Z"/><path d="M221.14853,63h-13.15612c-.82755,0-1.48776.65989-1.48776,1.48744v93.60283c0,.82755.67083,1.48744,1.48776,1.48744h13.15612c.82755,0,1.48776-.67043,1.48776-1.48744v-93.60283c0-.82755-.67083-1.48744-1.48776-1.48744Z"/><path d="M465.60899,63h-14.80061c-.82755,0-1.48776.67034-1.48776,1.48744v13.86863c0,.81701.67083,1.48744,1.48776,1.48744h14.80061c.82763,0,1.48776-.67043,1.48776-1.48744v-13.86863c0-.82755-.67083-1.48744-1.48776-1.48744Z"/><path d="M464.78144,90.59067h-6.5648v-.00008h-14.64389v-.01038c-.81693,0-1.48776.67026-1.48776,1.48736v8.76734c0,.81709.67083,1.48752,1.48776,1.48752h6.57543v55.76784h-.01062c0,.82755.67083,1.48744,1.48776,1.48744h13.15612c.82755,0,1.48776-.67043,1.48776-1.48744v-66.01225c0-.82739-.67083-1.48736-1.48776-1.48736Z"/><path d="M310.51963,147.84579h-5.28817v-55.76744c0-.82763-.67083-1.48752-1.48776-1.48752h-13.1562c-.82755,0-1.48776.67043-1.48776,1.48752v28.1771c0,17.25205-7.02832,26.35465-17.63936,26.35465-9.36496,0-14.46592-5.93921-14.46592-18.21573v-36.31601c0-.82763-.67075-1.48752-1.48776-1.48752h-13.15612c-.82755,0-1.48776.67043-1.48776,1.48752v38.25383c0,19.72409,8.95723,30.90072,27.42413,30.90072h.03057c8.80967,0,17.49326-4.82887,20.93903-11.31276l1.68697,8.46371c.13556.69126.74388,1.19402,1.4559,1.19402h12.83206v-.00024h5.28817c.81831,0,1.48776-.67043,1.48776-1.48752v-8.75688c0-.81701-.66945-1.48744-1.48776-1.48744Z"/></g></svg>
-  <nav class="breadcrumb">
-    <a href="/index.html">Shared</a>
-    <span class="sep">/</span>
-    <a href="/lhilton/index.html">lhilton</a>
-    <span class="sep">/</span>
-    <span class="current">2026-03-29</span>
-  </nav>
-</header>
-<main>
-  <h1>2026-03-29</h1>
-  <div class="card-list">
-
-    <a href="CRTX-586/index.html" class="card folder">
-      <div class="card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></div>
-      <div class="card-body">
-        <div class="card-name">CRTX-586</div>
-        <div class="card-summary">Fix AI drawer blank page on load and non-functional + button</div>
-      </div>
-      <span class="card-badge badge-folder">8 files</span>
-    </a>
-
-    <a href="CRTX-587/index.html" class="card folder">
-      <div class="card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></div>
-      <div class="card-body">
-        <div class="card-name">CRTX-587</div>
-        <div class="card-summary">Add payment-plan-search MCP tool for payment plan queries</div>
-      </div>
-      <span class="card-badge badge-folder">8 files</span>
-    </a>
-
-    <a href="CRTX-605/index.html" class="card folder">
-      <div class="card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></div>
-      <div class="card-body">
-        <div class="card-name">CRTX-605</div>
-        <div class="card-summary">Fix AI draft cards vanishing in Livewire drawer</div>
-      </div>
-      <span class="card-badge badge-folder">8 files</span>
-    </a>
-
-    <a href="CRTX-606/index.html" class="card folder">
-      <div class="card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></div>
-      <div class="card-body">
-        <div class="card-name">CRTX-606</div>
-        <div class="card-summary">Fix FK constraint crash on send-now and TCPA over-enforcement</div>
-      </div>
-      <span class="card-badge badge-folder">1 file</span>
-    </a>
-
-    <a href="CRTX-612/index.html" class="card folder">
-      <div class="card-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg></div>
-      <div class="card-body">
-        <div class="card-name">CRTX-612</div>
-        <div class="card-summary">Fix payment method lookup in student PaymentScheduleTool</div>
-      </div>
-      <span class="card-badge badge-folder">1 file</span>
-    </a>
-
-  </div>
-</main>
-<footer>Powered by MiaShare &middot; Generated 2026-03-30 20:32:48 UTC</footer>
+<div class="header"><div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 40" fill="none"><text x="0" y="30" font-family="Inter,sans-serif" font-weight="700" font-size="28" fill="#5261CE">Lumion</text><text x="108" y="30" font-family="Inter,sans-serif" font-weight="400" font-size="14" fill="#94a3b8">shared</text></svg></div></div>
+<div class="breadcrumbs"><a href="../../index.html">Shared</a><span>/</span><a href="../index.html">lhilton</a><span>/</span><span style="color:#e2e8f0">2026-03-29</span></div>
+<div class="content">
+<a href="CRTX-586/index.html" style="text-decoration:none;color:inherit"><div class="card card-folder"><div class="card-icon">📁</div><div class="card-info"><div class="card-name">CRTX-586</div><div class="card-desc">AI drawer blank page on load and non-functional + button fixed</div></div></div></a>
+<a href="CRTX-587/index.html" style="text-decoration:none;color:inherit"><div class="card card-folder"><div class="card-icon">📁</div><div class="card-info"><div class="card-name">CRTX-587</div><div class="card-desc">New payment-plan-search MCP tool routes queries correctly</div></div></div></a>
+<a href="CRTX-605/index.html" style="text-decoration:none;color:inherit"><div class="card card-folder"><div class="card-icon">📁</div><div class="card-info"><div class="card-name">CRTX-605</div><div class="card-desc">wire:key fix prevents AI draft cards from vanishing</div></div></div></a>
+<a href="CRTX-606/index.html" style="text-decoration:none;color:inherit"><div class="card card-folder"><div class="card-icon">📁</div><div class="card-info"><div class="card-name">CRTX-606</div><div class="card-desc">FK constraint crash on send-now + TCPA over-enforcement fix</div></div></div></a>
+<a href="CRTX-612/index.html" style="text-decoration:none;color:inherit"><div class="card card-folder"><div class="card-icon">📁</div><div class="card-info"><div class="card-name">CRTX-612</div><div class="card-desc">Payment method lookup fix in PaymentScheduleTool</div></div></div></a>
+</div>
+<div class="footer">Powered by MiaShare · Generated 2026-03-30T22:00:00Z</div>
 </body>
 </html>
