@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRTX-614 Solution Evidence</title>
+<style>
+:root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --border: #334155;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #38bdf8;
+    --accent-green: #4ade80;
+    --accent-red: #f87171;
+    --accent-amber: #fbbf24;
+    --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: 14px;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+/* Header */
+.header {
+    text-align: center;
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+}
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.header .subtitle { color: var(--text-secondary); font-size: 15px; }
+.badge {
+    display: inline-block;
+    background: #059669;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+.badge.high { background: #dc2626; }
+
+/* Section titles */
+.section {
+    margin-bottom: 40px;
+}
+.section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.section-number {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--bg-primary);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 8px;
+}
+
+/* Links section */
+.links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+.link-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    transition: border-color 0.2s;
+}
+.link-card:hover { border-color: var(--accent); }
+.link-card .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.link-card .icon.linear { background: #5e6ad2; }
+.link-card .icon.github { background: #238636; }
+.link-card .icon.slack { background: #4a154b; }
+.link-card .label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.link-card .url {
+    font-size: 13px;
+    color: var(--accent);
+    word-break: break-all;
+}
+
+/* Problem / Solution cards */
+.summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 16px;
+}
+.summary-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+.summary-card p {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.stats-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.stat-pill {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    text-align: center;
+}
+.stat-pill .number { font-size: 24px; font-weight: 700; color: var(--accent-green); }
+.stat-pill .number.red { color: var(--accent-red); }
+.stat-pill .number.amber { color: var(--accent-amber); }
+.stat-pill .desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Code diff */
+.code-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 12px 0;
+}
+.line-removed { color: #f87171; }
+.line-removed::before { content: '- '; color: #f87171; }
+.line-added { color: #4ade80; }
+.line-added::before { content: '+ '; color: #4ade80; }
+.line-context { color: #8b949e; }
+
+/* Fix cards grid */
+.fix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+@media (max-width: 800px) { .fix-grid { grid-template-columns: 1fr; } }
+
+.fix-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+}
+.fix-card .fix-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-green);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+}
+.fix-card h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.fix-card p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Slideshow */
+.slideshow-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.slide-viewport {
+    position: relative;
+    background: #000;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.slide-viewport img {
+    max-width: 100%;
+    max-height: 70vh;
+    display: block;
+    object-fit: contain;
+}
+.slide-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    z-index: 10;
+}
+.slide-nav:hover { background: rgba(30, 41, 59, 0.95); }
+.slide-nav.prev { left: 12px; }
+.slide-nav.next { right: 12px; }
+.slide-counter {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    z-index: 10;
+}
+.slide-controls {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+}
+.slide-caption {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+.slide-caption .caption-detail {
+    color: var(--text-secondary);
+    font-weight: 400;
+    font-size: 13px;
+}
+.dots {
+    display: flex;
+    gap: 6px;
+}
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.dot.active { background: var(--accent); }
+.dot:hover { background: var(--accent); opacity: 0.7; }
+.keyboard-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    text-align: center;
+}
+.keyboard-hint kbd {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 32px 0;
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+</style>
+<meta name="share-summary" content="Solution evidence for CRTX-614: Proves the UrlService regex fix resolves bare domain URLs with paths not rendering as clickable links in AI chat. Browser-verified with 13 URL patterns (87 tests, 164 assertions, 0 regressions). calendly.com/example-school now links to https://calendly.com/example-school correctly.">
+<meta name="share-hash" content="92171d6a824c1bb3dbd5f125e62721e061f67c8d66eab02a31dd780b5c0e3a08">
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+    <h1>CRTX-614: Scheduling Links Not Clickable <span class="badge">RESOLVED</span></h1>
+    <p class="subtitle">Bare domain URLs with paths now render as complete clickable hyperlinks in the AI chat widget</p>
+</div>
+
+<!-- Section 1: Links -->
+<div class="section">
+    <div class="section-title"><span class="section-number">1</span> Links</div>
+    <div class="links-grid">
+        <a class="link-card" href="https://linear.app/lumion/issue/CRTX-614" target="_blank" rel="noopener">
+            <div class="icon linear">&#9670;</div>
+            <div>
+                <div class="label">Linear Issue</div>
+                <div class="url">CRTX-614</div>
+            </div>
+        </a>
+        <a class="link-card" href="https://github.com/MiaShare/miashare-app/pull/5607" target="_blank" rel="noopener">
+            <div class="icon github">&#9679;</div>
+            <div>
+                <div class="label">GitHub Pull Request</div>
+                <div class="url">PR #5607</div>
+            </div>
+        </a>
+        <a class="link-card" href="https://lumion-ai.slack.com/archives/C0AJPSKATCK/p1774547594295139" target="_blank" rel="noopener">
+            <div class="icon slack">&#9993;</div>
+            <div>
+                <div class="label">Slack Thread</div>
+                <div class="url">#ai-conversations</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Section 2: Problem Summary -->
+<div class="section">
+    <div class="section-title"><span class="section-number">2</span> Problem Summary</div>
+    <div class="stats-row">
+        <div class="stat-pill"><div class="number red">1</div><div class="desc">Conversation</div></div>
+        <div class="stat-pill"><div class="number red">31</div><div class="desc">Messages</div></div>
+        <div class="stat-pill"><div class="number amber">High</div><div class="desc">Priority</div></div>
+        <div class="stat-pill"><div class="number red">Blocked</div><div class="desc">Conversion</div></div>
+    </div>
+    <div class="summary-card">
+        <h3>User Unable to Click Scheduling Links in AI Chat Widget</h3>
+        <p>A prospective student interacting with the lead capture AI chat widget tried to schedule a campus visit. The AI provided scheduling links, but they appeared as partially-clickable text &mdash; the user repeatedly asked "where do I click?" across 31 messages, indicating significant frustration.</p>
+        <p><strong>Root cause:</strong> <code>UrlService::addPlainDomainLinks()</code> used a regex with <code>\b</code> word boundaries that stopped matching at <code>/</code> characters. For a bare URL like <code>calendly.com/example-school</code>, only the domain <code>calendly.com</code> was linked. The path <code>/example-school</code> was left as plain text, producing a broken link that navigated to the wrong URL.</p>
+        <div class="code-block">
+<span class="line-context">&lt;!-- What the user saw (BEFORE fix) --&gt;</span>
+<span class="line-removed">&lt;a href="https://calendly.com"&gt;calendly.com&lt;/a&gt;/example-school</span>
+<span class="line-context">&lt;!-- Only "calendly.com" was clickable. "/example-school" was plain text. --&gt;</span>
+<span class="line-context">&lt;!-- Clicking the link went to calendly.com (homepage), not the scheduling page. --&gt;</span>
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: Solution Summary -->
+<div class="section">
+    <div class="section-title"><span class="section-number">3</span> Solution Summary</div>
+    <div class="fix-grid">
+        <div class="fix-card">
+            <div class="fix-label">Fix 1 &mdash; Primary</div>
+            <h4>Regex Update: Capture Path Components</h4>
+            <p>Updated <code>addPlainDomainLinks()</code> regex to capture optional path segments after bare domains. The callback now separates domain (lowercased) from path (case-preserved per RFC 3986). Ampersands are excluded from the path character class to prevent HTML entity absorption.</p>
+            <div class="code-block">
+<span class="line-context">// UrlService.php - addPlainDomainLinks()</span>
+<span class="line-removed">$domainPattern = '/\b(?&lt;![@\/])(...)+)\b(?![@])/i';</span>
+<span class="line-added">$domainPattern = '/\b(?&lt;![@\/])(...)+)(\/[^\s&lt;&gt;"&amp;]*[^\s&lt;&gt;"&amp;.,;:!?\)\]\}])?(?![a-zA-Z0-9@])/i';</span>
+<span class="line-context">// Added optional path capture group after domain</span>
+<span class="line-context">// Domain lowercased, path case preserved</span>
+            </div>
+        </div>
+        <div class="fix-card">
+            <div class="fix-label">Fix 2 &mdash; Defense-in-Depth</div>
+            <h4>AI Prompt: Always Include https://</h4>
+            <p>Added a URL formatting instruction to the lead capture agent system prompt: "Always include the full URL with https:// when sharing a link." This ensures GFM autolinks also catch URLs (belt + suspenders).</p>
+            <div class="code-block">
+<span class="line-context">// CortexPromptMigrationSeeder.php</span>
+<span class="line-context">// RULES FOR SHARING ACTIONS section:</span>
+<span class="line-added">- Always include the full URL with https://</span>
+<span class="line-added">  when sharing a link. For example:</span>
+<span class="line-added">  https://calendly.com/school, not just</span>
+<span class="line-added">  calendly.com/school.</span>
+            </div>
+        </div>
+    </div>
+    <div class="stats-row" style="margin-top: 16px;">
+        <div class="stat-pill"><div class="number">87</div><div class="desc">Tests Passing</div></div>
+        <div class="stat-pill"><div class="number">13</div><div class="desc">URL Patterns</div></div>
+        <div class="stat-pill"><div class="number">164</div><div class="desc">Assertions</div></div>
+        <div class="stat-pill"><div class="number">0</div><div class="desc">Regressions</div></div>
+    </div>
+</div>
+
+<!-- Section 4: Evidence -->
+<div class="section">
+    <div class="section-title"><span class="section-number">4</span> Evidence</div>
+    <div class="slideshow-container">
+        <div class="slide-viewport">
+            <button class="slide-nav prev" onclick="changeSlide(-1)" aria-label="Previous slide">&#8249;</button>
+            <img id="slide-img" src="slide-01-header.png" alt="Evidence screenshot">
+            <button class="slide-nav next" onclick="changeSlide(1)" aria-label="Next slide">&#8250;</button>
+            <div class="slide-counter" id="slide-counter">1 / 8</div>
+        </div>
+        <div class="slide-controls">
+            <div>
+                <div class="slide-caption" id="slide-caption">Overview: 87 tests passing, 13 URL patterns, 0 regressions</div>
+            </div>
+            <div class="dots" id="dots"></div>
+        </div>
+    </div>
+    <div class="keyboard-hint">Navigate: <kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys</div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    Generated 2026-03-31 &middot; Branch: lhilton/crtx-614-fix &middot; PR #5607
+</div>
+
+</div>
+
+<script>
+const slides = [
+    { src: 'slide-01-header.png', caption: 'Overview: 87 tests passing, 13 URL patterns, 0 regressions' },
+    { src: 'slide-02-bug-fix-tests-1-2.png', caption: 'Bug Fix: Tests 1-2 &mdash; <span class="caption-detail">calendly.com/example-school and acme.edu/admissions/schedule/fall-2026 render as complete clickable links</span>' },
+    { src: 'slide-03-punctuation-tests-3-4.png', caption: 'Punctuation: Tests 3-4 &mdash; <span class="caption-detail">Trailing periods and commas stay outside the link boundary</span>' },
+    { src: 'slide-04-ip-case-tests-5-6.png', caption: 'IP & Case: Tests 5-6 &mdash; <span class="caption-detail">192.168.1.1/admin linked, /My-Schedule case preserved per RFC 3986</span>' },
+    { src: 'slide-05-regression-tests-7-9.png', caption: 'Regression: Tests 7-9 &mdash; <span class="caption-detail">Full https:// URLs, bare domains, and trailing periods all still work</span>' },
+    { src: 'slide-06-mixed-content-10-11.png', caption: 'Mixed Content: Tests 10-11 &mdash; <span class="caption-detail">URLs, phone numbers, and email addresses all render correctly in the same message</span>' },
+    { src: 'slide-07-advanced-patterns-12-13.png', caption: 'Advanced: Tests 12-13 &mdash; <span class="caption-detail">Query parameters preserved, Markdown links render with display text</span>' },
+    { src: '01-full-page-evidence.png', caption: 'Full Page: All 13 test patterns &mdash; <span class="caption-detail">Complete browser-rendered evidence showing UrlService output for every URL pattern</span>' },
+];
+
+let currentSlide = 0;
+
+function initDots() {
+    const dotsContainer = document.getElementById('dots');
+    slides.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+    });
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    document.getElementById('slide-img').src = slides[index].src;
+    document.getElementById('slide-caption').innerHTML = slides[index].caption;
+    document.getElementById('slide-counter').textContent = `${index + 1} / ${slides.length}`;
+    document.querySelectorAll('.dot').forEach((d, i) => {
+        d.className = 'dot' + (i === index ? ' active' : '');
+    });
+}
+
+function changeSlide(delta) {
+    let next = currentSlide + delta;
+    if (next < 0) next = slides.length - 1;
+    if (next >= slides.length) next = 0;
+    goToSlide(next);
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') changeSlide(-1);
+    if (e.key === 'ArrowRight') changeSlide(1);
+});
+
+initDots();
+</script>
+</body>
+</html>
