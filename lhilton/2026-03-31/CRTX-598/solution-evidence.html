@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRTX-598 Solution Evidence Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0f1117;
+    --bg-secondary: #161922;
+    --bg-card: #1c1f2e;
+    --bg-code: #12141f;
+    --border: #2a2d3e;
+    --border-accent: #3a3d4e;
+    --text-primary: #e4e6f0;
+    --text-secondary: #9ca0b4;
+    --text-muted: #6b6f85;
+    --accent-teal: #4fd1c5;
+    --accent-blue: #5261ce;
+    --accent-indigo: #7c8cf5;
+    --accent-rose: #fe6d73;
+    --accent-amber: #f6ad55;
+    --accent-green: #48bb78;
+    --accent-red: #fc5c65;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ---- Header ---- */
+  .report-header {
+    text-align: center;
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .report-header .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent-teal);
+    background: rgba(79, 209, 197, 0.1);
+    border: 1px solid rgba(79, 209, 197, 0.25);
+    border-radius: 4px;
+    padding: 4px 12px;
+    margin-bottom: 16px;
+  }
+  .report-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .report-header .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* ---- Section ---- */
+  .section { margin-bottom: 56px; }
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent-teal);
+    display: inline-block;
+  }
+  .lead {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+    line-height: 1.7;
+  }
+
+  /* ---- Stats Grid ---- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card:nth-child(1)::before { background: var(--accent-teal); }
+  .stat-card:nth-child(2)::before { background: var(--accent-blue); }
+  .stat-card:nth-child(3)::before { background: var(--accent-indigo); }
+  .stat-card:nth-child(4)::before { background: var(--accent-amber); }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-card:nth-child(1) .stat-value { color: var(--accent-teal); }
+  .stat-card:nth-child(2) .stat-value { color: var(--accent-blue); }
+  .stat-card:nth-child(3) .stat-value { color: var(--accent-indigo); }
+  .stat-card:nth-child(4) .stat-value { color: var(--accent-amber); }
+  .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+  }
+
+  /* ---- Quote ---- */
+  .quote-block {
+    background: var(--bg-card);
+    border-left: 4px solid var(--accent-rose);
+    border-radius: 0 10px 10px 0;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+  .quote-text {
+    font-size: 15px;
+    font-style: italic;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .quote-attr {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  /* ---- Fix Card ---- */
+  .fix-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .fix-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .fix-card .fix-number {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--bg-primary);
+    background: var(--accent-teal);
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .fix-card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+  .fix-card ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 16px;
+  }
+  .fix-card ul li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 4px 0 4px 20px;
+    position: relative;
+  }
+  .fix-card ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+  }
+
+  /* ---- Reference Links ---- */
+  .links-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .link-card {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+  }
+  .link-card:hover {
+    border-color: var(--accent-teal);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .link-card .link-icon { font-size: 28px; margin-bottom: 10px; }
+  .link-card .link-label { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .link-card .link-desc { font-size: 11px; color: var(--text-muted); }
+
+  /* ---- Slideshow ---- */
+  .slideshow-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+  }
+  .slideshow {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .slide-viewport {
+    position: relative;
+    background: #0a0c14;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .slide-viewport img {
+    max-width: 100%;
+    max-height: 560px;
+    display: block;
+    object-fit: contain;
+  }
+  .slide-caption {
+    padding: 20px 24px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    min-height: 72px;
+  }
+  .slide-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+  }
+  .slide-btn {
+    background: none;
+    border: 1px solid var(--border-accent);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .slide-btn:hover {
+    background: rgba(79, 209, 197, 0.1);
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
+  }
+  .slide-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .slide-btn:disabled:hover {
+    background: none;
+    border-color: var(--border-accent);
+    color: var(--text-primary);
+  }
+  .slide-indicator {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .slide-indicator .current { color: var(--accent-teal); }
+  .slide-dots {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    justify-content: center;
+  }
+  .slide-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border-accent);
+    transition: background 0.2s;
+  }
+  .slide-dot.active { background: var(--accent-teal); }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .links-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<meta name="share-summary" content="Solution evidence for CRTX-598: Proves chat history delete capability and per-user scope clarification. Browser-verified with 2 users on the same institution — soft delete preserves records, inline two-click confirmation works, </head>quot;Your Conversations</head>quot; header clarifies per-user scoping, and cross-user isolation prevents data leakage.">
+<meta name="share-hash" content="463d77e72fba751e493416d6ea8779aa70ff7e80cac28a5e5a1b951308b5a407">
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header class="report-header">
+    <div class="tag">Solution Evidence Report</div>
+    <h1>CRTX-598: Chat History Delete Capability &amp; User Scope Clarification</h1>
+    <div class="subtitle">Lumion AI Assistant &mdash; Feature Verified</div>
+  </header>
+
+  <!-- Section 1: Reference Links -->
+  <section class="section">
+    <h2 class="section-title">Reference Links</h2>
+    <div class="links-grid">
+      <a class="link-card" href="https://linear.app/lumion/issue/CRTX-598" target="_blank" rel="noopener">
+        <div class="link-icon">&#9881;</div>
+        <div class="link-label">CRTX-598 Linear Ticket</div>
+        <div class="link-desc">Feature request &amp; acceptance criteria</div>
+      </a>
+      <a class="link-card" href="https://github.com/MiaShare/miashare-app/pull/5609" target="_blank" rel="noopener">
+        <div class="link-icon">&#10562;</div>
+        <div class="link-label">PR #5609</div>
+        <div class="link-desc">Code changes &amp; review</div>
+      </a>
+      <a class="link-card" href="https://lumion-ai.slack.com/archives/C0ANJS3DEQN" target="_blank" rel="noopener">
+        <div class="link-icon">&#128172;</div>
+        <div class="link-label">#lumion-ai-testing</div>
+        <div class="link-desc">QA session &mdash; Akir Rowe</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Section 2: Problem Summary -->
+  <section class="section">
+    <h2 class="section-title">Problem Summary</h2>
+    <p class="lead">
+      During QA testing on March 24, 2026, Akir Rowe raised two product-level questions:
+      (1) Can users delete their chat history? and (2) Is the chat history shared across the organization
+      or user-specific? No delete capability existed, and the UI did not clarify that conversation
+      history is scoped per-user.
+    </p>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Delete Options</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Scope Indicators</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">2</div>
+        <div class="stat-label">Questions Raised</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">Mar 24</div>
+        <div class="stat-label">Reported, 2026</div>
+      </div>
+    </div>
+
+    <div class="quote-block">
+      <div class="quote-text">"Can we delete chat history? And is the chat history shared across the organization or will the history be user specific?"</div>
+      <div class="quote-attr">Akir Rowe &mdash; #lumion-ai-testing QA session</div>
+    </div>
+  </section>
+
+  <!-- Section 3: Solution Summary -->
+  <section class="section">
+    <h2 class="section-title">Solution Summary</h2>
+    <p class="lead">PR #5609 adds individual conversation deletion with soft deletes, a two-click inline confirmation pattern, and a "Your Conversations" header to clarify per-user scoping. 5 new tests and 12 files changed.</p>
+
+    <div class="fix-card">
+      <h3><span class="fix-number">1</span> Soft Delete Infrastructure</h3>
+      <ul>
+        <li>Added <code>SoftDeletes</code> trait to <code>Conversation</code> model with <code>deleted_at</code> column + index</li>
+        <li>Two-pass purge command: Pass 1 immediately purges soft-deleted conversations (respects user intent); Pass 2 retains age-based cleanup using <code>forceDelete()</code></li>
+        <li>Added <code>withTrashed()</code> to <code>AggregateAiUsageCommand</code> so metrics correctly count deleted conversations</li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <h3><span class="fix-number">2</span> Delete UI with Inline Confirmation</h3>
+      <ul>
+        <li>Trash icon appears on hover/focus for each conversation row in history</li>
+        <li>Two-click confirmation: click trash &rarr; "Delete?" / "Cancel" buttons replace timestamp</li>
+        <li>Outer row disabled during confirmation &mdash; prevents accidental resume</li>
+        <li>Keyboard Enter guard prevents programmatic <code>.click()</code> bypass on disabled buttons</li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <h3><span class="fix-number">3</span> Per-User Scope Clarification</h3>
+      <ul>
+        <li>Added "YOUR CONVERSATIONS" header to history view</li>
+        <li>History was already scoped per-user via <code>Conversation::scopeForUser()</code> &mdash; the header makes this explicit</li>
+        <li>Each user sees only their own conversations; cross-user delete attempts are silently rejected</li>
+      </ul>
+    </div>
+
+    <div class="fix-card">
+      <h3><span class="fix-number">4</span> Analytics &amp; Test Coverage</h3>
+      <ul>
+        <li>New <code>ConversationDeleted</code> analytics event tracking conversation age and portal</li>
+        <li>5 new Pest tests: delete from history, cross-user rejection, active conversation rejection, "Your Conversations" header, analytics tracking</li>
+        <li>Updated 4 existing tests for soft-delete compatibility (<code>forceDelete()</code>, <code>withTrashed()</code> assertions)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Section 4: Evidence Screenshots -->
+  <section class="section">
+    <h2 class="section-title">Verification Evidence</h2>
+    <p class="slideshow-subtitle">
+      Browser-verified on demo.doha-v1.test with two users (User 23: Excalibur School Owner, User 19: Laurence Paucek) on the same institution, confirming delete functionality, soft delete persistence, and per-user isolation.
+    </p>
+    <div class="slideshow" id="slideshow">
+      <div class="slide-viewport">
+        <img id="slide-img" src="" alt="Evidence screenshot">
+      </div>
+      <div class="slide-caption" id="slide-caption"></div>
+      <div class="slide-controls">
+        <button class="slide-btn" id="prev-btn" onclick="changeSlide(-1)" disabled>&larr; Previous</button>
+        <div style="text-align:center">
+          <div class="slide-indicator"><span class="current" id="slide-current">1</span> / <span id="slide-total">11</span></div>
+          <div class="slide-dots" id="slide-dots"></div>
+        </div>
+        <button class="slide-btn" id="next-btn" onclick="changeSlide(1)">Next &rarr;</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function() {
+  var slides = [
+    {
+      src: '01-dashboard-baseline.png',
+      caption: 'Baseline: School Dashboard for Excalibur Auto Mechanics Institute, logged in as User 23 (School Owner). AI assistant trigger button visible in top-right toolbar (lightning bolt icon next to Beta badge).'
+    },
+    {
+      src: '02-ai-drawer-welcome.png',
+      caption: 'AI Assistant drawer opened. Shows "Mia Beta" header with history (clock), new (+), and close (X) buttons. Resume prompt card for most recent conversation. Quick action tiles with live counts: Applications (5), Recent Payments (3).'
+    },
+    {
+      src: '03-history-your-conversations-header.png',
+      caption: 'History view showing the new "YOUR CONVERSATIONS" header \u2014 clarifies that history is scoped per-user, not shared across the organization. Three closed conversations listed for User 23 with timestamps.'
+    },
+    {
+      src: '04-history-trash-icon-on-hover.png',
+      caption: 'Hovering over the first conversation row reveals the trash icon (right side, next to "3 hours ago"). The icon only appears on hover/focus \u2014 non-intrusive design that keeps the UI clean.'
+    },
+    {
+      src: '05-inline-delete-confirmation.png',
+      caption: 'After clicking the trash icon: inline two-click confirmation appears. "Delete?" (red) and "Cancel" (gray) buttons replace the timestamp. The outer row button is disabled \u2014 prevents accidental resume while confirming.'
+    },
+    {
+      src: '06-cancel-reverts-to-normal.png',
+      caption: 'After clicking "Cancel": row reverts to normal state with timestamp and hover-revealed trash icon. All 3 conversations remain \u2014 cancel is non-destructive.'
+    },
+    {
+      src: '07-after-deletion-2-remaining.png',
+      caption: 'After confirming delete on "I want to build a new enrollment form...": conversation removed from list instantly. 2 conversations remain. No page reload required \u2014 client-side array filter updates the UI.'
+    },
+    {
+      src: '08-database-soft-delete-proof.png',
+      caption: 'Database verification: Conversation ID 3 has deleted_at = 2026-03-31T22:58:50 (soft deleted, NOT hard deleted). Messages and action confirmations remain intact. The 2 visible conversations have deleted_at = NULL. Record is recoverable and will be permanently purged on next scheduled run.'
+    },
+    {
+      src: '09-user19-sees-only-own-conversations.png',
+      caption: 'User isolation proof: Logged in as User 19 (Laurence Paucek, same institution). History shows only User 19\'s 2 conversations \u2014 "What reports are available?" and "How do I add a new student?". User 23\'s conversations are not visible. Per-user scoping confirmed.'
+    },
+    {
+      src: '10-user19-deleted-conversation.png',
+      caption: 'User 19 deleted "What reports are available?" \u2014 only 1 conversation remains ("How do I add a new student?"). Delete works independently for each user. User 23\'s data is unaffected.'
+    },
+    {
+      src: '12-empty-state-all-deleted.png',
+      caption: 'Empty state: After all conversations are deleted, the history view shows "No previous conversations" with a chat bubble icon. Clean empty state \u2014 user can start fresh by clicking the + button or typing in the input.'
+    }
+  ];
+
+  var current = 0;
+  var img = document.getElementById('slide-img');
+  var caption = document.getElementById('slide-caption');
+  var currentEl = document.getElementById('slide-current');
+  var totalEl = document.getElementById('slide-total');
+  var prevBtn = document.getElementById('prev-btn');
+  var nextBtn = document.getElementById('next-btn');
+  var dotsContainer = document.getElementById('slide-dots');
+
+  totalEl.textContent = slides.length;
+
+  for (var i = 0; i < slides.length; i++) {
+    var dot = document.createElement('div');
+    dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('data-index', i);
+    dotsContainer.appendChild(dot);
+  }
+
+  function render() {
+    img.src = slides[current].src;
+    img.alt = 'Evidence screenshot ' + (current + 1);
+    caption.textContent = slides[current].caption;
+    currentEl.textContent = current + 1;
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    var dots = dotsContainer.children;
+    for (var i = 0; i < dots.length; i++) {
+      dots[i].className = 'slide-dot' + (i === current ? ' active' : '');
+    }
+  }
+
+  window.changeSlide = function(dir) {
+    var next = current + dir;
+    if (next < 0 || next >= slides.length) return;
+    current = next;
+    render();
+  };
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') changeSlide(-1);
+    if (e.key === 'ArrowRight') changeSlide(1);
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
