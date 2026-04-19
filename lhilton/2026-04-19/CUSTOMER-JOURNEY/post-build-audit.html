@@ -1,0 +1,1248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Customer Journey AI — Post-Build Audit (Remediated)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-elev: #161922;
+    --bg-card: #1b1f2a;
+    --bg-soft: #232836;
+    --border: #2a3040;
+    --border-strong: #3a4255;
+    --text: #e6e8ee;
+    --text-soft: #a8aebb;
+    --text-mute: #6a7180;
+    --accent: #7aa2f7;
+    --accent-soft: rgba(122,162,247,0.12);
+    --good: #9ece6a;
+    --good-soft: rgba(158,206,106,0.12);
+    --warn: #e0af68;
+    --warn-soft: rgba(224,175,104,0.14);
+    --bad: #f7768e;
+    --bad-soft: rgba(247,118,142,0.14);
+    --inert: #bb9af7;
+    --inert-soft: rgba(187,154,247,0.14);
+    --code-bg: #11141c;
+    --shadow: 0 1px 2px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.18);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f7f8fb;
+      --bg-elev: #ffffff;
+      --bg-card: #ffffff;
+      --bg-soft: #f1f3f8;
+      --border: #e3e6ed;
+      --border-strong: #c8ccd6;
+      --text: #1d2230;
+      --text-soft: #4a5060;
+      --text-mute: #7c8294;
+      --accent: #2f6df3;
+      --accent-soft: rgba(47,109,243,0.10);
+      --good: #1f8f4a;
+      --good-soft: rgba(31,143,74,0.10);
+      --warn: #b8770f;
+      --warn-soft: rgba(184,119,15,0.12);
+      --bad: #c4344f;
+      --bad-soft: rgba(196,52,79,0.10);
+      --inert: #6b48b8;
+      --inert-soft: rgba(107,72,184,0.10);
+      --code-bg: #f0f2f7;
+      --shadow: 0 1px 2px rgba(15,17,21,0.06), 0 8px 24px rgba(15,17,21,0.06);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+  @media (max-width: 960px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--bg-elev);
+    border-right: 1px solid var(--border);
+    padding: 24px 18px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-mark {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--good), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 800; font-size: 13px;
+    box-shadow: var(--shadow);
+  }
+  .brand-text { font-weight: 700; font-size: 14px; line-height: 1.25; }
+  .brand-text small { display: block; color: var(--text-mute); font-weight: 400; font-size: 11px; }
+  .toc { font-size: 13px; }
+  .toc h4 {
+    margin: 16px 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .toc a {
+    display: block;
+    padding: 6px 10px;
+    color: var(--text-soft);
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 1px;
+  }
+  .toc a:hover { color: var(--text); background: var(--bg-soft); }
+  .toc a.depth-2 { padding-left: 22px; font-size: 12.5px; color: var(--text-mute); }
+
+  main {
+    padding: 48px clamp(20px, 5vw, 64px);
+    max-width: 1280px;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, var(--bg-elev), var(--bg-card));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 40px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(900px 200px at 20% 0%, var(--good-soft), transparent 70%),
+                radial-gradient(700px 220px at 90% 100%, var(--accent-soft), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-meta { color: var(--text-mute); font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+  .hero h1 { font-size: 42px; line-height: 1.1; margin: 8px 0 8px; font-weight: 800; letter-spacing: -0.02em; }
+  .hero .sub { color: var(--text-soft); font-size: 17px; max-width: 820px; }
+  .hero .badges {
+    margin-top: 24px;
+    display: flex; flex-wrap: wrap; gap: 8px;
+    position: relative;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-soft);
+  }
+  .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .badge.bad { color: var(--bad); border-color: var(--bad-soft); }
+  .badge.bad .badge-dot { background: var(--bad); }
+  .badge.good { color: var(--good); border-color: var(--good-soft); }
+  .badge.good .badge-dot { background: var(--good); }
+  .badge.warn { color: var(--warn); border-color: var(--warn-soft); }
+  .badge.warn .badge-dot { background: var(--warn); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .stat-num { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .stat-num.bad { color: var(--bad); }
+  .stat-num.warn { color: var(--warn); }
+  .stat-num.good { color: var(--good); }
+  .stat-num.inert { color: var(--inert); }
+  .stat-label { font-size: 12px; color: var(--text-mute); margin-top: 4px; font-weight: 500; }
+
+  section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  h2 .num { color: var(--text-mute); margin-right: 10px; font-weight: 500; }
+  h3 {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 32px 0 12px;
+    color: var(--text);
+  }
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 24px 0 10px;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  p { margin: 12px 0; }
+  p, li { color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  code {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: var(--text);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 16px 0;
+  }
+  pre code { background: transparent; padding: 0; font-size: inherit; }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 13.5px;
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--bg-soft);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-soft);
+  }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: 12px; }
+
+  .table-tracker tbody tr td:first-child { font-weight: 700; color: var(--accent); width: 64px; }
+
+  .mermaid-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  .mermaid-wrap .mermaid {
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: transparent;
+    min-height: 240px;
+  }
+  .mermaid-wrap.zoomable .mermaid {
+    cursor: grab;
+    height: 520px;
+    background: repeating-linear-gradient(
+      0deg, transparent 0, transparent 23px,
+      var(--bg-soft) 23px, var(--bg-soft) 24px),
+    repeating-linear-gradient(
+      90deg, transparent 0, transparent 23px,
+      var(--bg-soft) 23px, var(--bg-soft) 24px);
+  }
+  .mermaid-wrap.zoomable .mermaid:active { cursor: grabbing; }
+  .mermaid-wrap .mermaid svg { max-width: none !important; height: 100% !important; width: 100% !important; }
+  .mermaid-caption {
+    margin-top: 10px;
+    color: var(--text-mute);
+    font-size: 12.5px;
+    text-align: center;
+  }
+  .mz-toolbar {
+    position: absolute; top: 10px; right: 10px;
+    display: flex; gap: 4px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: var(--shadow);
+    opacity: 0.85;
+    transition: opacity 0.15s;
+    z-index: 5;
+  }
+  .mermaid-wrap:hover .mz-toolbar { opacity: 1; }
+  .mz-btn {
+    background: transparent; border: none; color: var(--text-soft);
+    width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background 0.12s, color 0.12s;
+  }
+  .mz-btn:hover { background: var(--bg-soft); color: var(--text); }
+  .mz-btn:active { background: var(--accent-soft); color: var(--accent); }
+  .mz-btn.label {
+    width: auto; padding: 0 8px; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-mute);
+  }
+  .mz-divider { width: 1px; background: var(--border); margin: 4px 2px; }
+  .mz-hint {
+    position: absolute; bottom: 10px; left: 14px;
+    font-size: 10.5px; color: var(--text-mute);
+    letter-spacing: 0.04em; text-transform: uppercase;
+    pointer-events: none; opacity: 0.65;
+  }
+
+  .callout {
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .callout-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .callout-body { font-size: 14px; }
+  .callout-body strong { display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .callout.bad { border-color: var(--bad-soft); background: var(--bad-soft); }
+  .callout.bad .callout-icon { background: var(--bad); color: white; }
+  .callout.warn { border-color: var(--warn-soft); background: var(--warn-soft); }
+  .callout.warn .callout-icon { background: var(--warn); color: white; }
+  .callout.good { border-color: var(--good-soft); background: var(--good-soft); }
+  .callout.good .callout-icon { background: var(--good); color: white; }
+  .callout.info { border-color: var(--accent-soft); background: var(--accent-soft); }
+  .callout.info .callout-icon { background: var(--accent); color: white; }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .pill.wired, .pill.resolved { background: var(--good-soft); color: var(--good); }
+  .pill.fatal { background: var(--bad-soft); color: var(--bad); }
+  .pill.inert { background: var(--warn-soft); color: var(--warn); }
+  .pill.unwired { background: var(--inert-soft); color: var(--inert); }
+  .pill.partial, .pill.deferred { background: rgba(255,165,0,0.14); color: #d18230; }
+  .pill.mitigated { background: var(--good-soft); color: var(--good); }
+  .pill.open { background: var(--bad-soft); color: var(--bad); }
+
+  .grid-wd {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 18px 0;
+  }
+  .grid-wd.three { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 980px) { .grid-wd.three { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 720px) { .grid-wd, .grid-wd.three { grid-template-columns: 1fr; } }
+  .wd-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 14px 18px;
+  }
+  .wd-card.wired, .wd-card.resolved { border-left-color: var(--good); }
+  .wd-card.fatal { border-left-color: var(--bad); }
+  .wd-card.inert { border-left-color: var(--warn); }
+  .wd-card.unwired { border-left-color: var(--inert); }
+  .wd-card.partial, .wd-card.deferred { border-left-color: #d18230; }
+  .wd-card h5 { margin: 0 0 6px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .wd-card p { margin: 0; font-size: 13px; color: var(--text-soft); }
+
+  footer {
+    margin-top: 64px;
+    padding: 24px 0;
+    color: var(--text-mute);
+    font-size: 12.5px;
+    border-top: 1px solid var(--border);
+  }
+  blockquote {
+    margin: 16px 0;
+    padding: 12px 18px;
+    border-left: 3px solid var(--good);
+    background: var(--good-soft);
+    border-radius: 0 8px 8px 0;
+    color: var(--text);
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  :target { scroll-margin-top: 16px; }
+</style>
+<meta name="share-summary" content="Post-build audit of the Customer Journey AI feature on branch tmp-bilal-idea — flagged 14 production-blocking defects across three rounds of adversarial review, then validated all 14 as resolved by a 14-commit ralph remediation campaign. Includes data-model ER diagram, sequence/flow diagrams, wired-vs-dead code matrix, and a tracker table with fix commit SHAs.">
+<meta name="share-hash" content="69d226445685052ae0617ec806e6e234095bbee3e116dffb113fecb50722676c">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">CJ</div>
+      <div class="brand-text">
+        Customer Journey AI
+        <small>Post-Build Audit · Remediated</small>
+      </div>
+    </div>
+    <nav class="toc">
+      <h4>Status</h4>
+      <a href="#tracker">0 · Remediation Tracker</a>
+      <h4>Audit body</h4>
+      <a href="#data-model">1 · Data Model</a>
+      <a href="#data-model" class="depth-2">1.1 ER diagram</a>
+      <a href="#demo-data" class="depth-2">1.2 Demo data</a>
+      <a href="#flows">2 · State Flows</a>
+      <a href="#flows" class="depth-2">2.1 SMS reply sequence</a>
+      <a href="#flows" class="depth-2">2.2 Inbound channels</a>
+      <a href="#flows" class="depth-2">2.3 Evaluation walk</a>
+      <a href="#flows" class="depth-2">2.4 Compliance race</a>
+      <a href="#stages">3 · Stages, Playbooks, Plays</a>
+      <a href="#agents">4 · Agents</a>
+      <a href="#wired">5 · Wired vs Dead</a>
+      <a href="#risks">6 · Production Risks</a>
+      <a href="#testing">7 · Testing</a>
+      <a href="#open">8 · Open Items</a>
+      <h4>Appendix</h4>
+      <a href="#method">Audit method</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <div class="hero-meta">Post-Build Audit · Remediated · 2026-04-19</div>
+      <h1>Customer Journey AI — Remediation Complete</h1>
+      <div class="sub">All 14 §0 BLOCKING defects closed across a 14-commit ralph campaign (`6c6fe386a6` → `540b710903`, plus pre-flight `350dee6e66`). Validated by four parallel agents reading current source against original §0 evidence.</div>
+      <div class="badges">
+        <span class="badge"><span class="badge-dot"></span>Branch <code>tmp-bilal-idea</code></span>
+        <span class="badge good"><span class="badge-dot"></span>14 / 14 §0 closed</span>
+        <span class="badge good"><span class="badge-dot"></span>93 + 51 tests passing</span>
+        <span class="badge warn"><span class="badge-dot"></span>2 partial-by-design (F7, F14)</span>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-num good">14/14</div><div class="stat-label">§0 defects closed</div></div>
+      <div class="stat"><div class="stat-num good">15</div><div class="stat-label">commits in remediation campaign</div></div>
+      <div class="stat"><div class="stat-num warn">2</div><div class="stat-label">partial by design (deferred carve-outs)</div></div>
+      <div class="stat"><div class="stat-num good">144+</div><div class="stat-label">passing journey tests after FINAL</div></div>
+    </div>
+
+    <section id="tracker">
+      <h2><span class="num">§0</span>Remediation Tracker</h2>
+      <p>The original audit (Round-3 converged) flagged 14 BLOCKING defects under §0. A remediation campaign of one-defect-per-commit closed each. Validation was performed by four parallel agents reading the current source against the original §0 evidence; they returned <code>RESOLVED</code> for 12 items and <code>PARTIAL by design</code> for F7 and F14 — both with explicitly captured deferred sub-items.</p>
+
+      <div class="callout good">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <strong>Audit posture (revised)</strong>
+          Architecture and data model were sound; the §0 production-fatal defects have been closed. Branch is no longer §0-blocked for pilot. Open items are §6 cost ceiling (deferred), F14 Part 2 (deferred to OI-012), the original Loop B/C scope items that were never §0 blockers, and the secondary tooling gaps in §7.3 — see §8.
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table-tracker">
+          <thead>
+            <tr><th>#</th><th>Defect (original §0)</th><th>Fix commit</th><th>Status</th><th>Resolution</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>F1</td><td>NOT NULL throws on form/payment handlers (every form submit + payment success threw <code>QueryException</code> from a sync subscriber, breaking upstream pipelines).</td><td><code>6c6fe386a6</code></td><td><span class="pill resolved">Resolved</span></td><td>Both handlers resolve a real <code>contact_id</code> first; private <code>stampAndDispatchForContact</code> writes per-placement activity rows with non-null IDs. Test: <code>FormAndPaymentTest.php</code> (8 cases).</td></tr>
+            <tr><td>F2</td><td>AI <code>confidence</code> dropped at action call site (job called <code>TransitionContactAction</code> with 4 positional args).</td><td><code>1cead66929</code></td><td><span class="pill resolved">Resolved</span></td><td>AI branch uses named arguments: <code>agentUuid: $agent->getKey()</code>, <code>confidence: $decision->confidence</code>. <code>journey_transitions_log.confidence</code> persists.</td></tr>
+            <tr><td>F3+F10</td><td>TransitionAgent errors didn't trigger retries; no <code>failed()</code> hook left rows stuck in <code>processing</code>.</td><td><code>11e564ba8f</code></td><td><span class="pill resolved">Resolved</span></td><td>Transient Prism errors (4-class allow-list) re-throw to retry; <code>failed()</code> finalizes pending → <code>processing_exhausted</code>; new command <code>journeys:prune-stuck-evaluations {--hours=48} {--execute}</code>.</td></tr>
+            <tr><td>F4</td><td><code>Bus::batch()</code> for time-sweep lacked <code>allowFailures()</code> — one bad job cancelled the rest.</td><td><code>6cfc7df071</code></td><td><span class="pill resolved">Resolved</span></td><td>One-line addition; test asserts <code>$batch->allowsFailures()</code>.</td></tr>
+            <tr><td>F5</td><td>"Time-based" sweep had no <code>last_evaluated_at</code> predicate — 960k jobs/day floor.</td><td><code>4d69c34e0a</code></td><td><span class="pill resolved">Resolved</span></td><td>Cooldown predicate + stalest-first ordering; <code>stampAndFinalize</code> stamps <code>last_evaluated_at</code> on every terminal status path; configurable via <code>customer_journeys.time_sweep_cooldown_minutes</code> (default 15).</td></tr>
+            <tr><td>F6</td><td>60s job lock &lt; Prism duration → double-evaluation race; no-op guard only caught <code>to == from</code>.</td><td><code>3ef36b8f68</code></td><td><span class="pill resolved">Resolved</span></td><td><code>TransitionContactAction</code> gains <code>?string $expectedFromStageId</code> + <code>lockForUpdate</code> re-read; null return → <code>stale_transition</code>. Job <code>$timeout=300</code>, <code>expireAfter(330)</code>.</td></tr>
+            <tr><td>F7</td><td>No Pennant kill-switch, no per-tenant token quota, no observability.</td><td><code>efd5792646</code></td><td><span class="pill partial">Partial by design</span></td><td><code>JourneysEnabled</code> Pennant feature + per-entry-point gate + Horizon <code>tags()</code>. <strong>Deferred:</strong> per-tenant token quota / cost ceiling — see §6.1 + §8.</td></tr>
+            <tr><td>F8</td><td>Sync gates could crash entire automation send pipeline cross-customer.</td><td><code>068079bc8c</code></td><td><span class="pill resolved">Resolved</span></td><td>All three listeners fail-closed: non-<code>Cancelled</code> throws caught + reported + re-thrown as <code>AutomationActionEventCancelled('*_listener_error')</code>.</td></tr>
+            <tr><td>F9</td><td>SMS opt-in did not restore opted-out placements — re-engaged contacts stayed frozen.</td><td><code>804ca51e29</code></td><td><span class="pill resolved">Resolved</span></td><td>New <code>OptInRestorationListener</code>; both opt listeners share <code>opt-toggle:$phoneE164</code> overlap key so STOP→START serializes. Writes <code>OptInRestored</code> activity row.</td></tr>
+            <tr><td>F11</td><td><code>UnifiedDatabaseSeeder</code> ran demo on staging, leaking <code>[TEMPLATE COPY PENDING]</code> rows.</td><td><code>2da91e9985</code></td><td><span class="pill resolved">Resolved</span></td><td><code>App::environment('local','testing')</code> allowlist on caller AND seeder. <code>forInstitution()</code> bypass preserved for tests + scenario.</td></tr>
+            <tr><td>F12</td><td>FERPA reply unwired AND v1 marked any non-empty reply verified — permanent challenge loop.</td><td><code>cd24294a1d</code></td><td><span class="pill resolved">Resolved</span></td><td>Date-shape regex + 80-char cap + 3-strike lockout + per-contact lockout in BOTH <code>issueChallenge</code> AND <code>handleVerificationResponse</code>. Reactor wires inbound SMS to verification handler before evaluation dispatch.</td></tr>
+            <tr><td>F13</td><td><code>ContactEscalationDetector</code> existed but no production caller — "I want a person" did nothing.</td><td><code>3cf65d0918</code></td><td><span class="pill resolved">Resolved</span></td><td>Wired in <code>onInboundSms</code> after FERPA pass, before evaluation dispatch. Fault-isolated via <code>try { ... } catch (Throwable $e) { report($e); }</code>.</td></tr>
+            <tr><td>F14</td><td>Publish snapshot omitted agents+KBs; restore was 4-field workflow rewrite, not structural.</td><td><code>033dfdf2ca</code></td><td><span class="pill partial">Partial by design</span></td><td><strong>Part 1:</strong> snapshot now collects + serializes agents + KBs (full payload + pivot list). <strong>Part 3:</strong> restore runs in transaction, <code>forceDelete</code>s + rebuilds stages/transitions with preserved UUIDs, computes <code>restoration_warnings</code>. <strong>Part 2 deferred to OI-012:</strong> runtime snapshot-backed agent resolution.</td></tr>
+            <tr><td>FINAL</td><td>Cross-defect interactions test + full verification gate.</td><td><code>540b710903</code></td><td><span class="pill resolved">Resolved</span></td><td>4 cross-defect cases: F3+F5, F6+F7, F9+F12, F13+F8. 93 feature + 51 unit tests pass. Stan baseline unchanged. Pint clean. Scenario green end-to-end.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top: 18px; font-size: 13px; color: var(--text-soft);">
+        <strong>Pre-flight (commit <code>350dee6e66</code>)</strong> added supporting infrastructure: 4 new <code>JourneyActivityEventType</code> enum cases, <code>FeatureSlugEnum::JOURNEYS</code>, migrations for <code>ferpa_failed_attempts</code> + <code>ferpa_locked_out_at</code> + time-sweep compound index + <code>restoration_warnings</code>, and <code>Workflow</code> + <code>ContactWorkflow</code> model updates.
+      </p>
+    </section>
+
+    <section id="data-model">
+      <h2><span class="num">§1</span>Data Model</h2>
+      <h3>1.1 Entity-relationship diagram</h3>
+      <p>Existing CRM tables extended; one new CRM extension (<code>crm_workflow_transitions</code>); 9 new Journey domain tables + 1 pivot. No <code>journey_playbooks</code> or <code>journey_plays</code> tables — playbooks are <code>Automation</code> rows, plays are <code>AutomationAction</code> rows.</p>
+
+      <div class="mermaid-wrap"><div class="mermaid">
+erDiagram
+    crm_workflows ||--o{ crm_workflow_stages : has
+    crm_workflows ||--o{ crm_workflow_transitions : routes
+    crm_workflows ||--o{ journey_versions : snapshots
+    crm_workflow_stages ||--o{ crm_workflow_transitions : "from/to"
+    crm_workflows ||--o{ crm_contact_workflows : places
+    crm_contact_workflows ||--o{ journey_activity_log : audits
+    crm_contact_workflows ||--o{ journey_transitions_log : audits
+    crm_contact_workflows ||--o{ journey_pending_evaluations : queues
+    crm_contact_workflows ||--o{ journey_escalations : raises
+    journey_ai_agents }o--o{ journey_knowledge_bases : "agent_kbs (pivot)"
+    journey_knowledge_bases ||--o{ journey_kb_sources : "ingests (NO CONSUMER)"
+    contacts ||--o{ journey_contact_learnings : "(READ-ONLY: no writers)"
+    journey_ai_agents ||--o{ journey_contact_learnings : "(READ-ONLY: no writers)"
+    crm_workflows {
+        bigint id PK
+        string status
+        uuid live_version_uuid "no FK"
+        uuid draft_version_uuid "no FK"
+        json restoration_warnings "F14 added"
+        bool dry_run_enabled
+    }
+    crm_workflow_stages {
+        bigint id PK
+        text description
+        json stage_action "agent_uuid or agent_slug"
+        bool has_ai_transition_config
+        string playbook_trigger_event "READ BY NO ONE"
+        json customer_visibility "no portal consumer"
+    }
+    crm_workflow_transitions {
+        uuid id PK
+        bigint workflow_id FK
+        bigint from_stage_id FK
+        bigint to_stage_id FK
+        enum type "manual rule ai"
+        json rule_config "real: always, dry_run; stub: inbound_msg_count"
+        json ai_config
+        int priority
+    }
+    crm_contact_workflows {
+        uuid id PK
+        uuid journey_version_uuid
+        timestamp entered_stage_at
+        timestamp last_evaluated_at "F5 stamped on every terminal path"
+        bool opted_out
+        bool dry_run
+        timestamp ferpa_identity_verified_at
+        int ferpa_failed_attempts "F12 added"
+        timestamp ferpa_locked_out_at "F12 added"
+    }
+    journey_ai_agents {
+        uuid id PK
+        string slug
+        string prompt_identifier "soft FK"
+        json persona_config
+        json guardrails "READ but NOT ENFORCED"
+        json channel_grants "NOT ENFORCED"
+        timestamp archived_at
+        timestamp deleted_at "SoftDeletes"
+    }
+    journey_versions {
+        uuid id PK
+        bigint journey_id FK
+        int version_number
+        longtext config_snapshot "F14: now includes agents + KBs"
+        timestamp published_at
+    }
+    journey_activity_log {
+        uuid id PK
+        uuid placement_id FK "NOT NULL"
+        bigint institution_id FK "NOT NULL"
+        string event_type
+        json payload
+    }
+    journey_transitions_log {
+        uuid id PK
+        uuid placement_id FK
+        enum transition_type
+        float confidence "F2: now persisted on AI advances"
+        text reason
+    }
+    journey_pending_evaluations {
+        uuid id PK
+        uuid placement_id FK
+        string evaluation_trigger_id "fresh UUID per dispatch"
+        enum status "F3+F10 processing_exhausted; F6 stale_transition"
+    }
+    journey_escalations {
+        uuid id PK
+        enum triggered_by "F13 contact_keyword now actually fires"
+        text reason "encrypted"
+        enum status
+        timestamp sla_expires_at
+    }
+    journey_kb_sources {
+        uuid id PK
+        string ingestion_status "STILL SCAFFOLD ONLY"
+    }
+    journey_contact_learnings {
+        uuid id PK
+        text entry "encrypted; STILL NEVER WRITTEN"
+    }
+      </div></div>
+
+      <h3 id="demo-data">1.2 Loop A demo data</h3>
+      <p><code>CustomerJourneyDemoSeeder</code> creates 6 demo workflows and 4 agents. Now gated behind <code>App::environment('local', 'testing')</code> at both caller and seeder (F11) — staging will not get demo data on <code>db:seed</code> unless explicitly allowed.</p>
+      <div class="grid-wd">
+        <div class="wd-card wired"><h5>Workflows (6)</h5><p>Inquiry to Enrollment · Application Submitted to Decision · Accepted to Enrolled · Retention &amp; Re-engagement · Support Ticket Lifecycle · Alumni Engagement</p></div>
+        <div class="wd-card wired"><h5>Agents (4)</h5><p>Enrollment Advisor · Admissions Outreach · Financial Aid Guide · Career Services</p></div>
+      </div>
+    </section>
+
+    <section id="flows">
+      <h2><span class="num">§2</span>State-Change Flows</h2>
+
+      <h3>2.1 Sequence — a student replies to a text (post-remediation)</h3>
+      <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Carrier as Carrier Twilio
+    participant App as App webhook
+    participant SmsRecv as SmsReceived
+    participant Reactor as JourneyReactor
+    participant Pennant as Pennant gate
+    participant Ferpa as FerpaGateService
+    participant Esc as ContactEscalationDetector
+    participant Job as EvaluateJob
+    participant Eval as Transitions walk
+    participant Trans as TransitionAgent
+    participant Prism as Prism structured
+    participant Action as TransitionContactAction
+    participant Stage as JourneyStageEntered
+    participant Play as PlaybookAgent
+    participant Mat as AutomationMaterializer
+    participant Worker as Automation worker
+    participant Resolving as AAE Resolving
+    participant Gates as Sync gates
+    participant Send as SMS or Email handler
+    Carrier->>App: inbound SMS webhook
+    App->>SmsRecv: dispatch
+    SmsRecv->>Reactor: onInboundSms
+    Reactor->>Pennant: institution journeys-enabled F7
+    Pennant-->>Reactor: yes or short-circuit no-op
+    Reactor->>Ferpa: handleFerpaReplyIfOutstanding F12
+    Ferpa->>Ferpa: per-contact lockout, date-shape regex, 3-strike
+    Ferpa-->>Reactor: verified or recorded failed attempt
+    Reactor->>Esc: detect activePlacements body F13
+    Esc-->>Reactor: escalations created or report on throw
+    Reactor->>Job: dispatch per active placement, Horizon-tagged
+    Job->>Eval: load transitions ORDER BY priority DESC
+    Eval->>Eval: rule? always or dry_run or stub
+    Eval->>Trans: AI candidate? decide
+    Trans->>Trans: InjectionProtector validates all recent bodies
+    alt injection pattern
+        Trans-->>Eval: hold, no Prism call, status=no_match
+    else
+        Trans->>Prism: structured TransitionDecision
+        alt Prism throws transient F3
+            Prism-->>Trans: throw
+            Trans-->>Job: bubble
+            Job->>Job: re-throw, queue retries 3x
+        else Prism throws non-transient
+            Prism-->>Trans: throw
+            Job->>Job: stampAndFinalize ai_error
+        else
+            Prism-->>Trans: TransitionDecision
+            Trans-->>Eval: decision
+        end
+    end
+    Eval->>Action: shouldTransition? expectedFromStageId guard F6
+    Action->>Action: lockForUpdate, re-read current stage
+    alt stage drifted
+        Action-->>Job: return null
+        Job->>Job: stampAndFinalize stale_transition
+    else
+        Action->>Action: DB transaction creates new ContactStage
+        Action->>Stage: dispatch JourneyStageEntered with confidence + agentUuid F2
+    end
+    Stage->>Reactor: onStageEntered
+    Reactor->>Pennant: institution still enabled F7
+    Reactor->>Reactor: resolve agent
+    Reactor->>Play: authorFor placement stage agent
+    Play->>Mat: materialize plan
+    Mat-->>Play: 1 Automation + N Action + N Event
+    Play-->>Reactor: result
+    Reactor->>Reactor: write JourneyActivityEntry playbook_dispatched
+    Worker->>Resolving: per AutomationActionEvent at execute_at
+    Resolving->>Gates: sync StageGuard, DryRun, Ferpa F8 fail-closed
+    alt gate vetoes via Cancelled or internal throw
+        Gates-->>Worker: cancel cleanly
+    else
+        Gates->>Send: dispatch SMS or Email
+    end
+      </div>
+      <div class="mermaid-caption">Drag to pan, wheel or +/− to zoom. New gates added by remediation: Pennant (F7), FERPA reply (F12), escalation detector (F13), stale-transition guard (F6), fail-closed sync gates (F8).</div>
+      </div>
+
+      <h3>2.2 Inbound channels — what actually fires (post-remediation)</h3>
+      <div class="grid-wd">
+        <div class="wd-card wired"><h5><span class="pill wired">Wired</span> SmsReceived → onInboundSms</h5><p>Drives evaluation. Now also runs Pennant gate (F7), FERPA reply check (F12), escalation detection (F13) before dispatch.</p></div>
+        <div class="wd-card inert"><h5><span class="pill inert">Still inert</span> MessageSent → onEmailMessageSent</h5><p>Requires <code>X-Lumion-Contact-Uuid</code> header. No production mailer sets it. Out of remediation scope.</p></div>
+        <div class="wd-card resolved"><h5><span class="pill resolved">F1 Resolved</span> LeadCaptureFormSubmitted</h5><p>Resolves contact via <code>FormSubmission::whereKey($id)->value('contact_id')</code>; no-op when missing; never writes NULL IDs. Pennant-gated.</p></div>
+        <div class="wd-card resolved"><h5><span class="pill resolved">F1 Resolved</span> PaymentSucceeded</h5><p>Resolves via invoice → applicant fallback (multi-contact warning + no-op). Pennant-gated.</p></div>
+      </div>
+
+      <h3>2.3 Evaluation walk (post-remediation)</h3>
+      <div class="mermaid-wrap"><div class="mermaid">
+flowchart TD
+    Start([EvaluatePlacementTransitionsJob.handle]) --> CheckOptOut{placement.opted_out?}
+    CheckOptOut -- yes --> EarlyReturn([return])
+    CheckOptOut -- no --> Record[recordOrReuseEvaluation]
+    Record --> Dup{duplicate trigger?}
+    Dup -- yes --> EarlyReturn
+    Dup -- no --> Stage{currentStage?}
+    Stage -- null --> StatusNoStage[stampAndFinalize<br/>status=no_current_stage]
+    Stage -- ok --> LoadTrans[load transitions ORDER BY priority DESC]
+    LoadTrans --> Empty{empty?}
+    Empty -- yes --> StatusNoTrans[stampAndFinalize<br/>status=no_transitions]
+    Empty -- no --> Loop[Walk candidates in priority order]
+    Loop --> Type{type?}
+    Type -- rule --> RuleMatch{ruleMatches?<br/>always or dry_run or stub}
+    RuleMatch -- yes --> CallTransRule[TransitionContactAction<br/>expectedFromStageId guard F6]
+    RuleMatch -- no --> NextRule[next candidate]
+    NextRule --> Loop
+    Type -- ai --> ResolveAgent{resolve agent}
+    ResolveAgent -- null --> StatusPending[stampAndFinalize<br/>status=pending_ai]
+    ResolveAgent -- ok --> Decide{TransitionAgent.decide<br/>try-catch}
+    Decide -- transient throw F3 --> Rethrow[re-throw, queue retries 3x]
+    Decide -- non-transient throw --> StatusErr[stampAndFinalize<br/>status=ai_error]
+    Decide -- shouldTransition=false --> NextAi[next candidate]
+    NextAi --> Loop
+    Decide -- shouldTransition=true --> CallTransAi[TransitionContactAction<br/>named args F2 confidence agentUuid]
+    CallTransRule --> StaleCheck{stale?}
+    CallTransAi --> StaleCheck
+    StaleCheck -- yes --> StatusStale[stampAndFinalize<br/>status=stale_transition F6]
+    StaleCheck -- no --> StatusAdv[stampAndFinalize<br/>status=advanced]
+    Type -- manual --> NextMan[skip; next candidate]
+    NextMan --> Loop
+    Loop --> Exhausted{candidates exhausted?}
+    Exhausted -- yes --> StatusNoMatch[stampAndFinalize<br/>status=no_match]
+    Rethrow --> RetryExhaust{retries exhausted?}
+    RetryExhaust -- yes --> Failed[failed hook<br/>status=processing_exhausted F3+F10]
+      </div>
+      <div class="mermaid-caption">Every terminal path now stamps <code>last_evaluated_at</code> via <code>stampAndFinalize</code>, so the F5 cooldown actually bites.</div>
+      </div>
+
+      <h3>2.4 Compliance gates — opt-toggle now serialized</h3>
+      <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Inb as Inbound STOP or START
+    participant SmsOut as SmsOptOut or SmsOptIn
+    participant OutList as OptOutEnforcement or OptInRestoration
+    participant Lock as opt-toggle phoneE164 F9
+    participant Worker as Automation worker
+    participant Resolving as AAE Resolving
+    participant Gates as Sync gates F8 fail-closed
+    participant Send as SMS handler
+    participant Carrier as Carrier
+    Note over Inb,Carrier: STOP and START now serialize via shared overlap key
+    Inb->>SmsOut: dispatch
+    SmsOut->>OutList: queued, both listeners share lock key
+    OutList->>Lock: acquire opt-toggle lock
+    Lock-->>OutList: granted
+    par concurrent send already in-flight
+        Worker->>Resolving: scheduled event firing NOW
+        Resolving->>Gates: sync gates evaluate
+        Note over Gates: race window remains for in-flight sends
+        alt opt-out flag now set
+            Gates-->>Worker: cancel
+        else not yet visible
+            Gates->>Send: pass
+            Send->>Carrier: SMS to opted-out contact
+        end
+    and serialized flip
+        OutList->>OutList: STOP flips opted_out=true
+        OutList->>OutList: START flips opted_out=false, preserves ferpa_locked_out_at
+        OutList->>Lock: release
+    end
+      </div>
+      <div class="mermaid-caption">F9 closed the symmetric STOP→START race. The async opt-out vs in-flight-send race remains — flagged for future hardening.</div>
+      </div>
+    </section>
+
+    <section id="stages">
+      <h2><span class="num">§3</span>Stages, Playbooks, Plays, and Versioning</h2>
+      <p>A "playbook" is an <code>Automation</code> row authored by <code>PlaybookAgent</code>. A "play" is one <code>AutomationAction</code> row inside it.</p>
+
+      <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    Stage[(WorkflowStage)] -- entered --> Reactor[JourneyReactor.onStageEntered]
+    Reactor -- Pennant gate F7 --> Agent[(JourneyAiAgent)]
+    Reactor -- author --> PA[PlaybookAgent.authorFor]
+    PA -- build context 24k --> Ctx[JourneyContextBuilder]
+    Ctx -- read --> KB[(journey_knowledge_bases)]
+    Ctx -- read --> Learn[(journey_contact_learnings<br/>STILL NO WRITERS)]
+    PA -- structured --> Prism[Prism::structured]
+    Prism --> Plan[(PlaybookPlan + N PlaybookPlanAction)]
+    Plan --> Mat[AutomationMaterializer.materialize]
+    Mat -- writes --> Auto[(Automation)]
+    Mat -- writes --> Act[(AutomationAction × N)]
+    Mat -- writes --> Evt[(AutomationActionEvent × N<br/>status=ReadyToResolve)]
+    Note1[channel_grants STILL NOT ENFORCED<br/>guardrails STILL NOT ENFORCED<br/>playbook_trigger_event STILL UNREAD]
+    Agent -.-> Note1
+      </div></div>
+
+      <h3>Versioning lifecycle (F14: snapshot now full, restore now structural)</h3>
+      <div class="mermaid-wrap"><div class="mermaid">
+flowchart TD
+    Draft[Draft workflow + stages + transitions + agents + KBs] -- PublishJourneyAction --> Snap[journey_versions.config_snapshot<br/>encrypted_array]
+    Snap -- includes --> SnapW[workflow]
+    Snap -- includes --> SnapS[stages]
+    Snap -- includes --> SnapT[transitions]
+    Snap -- F14 Part 1 includes --> SnapA[agents]
+    Snap -- F14 Part 1 includes --> SnapKB[knowledge_bases + pivot]
+    Snap -- still does NOT include --> SnapPrompts[Cortex prompts soft FK]
+    Snap --> Live[crm_workflows.live_version_uuid]
+    Live --> NewPlace[New placements pin journey_version_uuid]
+    NewPlace -- in-flight --> Mutable{Agent edited<br/>post-publish?}
+    Mutable -- still mutable globally --> Surprise[F14 Part 2 DEFERRED to OI-012<br/>runtime still resolves live agent rows<br/>not snapshot rows]
+    Snap -- RestoreJourneyVersionAction F14 Part 3 --> Restore[DB transaction<br/>forceDelete stages + transitions<br/>forceFill snapshot UUIDs<br/>computeWarnings sets restoration_warnings]
+    Restore --> Pointer[Sets draft_version_uuid + status=draft]
+    Restore --> ManualRepublish[Admin must re-publish to make live]
+      </div></div>
+    </section>
+
+    <section id="agents">
+      <h2><span class="num">§4</span>Transition Agent and Playbook Agent</h2>
+
+      <div class="mermaid-wrap"><div class="mermaid">
+classDiagram
+    class TransitionAgent {
+        +decide(placement, stage, agent) TransitionDecision
+        +explainStrategy(stage, agent) array
+        -InjectionProtector validates ALL recent bodies first
+        -F3 transient errors re-throw to retry; non-transient finalize ai_error
+    }
+    class PlaybookAgent {
+        +authorFor(placement, stage, agent) array
+        +samplePreview(agent, sampleContext) string
+        -lt_5s timeout via withClientOptions
+        -caught by JourneyReactor logs error activity entry
+    }
+    class JourneyContextBuilder {
+        +build(placement, stage, agent, mode, kbQuery) array
+        -MODE_TRANSITION 12k tokens
+        -MODE_PLAYBOOK 24k tokens
+        -drop order kb_chunks then learnings then interactions
+        -fails-fast on overflow RuntimeException
+    }
+    class TransitionDecision {
+        bool shouldTransition
+        string reason
+        nullable_string nextStageSlug
+        nullable_float confidence "F2 persisted via named-arg call"
+    }
+    class PlaybookPlan {
+        array_PlaybookPlanAction actions
+    }
+    class InjectionProtector {
+        +validate(body) result
+        -returns patterns that matched
+    }
+    TransitionAgent --> JourneyContextBuilder : MODE_TRANSITION
+    PlaybookAgent --> JourneyContextBuilder : MODE_PLAYBOOK
+    TransitionAgent --> TransitionDecision : returns
+    PlaybookAgent --> PlaybookPlan : returns
+    TransitionAgent --> InjectionProtector : validates first
+      </div></div>
+
+      <div class="callout warn">
+        <div class="callout-icon">2</div>
+        <div class="callout-body">
+          <strong>Two resolvers, two precedence orders (still — by design)</strong>
+          <ul style="margin: 8px 0 0;">
+            <li><strong>Authoring agent</strong> (<code>JourneyReactor::resolveAuthoringAgent</code>): <code>stage_action.agent_uuid</code> → <code>stage_action.agent_slug</code> → first non-archived.</li>
+            <li><strong>AI-transition agent</strong> (<code>EvaluatePlacementTransitionsJob::resolveAgentForTransition</code>): <code>ai_config.agent_uuid</code> → <code>ai_config.agent_slug</code> → <code>stage_action.agent_uuid</code> → first non-archived.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-icon">≡</div>
+        <div class="callout-body">
+          <strong>Failure-mode parity (post-F3)</strong>
+          <code>TransitionAgent</code> failures: transient (4-class allow-list) re-throw to trigger queue retry; non-transient caught by job → <code>status='ai_error'</code>. Retry exhaustion lands in <code>failed()</code> → <code>status='processing_exhausted'</code>.<br>
+          <code>PlaybookAgent</code> failures: caught by reactor → activity entry with <code>error</code> payload. No retry.
+        </div>
+      </div>
+    </section>
+
+    <section id="wired">
+      <h2><span class="num">§5</span>Wired vs Dead Code (post-remediation)</h2>
+      <p>Many rows have flipped from unwired/fatal to wired due to the remediation campaign. Items still unwired/inert are out of §0 scope.</p>
+
+      <h3>Wired and functional (post-remediation flips highlighted)</h3>
+      <div class="grid-wd three">
+        <div class="wd-card wired"><h5><span class="pill wired">Wired</span> Inbound SMS → evaluation</h5></div>
+        <div class="wd-card wired"><h5><span class="pill wired">Wired</span> Stage entry → playbook authoring</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F8 Resolved</span> Send-time gates fail-closed</h5></div>
+        <div class="wd-card wired"><h5><span class="pill wired">Wired</span> SMS opt-out → off-ramp</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F9 Resolved</span> SMS opt-IN → restore</h5></div>
+        <div class="wd-card wired"><h5><span class="pill wired">Wired</span> Email unsubscribe → off-ramp</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F5 Resolved</span> Time-sweep with cooldown</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F12 Resolved</span> FERPA challenge + verify</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F13 Resolved</span> Contact-initiated escalation</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F1 Resolved</span> Form submit + Payment success → evaluation</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F7 Resolved</span> Pennant kill-switch JourneysEnabled</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F7 Resolved</span> Job tags for Horizon</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F3+F10 Resolved</span> failed() + prune-stuck-evaluations</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F6 Resolved</span> Stale-transition guard</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F2 Resolved</span> Confidence persistence</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F14 Resolved</span> Snapshot includes agents+KBs</h5></div>
+        <div class="wd-card wired"><h5><span class="pill resolved">F14 Resolved</span> Restore rebuilds stages+transitions</h5></div>
+      </div>
+
+      <h3>Wired but inert</h3>
+      <div class="grid-wd">
+        <div class="wd-card inert"><h5><span class="pill inert">Inert</span> Email MessageSent → evaluation</h5><p>Requires <code>X-Lumion-Contact-Uuid</code> header; no production mailer sets it.</p></div>
+      </div>
+
+      <h3>Code exists, never called (still — out of §0 scope)</h3>
+      <div class="grid-wd three">
+        <div class="wd-card unwired"><h5><span class="pill unwired">Unwired</span> journey_contact_learnings writes</h5><p>Agents do not learn yet.</p></div>
+        <div class="wd-card unwired"><h5><span class="pill unwired">Unwired</span> journey_kb_sources ingestion</h5><p>Scaffold only.</p></div>
+        <div class="wd-card unwired"><h5><span class="pill unwired">Unwired</span> channel_grants enforcement</h5><p>Authoring is not channel-gated.</p></div>
+        <div class="wd-card unwired"><h5><span class="pill unwired">Unwired</span> guardrails enforcement</h5><p>Read into context, surfaced by <code>explainStrategy</code>, not policed.</p></div>
+        <div class="wd-card unwired"><h5><span class="pill unwired">Unwired</span> playbook_trigger_event field</h5><p>No code path reads it.</p></div>
+      </div>
+
+      <h3>Partial — by design</h3>
+      <div class="grid-wd">
+        <div class="wd-card partial"><h5><span class="pill partial">Partial</span> Rule modes</h5><p>Only <code>always</code> + <code>dry_run</code> real; <code>inbound_message_count_gte</code> is stub returning <code>true</code>.</p></div>
+        <div class="wd-card partial"><h5><span class="pill deferred">Deferred</span> F14 Part 2 — runtime snapshot-backed agent resolution</h5><p>Plan §F14 scope-discipline carve-out; tracked as OI-012.</p></div>
+        <div class="wd-card partial"><h5><span class="pill deferred">Deferred</span> F7 — per-tenant token quota / cost dashboard</h5><p>Kill-switch + Horizon tags shipped; full observability deferred.</p></div>
+      </div>
+    </section>
+
+    <section id="risks">
+      <h2><span class="num">§6</span>Production Risks (post-remediation)</h2>
+
+      <div class="callout warn">
+        <div class="callout-icon">$</div>
+        <div class="callout-body">
+          <strong>6.1 Cost — STILL OPEN (deferred)</strong>
+          F5 cooldown means the 960k-jobs/day floor is no longer realized at idle. F7 ships a per-tenant kill-switch. But there is still no per-tenant token quota or cost ceiling. Pilot is now safer; cost-control work was explicitly deferred.
+        </div>
+      </div>
+
+      <div class="callout good">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <strong>6.2 Job lock vs Prism duration — MITIGATED (F6)</strong>
+          Job declares <code>$timeout = 300</code>, <code>WithoutOverlapping->expireAfter(330)</code>. <code>expectedFromStageId</code> guard catches divergent decisions even if the lock briefly drops.
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-icon">⇄</div>
+        <div class="callout-body">
+          <strong>6.3 Sync-vs-queued opt-out race — PARTIALLY MITIGATED (F9)</strong>
+          STOP→START race closed by shared <code>opt-toggle:$phoneE164</code> overlap key. Async opt-out vs in-flight <code>AutomationActionEventResolving</code> send race still exists — see §2.4.
+        </div>
+      </div>
+
+      <div class="callout good">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <strong>6.4 Sync gate blast radius — MITIGATED (F8)</strong>
+          All three listeners fail-closed: non-<code>Cancelled</code> throws caught + reported + converted to <code>AutomationActionEventCancelled('*_listener_error')</code>.
+        </div>
+      </div>
+
+      <div class="callout good">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <strong>6.5 Prism failure modes — PARTIALLY MITIGATED (F3+F10)</strong>
+          Transient throws re-throw to trigger retry; non-transient and exhausted retries finalize cleanly via <code>failed()</code>. Schema-validation strictness still permissive — out of remediation scope.
+        </div>
+      </div>
+
+      <div class="callout good">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <strong>6.6 No feature flag / kill switch — MITIGATED (F7)</strong>
+          <code>JourneysEnabled</code> Pennant feature gated at every reactor entry point + the time-sweep loop.
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-icon">i</div>
+        <div class="callout-body">
+          <strong>6.8 PII in LLM context — STILL OPEN</strong>
+          Contact <code>email</code> and <code>phone_e164</code> are still in the JSON sent to the model. Confirm against the data-handling terms of the configured Prism provider before pilot.
+        </div>
+      </div>
+
+      <div class="callout good">
+        <div class="callout-icon">✓</div>
+        <div class="callout-body">
+          <strong>6.9 Test coverage gaps — SUBSTANTIALLY MITIGATED</strong>
+          New tests: NOT NULL throws (F1), confidence persistence (F2), retry classification (F3), cooldown predicate (F5), stale-transition race (F6), Pennant gating (F7), gate listener isolation (F8), opt-in restoration (F9), FERPA reply (F12), escalation wiring (F13), restore round-trip (F14), and four cross-defect scenarios (FINAL).
+        </div>
+      </div>
+    </section>
+
+    <section id="testing">
+      <h2><span class="num">§7</span>Testing — Tooling Today</h2>
+
+      <h3>7.1 Already shipped (post-remediation)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td>End-to-end scenario</td><td><code>php artisan scenario:run journeys:contact-flows-inquiry-to-enrollment [--reset]</code> — verified green at FINAL.</td></tr>
+            <tr><td>Time-sweep command</td><td><code>php artisan journeys:evaluate-time-based-transitions --institution={id}</code> — now cooldown-filtered (F5) and <code>allowFailures()</code>-batched (F4).</td></tr>
+            <tr><td><strong>NEW: Prune stuck evaluations</strong></td><td><code>php artisan journeys:prune-stuck-evaluations {--hours=48} {--execute}</code> — recovers stuck rows. Dry-run by default.</td></tr>
+            <tr><td>Pest feature suite</td><td><code>vendor/bin/pest tests/Feature/Journeys --parallel</code> — 93 cases pass (404 assertions).</td></tr>
+            <tr><td>Unit suite</td><td><code>vendor/bin/pest tests/Unit/Journeys --parallel</code> — 51 cases pass (135 assertions).</td></tr>
+            <tr><td>Cortex prompt seeder</td><td><code>php artisan db:seed --class='Database\Seeders\Journeys\JourneyCortexPromptSeeder'</code></td></tr>
+            <tr><td>Demo seeder</td><td><code>php artisan db:seed --class=CustomerJourneyDemoSeeder</code> — now skips outside <code>local</code>/<code>testing</code> unless <code>forInstitution()</code> (F11).</td></tr>
+            <tr><td>Prism faking</td><td><code>Prism::fake([StructuredResponseFake::make()->withStructured([...])])</code> inline.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>7.2 Quickstart for a human tester</h3>
+      <pre><code>php artisan migrate:fresh
+php artisan scenario:run journeys:contact-flows-inquiry-to-enrollment</code></pre>
+      <p>Then inspect:</p>
+      <ul>
+        <li><code>journey_activity_log</code> — <code>placed_into</code> then <code>playbook_dispatched</code>.</li>
+        <li><code>automations</code> + <code>automation_actions</code> + <code>automation_action_events</code> — one Automation with ≥1 ready-to-resolve event, <code>meta_data.journey_placement_id</code> set.</li>
+        <li><code>crm_contact_workflows</code> — placement row with <code>journey_version_uuid</code> pinned, <code>dry_run=false</code>, <code>last_evaluated_at</code> stamped.</li>
+        <li>If a FERPA challenge fired: <code>ferpa_failed_attempts</code> and <code>ferpa_locked_out_at</code>.</li>
+      </ul>
+      <p>To verify a Pennant kill: <code>Feature::for($institution)->deactivate(JourneysEnabled::class)</code>, send a test inbound, observe no job dispatched. To verify the F8 fail-closed gate: corrupt journey-tagged <code>meta_data</code> so a listener throws; expected observable is the send is cancelled cleanly with reason <code>*_listener_error</code>, not a worker <code>failed_jobs</code> row.</p>
+
+      <h3>7.3 Tooling gaps still worth filling</h3>
+      <p>The §0 hot list is closed. These remain as quality-of-life and observability gaps that were never §0 blockers:</p>
+      <ol>
+        <li><strong>Filament UI</strong> for journeys, transitions, placements, agents (with <code>explainStrategy</code> + <code>samplePreview</code> as Actions), escalations (ack/resolve workflow), KBs, versions, learnings, per-placement views.</li>
+        <li><strong>MCP read-only debug tools:</strong> <code>journey.placement.show</code>, <code>journey.placement.replay_evaluation</code>, <code>journey.agent.sample_preview</code>, <code>journey.agent.explain_strategy</code>.</li>
+        <li><strong>QA poke commands:</strong> <code>journeys:place-contact</code>, <code>journeys:advance-placement</code>, <code>journeys:simulate-inbound</code>, <code>journeys:show-pending</code>. (<code>journeys:prune-stuck-evaluations</code> exists.)</li>
+        <li><strong>Per-tenant token quota / cost dashboard</strong> (F7 deferred half).</li>
+        <li><strong>Browser test</strong> — once a Filament UI exists.</li>
+      </ol>
+    </section>
+
+    <section id="open">
+      <h2><span class="num">§8</span>Open Items After Remediation</h2>
+      <p>The §0 hot list is closed. These items remain on the to-do list but were never §0 blockers — explicit scope-discipline carve-outs or original Loop-B/C items the remediation did not touch.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Status</th><th>Reason still open</th></tr></thead>
+          <tbody>
+            <tr><td>F14 Part 2 — runtime snapshot-backed agent resolution</td><td><span class="pill deferred">Deferred</span></td><td>Plan §F14 scope-discipline carve-out → OI-012.</td></tr>
+            <tr><td>Per-tenant token quota / cost ceiling</td><td><span class="pill deferred">Deferred</span></td><td>F7 shipped only kill-switch + Horizon tags.</td></tr>
+            <tr><td>Admin observability (stuck-row dashboard, cost dashboard, Telescope tags)</td><td><span class="pill open">Open</span></td><td>Tooling gap; not a §0 blocker.</td></tr>
+            <tr><td>Async opt-out vs in-flight-send race</td><td><span class="pill open">Open</span></td><td>F9 closed only the symmetric STOP→START race.</td></tr>
+            <tr><td>Channel grants enforcement</td><td><span class="pill open">Open</span></td><td>Out of §0 scope.</td></tr>
+            <tr><td>Guardrails enforcement</td><td><span class="pill open">Open</span></td><td>Read into context but not policed.</td></tr>
+            <tr><td><code>playbook_trigger_event</code> field</td><td><span class="pill open">Open</span></td><td>Read by no one; out of §0 scope.</td></tr>
+            <tr><td><code>journey_contact_learnings</code> writes</td><td><span class="pill open">Open</span></td><td>Agents do not yet learn; out of §0 scope.</td></tr>
+            <tr><td><code>journey_kb_sources</code> ingestion</td><td><span class="pill open">Open</span></td><td>Scaffold only; out of §0 scope.</td></tr>
+            <tr><td><code>inbound_message_count_gte</code> rule mode</td><td><span class="pill open">Open</span></td><td>Stub returns <code>true</code> unconditionally; only <code>always</code> + <code>dry_run</code> are real.</td></tr>
+            <tr><td>PII in LLM context</td><td><span class="pill open">Open</span></td><td>Email + phone in context blob; data-handling review needed.</td></tr>
+            <tr><td><code>crm_workflows.live_version_uuid</code> / <code>draft_version_uuid</code> FK</td><td><span class="pill open">Open</span></td><td>No FK constraint to <code>journey_versions.id</code>.</td></tr>
+            <tr><td>Email <code>MessageSent</code> handler</td><td><span class="pill inert">Inert</span></td><td>Requires <code>X-Lumion-Contact-Uuid</code> header.</td></tr>
+            <tr><td>Original OI-001 .. OI-013</td><td><span class="pill open">Open</span></td><td>Pre-remediation open items mostly unchanged. OI-010 (confidence-gated HITL) is now <em>unblocked</em> since F2 persists confidence.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="method">
+      <h2><span class="num">§A</span>Audit method</h2>
+      <ol>
+        <li>Three parallel <em>Explore</em> agents mapping planning docs, code, and tests.</li>
+        <li>First-pass audit document.</li>
+        <li>Three parallel adversarial agents reviewing against source code.</li>
+        <li>Validation of every BLOCKING claim against actual file:line evidence.</li>
+        <li>Integration of validated findings into a revised audit.</li>
+        <li>Two parallel adversarial agents reviewing the revised document.</li>
+        <li>Validation and integration of new findings.</li>
+        <li>Round-3 convergence-check antagonist returning <code>APPROVED — No blocking flaws found</code>.</li>
+        <li><strong>14-commit ralph remediation campaign</strong> from <code>6c6fe386a6</code> through <code>540b710903</code> (plus pre-flight <code>350dee6e66</code>), one commit per defect, gated by Pest tests + <code>composer stan</code> baseline + <code>vendor/bin/pint --dirty</code>.</li>
+        <li><strong>Four parallel validator agents</strong> confirming every §0 fix against current source — RESOLVED for 12 items, PARTIAL by design for F7 and F14.</li>
+      </ol>
+      <blockquote>
+        <strong>This audit document is for review only.</strong> No code changes were made by this audit pass; the code changes were made by the ralph remediation iterations, which are recorded in git history.
+      </blockquote>
+    </section>
+
+    <footer>
+      Customer Journey AI Post-Build Audit · Branch <code>tmp-bilal-idea</code> · Remediation campaign complete · 2026-04-19
+    </footer>
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: 'loose',
+    theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'default' : 'dark',
+    themeVariables: { fontFamily: "'Inter', sans-serif", fontSize: '13px' },
+    er: { entityPadding: 12, useMaxWidth: false },
+    sequence: { useMaxWidth: false, mirrorActors: false, boxMargin: 8 },
+    flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis' },
+    classDiagram: { useMaxWidth: false },
+  });
+
+  (async function renderAll() {
+    const blocks = document.querySelectorAll('.mermaid-wrap');
+    let idx = 0;
+    for (const wrap of blocks) {
+      const mEl = wrap.querySelector('.mermaid');
+      if (!mEl) continue;
+      const src = mEl.textContent.trim();
+      const id = 'mz-' + (idx++);
+      try {
+        const { svg } = await mermaid.render(id, src);
+        mEl.innerHTML = svg;
+        const svgEl = mEl.querySelector('svg');
+        if (!svgEl) continue;
+        svgEl.removeAttribute('width');
+        svgEl.removeAttribute('height');
+        svgEl.style.width = '100%';
+        svgEl.style.height = '100%';
+        wrap.classList.add('zoomable');
+        attachToolbar(wrap, svgEl);
+      } catch (err) {
+        console.error('Mermaid render failed for', id, err);
+        mEl.innerHTML = '<pre style="color:var(--bad);white-space:pre-wrap;">Mermaid render error: ' + (err && err.message ? err.message : err) + '</pre>';
+      }
+    }
+  })();
+
+  function attachToolbar(wrap, svgEl) {
+    const pan = svgPanZoom(svgEl, {
+      zoomEnabled: true,
+      controlIconsEnabled: false,
+      fit: true,
+      center: true,
+      minZoom: 0.5,
+      maxZoom: 8,
+      zoomScaleSensitivity: 0.35,
+      dblClickZoomEnabled: true,
+      mouseWheelZoomEnabled: true,
+      preventMouseEventsDefault: false,
+    });
+
+    const bar = document.createElement('div');
+    bar.className = 'mz-toolbar';
+    bar.innerHTML = `
+      <button class="mz-btn" data-act="out" title="Zoom out">−</button>
+      <button class="mz-btn label" data-act="reset" title="Reset view">FIT</button>
+      <button class="mz-btn" data-act="in" title="Zoom in">+</button>
+      <span class="mz-divider"></span>
+      <button class="mz-btn label" data-act="full" title="Open in new tab">↗</button>
+    `;
+    wrap.appendChild(bar);
+
+    const hint = document.createElement('div');
+    hint.className = 'mz-hint';
+    hint.textContent = 'drag to pan · wheel / +/− to zoom · double-click to zoom in';
+    wrap.appendChild(hint);
+
+    bar.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      const act = btn.dataset.act;
+      if (act === 'in') pan.zoomBy(1.4);
+      else if (act === 'out') pan.zoomBy(1 / 1.4);
+      else if (act === 'reset') { pan.resetZoom(); pan.resetPan(); pan.fit(); pan.center(); }
+      else if (act === 'full') {
+        const w = window.open('', '_blank');
+        if (!w) return;
+        w.document.write('<!doctype html><html><head><title>Diagram</title><style>html,body{margin:0;background:#0f1115;height:100%;}svg{width:100vw;height:100vh;display:block;}</style></head><body>' + svgEl.outerHTML + '</body></html>');
+        w.document.close();
+      }
+    });
+
+    const ro = new ResizeObserver(() => {
+      try { pan.resize(); pan.fit(); pan.center(); } catch (_) {}
+    });
+    ro.observe(wrap);
+  }
+
+  const tocLinks = document.querySelectorAll('.toc a');
+  const sections = [...document.querySelectorAll('section[id]')];
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        tocLinks.forEach(a => {
+          if (a.getAttribute('href') === '#' + id) {
+            a.style.background = 'var(--accent-soft)';
+            a.style.color = 'var(--accent)';
+          } else {
+            a.style.background = '';
+            if (!a.classList.contains('depth-2')) a.style.color = '';
+          }
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
