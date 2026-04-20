@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta name="share-summary" content="An engineering reference guide for the Lumion CRM that explains its architecture as a contact and workflow/stage engine driven by event-based automations, covering the data model, automation pipeline, UI routes, quick-start setup, and manual test paths on the SchoolDashboard panel.">
+<meta name="share-hash" content="b8a5dd42a5186aa74977d9e6b924f6600557a37027636f3bea73066e8cfc2db2">
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lumion CRM — Engineering Overview</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50:  '#eef0fb',
+            100: '#dde1f6',
+            200: '#b8c0ec',
+            300: '#909ce1',
+            400: '#6e7bd6',
+            500: '#5261ce',   // SchoolDashboard primary
+            600: '#424fb2',
+            700: '#343f91',
+            800: '#2a336f',
+            900: '#1f2651',
+            950: '#141831',
+          },
+        },
+        fontFamily: {
+          sans: ['-apple-system','BlinkMacSystemFont','Segoe UI','Roboto','Inter','Arial','sans-serif'],
+          mono: ['ui-monospace','SFMono-Regular','Menlo','Monaco','Consolas','monospace'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-feature-settings: 'cv02','cv03','cv04','cv11'; }
+  .path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.82em;
+    padding: 0.12em 0.4em;
+    border-radius: 0.35em;
+    background: rgba(148,163,184,0.12);
+    color: rgb(203,213,225);
+    border: 1px solid rgba(148,163,184,0.2);
+    white-space: nowrap;
+  }
+  html:not(.dark) .path {
+    background: rgba(100,116,139,0.08);
+    color: rgb(51,65,85);
+    border-color: rgba(100,116,139,0.18);
+  }
+  .toc a.active {
+    background: rgb(82 97 206 / 0.12);
+    color: rgb(147 158 229);
+    font-weight: 600;
+  }
+  html:not(.dark) .toc a.active {
+    background: rgb(82 97 206 / 0.08);
+    color: rgb(66 79 178);
+  }
+  .fade-in { animation: fadeIn 0.35s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .dot-pattern {
+    background-image: radial-gradient(rgba(148,163,184,0.18) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+  html:not(.dark) .dot-pattern {
+    background-image: radial-gradient(rgba(100,116,139,0.18) 1px, transparent 1px);
+  }
+  [data-copy] { position: relative; }
+  [data-copy]::after {
+    content: attr(data-copied);
+    position: absolute; top: 50%; right: 2.25rem; transform: translateY(-50%);
+    font-size: 0.7rem; color: rgb(52 211 153); opacity: 0; transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  [data-copy].just-copied::after { opacity: 1; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-200 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- ===== TOP BAR ===== -->
+<header class="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
+  <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-3">
+    <div class="flex items-center gap-3">
+      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold">L</div>
+      <div>
+        <div class="text-sm font-semibold text-slate-100">Lumion CRM</div>
+        <div class="text-xs text-slate-400">Engineering Overview</div>
+      </div>
+    </div>
+    <nav class="hidden items-center gap-1 text-sm md:flex">
+      <a href="#tldr" class="rounded px-3 py-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100">TL;DR</a>
+      <a href="#quickstart" class="rounded px-3 py-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100">Quick Start</a>
+      <a href="#data-model" class="rounded px-3 py-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100">Data Model</a>
+      <a href="#manual-tests" class="rounded px-3 py-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100">Manual Tests</a>
+      <button id="theme-toggle" aria-label="Toggle theme"
+        class="ml-2 rounded-md border border-slate-700 p-1.5 text-slate-300 hover:bg-slate-800">
+        <svg class="dark:hidden h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="hidden dark:block h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="relative overflow-hidden border-b border-slate-800/80">
+  <div class="absolute inset-0 dot-pattern opacity-60"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-brand-900/20 via-transparent to-transparent"></div>
+  <div class="relative mx-auto max-w-7xl px-5 py-14 md:py-20">
+    <div class="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-3 py-1 text-xs font-medium text-brand-300">
+      <span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>
+      Internal technical reference · last refreshed 2026-04-20
+    </div>
+    <h1 class="mt-5 text-4xl font-bold tracking-tight text-white md:text-5xl">
+      Lumion CRM — Engineering Overview
+    </h1>
+    <p class="mt-4 max-w-3xl text-lg text-slate-300">
+      A workflow/stage engine for contacts, driven by event-based automations, surfaced as a
+      Kanban board on the SchoolDashboard panel. Not a classic Activities/Tasks CRM — the
+      core primitive is <em>a contact moving through stages</em>.
+    </p>
+
+    <!-- stat cards -->
+    <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+        <div class="text-2xl font-bold text-white">9 + 6</div>
+        <div class="mt-1 text-sm text-slate-400">core + supporting Eloquent models</div>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+        <div class="text-2xl font-bold text-white">5</div>
+        <div class="mt-1 text-sm text-slate-400">inbound event sources trigger automations</div>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+        <div class="text-2xl font-bold text-white">1</div>
+        <div class="mt-1 text-sm text-slate-400">Filament panel (SchoolDashboard at <span class="path">/portal</span>)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== MAIN LAYOUT ===== -->
+<main class="mx-auto max-w-7xl px-5 py-10">
+  <div class="grid grid-cols-1 gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+
+    <!-- ===== TOC ===== -->
+    <aside class="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] lg:overflow-y-auto">
+      <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">On this page</div>
+      <nav class="toc mt-3 flex flex-col gap-1 text-sm">
+        <a href="#tldr" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">TL;DR</a>
+        <a href="#quickstart" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">Quick start</a>
+        <a href="#where-code-lives" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">Where the code lives</a>
+        <a href="#data-model" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">Data model</a>
+        <a href="#automation-engine" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">Automation engine</a>
+        <a href="#ui-map" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">UI surface map</a>
+        <a href="#integrations" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">Integration points</a>
+        <a href="#manual-tests" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">Manual test paths</a>
+        <a href="#flags-perms" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">Flags &amp; permissions</a>
+        <a href="#where-next" class="rounded px-3 py-1.5 text-slate-400 hover:text-slate-100">Where next (file index)</a>
+      </nav>
+    </aside>
+
+    <!-- ===== CONTENT ===== -->
+    <div class="min-w-0 space-y-16">
+
+      <!-- ===== TL;DR ===== -->
+      <section id="tldr" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">TL;DR</h2>
+        <div class="mt-4 rounded-xl border border-slate-800 bg-slate-900/60 p-6 leading-relaxed text-slate-300">
+          <p>
+            The CRM is a <strong class="text-white">contact + workflow engine</strong>. A
+            <span class="path">Contact</span> can be enrolled in one or more
+            <span class="path">Workflow</span>s. Each workflow has ordered
+            <span class="path">WorkflowStage</span>s (the Kanban columns). A
+            <span class="path">ContactStage</span> row captures the moment a contact enters a stage,
+            and who moved them (user or <span class="path">Automation</span>).
+          </p>
+          <p class="mt-3">
+            An <strong class="text-white">Automation</strong> is a row that binds
+            <em>“when this event fires, drop the contact into that stage.”</em> Five upstream
+            event sources (enrollment, lead-capture, etc.) feed the engine — all routed through a
+            single listener.
+          </p>
+          <p class="mt-3">
+            Users work the board at
+            <a class="text-brand-300 hover:underline" href="#ui-map"><span class="path">/portal/crm/stages</span></a>
+            (Kanban) and drill into a contact via
+            <span class="path">/portal/unified-contacts/{id}</span> (6-tab profile).
+          </p>
+        </div>
+      </section>
+
+      <!-- ===== QUICK START ===== -->
+      <section id="quickstart" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">Quick start</h2>
+        <p class="mt-2 text-slate-400">Log in and click around. You should be able to see the CRM in under two minutes.</p>
+
+        <div class="mt-5 rounded-xl border border-brand-500/40 bg-gradient-to-br from-brand-500/10 via-slate-900/40 to-slate-900 p-6">
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <!-- cred block -->
+            <div>
+              <div class="text-xs font-semibold uppercase tracking-wider text-brand-300">Login</div>
+              <dl class="mt-3 space-y-3 text-sm">
+                <div class="flex items-start justify-between gap-3">
+                  <dt class="w-24 shrink-0 text-slate-400">URL</dt>
+                  <dd class="flex-1"><button data-copy data-value="https://demo.miashare-app.test/portal" data-copied="copied" class="group w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-left font-mono text-xs text-slate-200 hover:border-brand-400 hover:bg-slate-800">https://demo.miashare-app.test/portal <span class="float-right text-slate-500 group-hover:text-brand-300">⧉</span></button></dd>
+                </div>
+                <div class="flex items-start justify-between gap-3">
+                  <dt class="w-24 shrink-0 text-slate-400">Email</dt>
+                  <dd class="flex-1"><button data-copy data-value="lee.hilton@lumion.ai" data-copied="copied" class="group w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-left font-mono text-xs text-slate-200 hover:border-brand-400 hover:bg-slate-800">lee.hilton@lumion.ai <span class="float-right text-slate-500 group-hover:text-brand-300">⧉</span></button></dd>
+                </div>
+                <div class="flex items-start justify-between gap-3">
+                  <dt class="w-24 shrink-0 text-slate-400">Password</dt>
+                  <dd class="flex-1"><button data-copy data-value="password" data-copied="copied" class="group w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-left font-mono text-xs text-slate-200 hover:border-brand-400 hover:bg-slate-800">password <span class="float-right text-slate-500 group-hover:text-brand-300">⧉</span></button></dd>
+                </div>
+                <div class="flex items-start justify-between gap-3">
+                  <dt class="w-24 shrink-0 text-slate-400">Institution</dt>
+                  <dd class="flex-1 text-sm text-slate-300">Excalibur Auto Mechanics Institute (id <span class="path">1</span>)</dd>
+                </div>
+                <div class="flex items-start justify-between gap-3">
+                  <dt class="w-24 shrink-0 text-slate-400">Role</dt>
+                  <dd class="flex-1 text-sm text-slate-300">School owner (<span class="path">is_school_user</span>)</dd>
+                </div>
+              </dl>
+            </div>
+
+            <!-- prereqs -->
+            <div>
+              <div class="text-xs font-semibold uppercase tracking-wider text-brand-300">Prereqs (run once)</div>
+              <p class="mt-3 text-sm text-slate-400">The CRM is gated by two Pennant flags. If you land on <span class="path">/portal</span> but don't see the CRM nav group, flip them on:</p>
+              <div class="mt-3 rounded-lg border border-slate-700 bg-slate-950 text-xs">
+                <div class="flex items-center justify-between border-b border-slate-800 px-3 py-1.5 text-slate-500">
+                  <span>php artisan tinker</span>
+                  <button data-copy data-value='use Laravel\Pennant\Feature; $i = \App\Institution::find(1); Feature::for($i)->activate("contact-management"); Feature::for($i)->activate("crm-access");' data-copied="copied" class="text-slate-400 hover:text-brand-300">copy</button>
+                </div>
+<pre class="overflow-x-auto px-3 py-3 text-slate-200"><code>use Laravel\Pennant\Feature;
+$i = \App\Institution::find(1);
+Feature::for($i)-&gt;activate('contact-management');
+Feature::for($i)-&gt;activate('crm-access');</code></pre>
+              </div>
+
+              <p class="mt-4 text-sm text-slate-400">Optional — seed sample custom-field data:</p>
+              <div class="mt-2 rounded-lg border border-slate-700 bg-slate-950 text-xs">
+                <div class="flex items-center justify-between border-b border-slate-800 px-3 py-1.5 text-slate-500">
+                  <span>shell</span>
+                  <button data-copy data-value="php artisan scenario:run crm:custom_field_sections" data-copied="copied" class="text-slate-400 hover:text-brand-300">copy</button>
+                </div>
+<pre class="overflow-x-auto px-3 py-3 text-slate-200"><code>php artisan scenario:run crm:custom_field_sections</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+            <strong>Heads up:</strong> Local dev domain is <span class="path">*.miashare-app.test</span> served by Herd with mkcert SSL. If HTTPS fails, run <span class="path">.local/mkcert-proxy</span> per root <span class="path">CLAUDE.md</span>.
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== WHERE CODE LIVES ===== -->
+      <section id="where-code-lives" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">Where the code lives (the awkward truth)</h2>
+        <p class="mt-2 text-slate-400">
+          The domain folder <span class="path">app/Domains/CRM/</span> is a <strong class="text-amber-300">skeleton</strong>
+          — empty config, empty actions, only tests. The real code is distributed across legacy locations.
+          Know this before you grep.
+        </p>
+
+        <div class="mt-5 overflow-hidden rounded-xl border border-slate-800">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-900/80 text-xs uppercase tracking-wider text-slate-400">
+              <tr>
+                <th class="px-4 py-3 text-left">Concern</th>
+                <th class="px-4 py-3 text-left">Path</th>
+                <th class="px-4 py-3 text-left">Notes</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 bg-slate-900/40">
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Models</td><td class="px-4 py-3"><span class="path">app/Models/Crm/</span></td><td class="px-4 py-3 text-slate-400">14 models here + <span class="path">app/Contact.php</span> (legacy root location)</td></tr>
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Actions</td><td class="px-4 py-3"><span class="path">app/Actions/Crm/</span></td><td class="px-4 py-3 text-slate-400">~30 single-purpose action classes (Loris Leiva style)</td></tr>
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Listeners</td><td class="px-4 py-3"><span class="path">app/Listeners/Crm/</span></td><td class="px-4 py-3 text-slate-400">Auto-discovered by Laravel 11 event dispatcher</td></tr>
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Events</td><td class="px-4 py-3"><span class="path">app/Events/Contacts/</span></td><td class="px-4 py-3 text-slate-400">Contact lifecycle events (Created, Updated, Deleted, etc.)</td></tr>
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Filament (CRM settings)</td><td class="px-4 py-3"><span class="path">app/Filament/SchoolDashboard/Resources/Crm/</span></td><td class="px-4 py-3 text-slate-400">Workflow, Label, EmailTemplate, CustomField resources</td></tr>
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Kanban page</td><td class="px-4 py-3"><span class="path">app/Filament/SchoolDashboard/Pages/ContactsFlowKanban.php</span></td><td class="px-4 py-3 text-slate-400">Custom Filament page (not a Resource)</td></tr>
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Contact Filament</td><td class="px-4 py-3"><span class="path">app/Domains/Contacts/Filament/SchoolDashboard/Resources/</span></td><td class="px-4 py-3 text-slate-400">Contacts live in their own <em>Contacts</em> domain, not CRM</td></tr>
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Policies</td><td class="px-4 py-3"><span class="path">app/Policies/ContactPolicy.php</span></td><td class="px-4 py-3 text-slate-400">Role + institution-scoped auth</td></tr>
+              <tr><td class="px-4 py-3 font-medium text-slate-200">Domain folder (CRM)</td><td class="px-4 py-3"><span class="path">app/Domains/CRM/</span></td><td class="px-4 py-3 text-amber-300/90">⚠ empty except tests &amp; an empty config</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-300">
+          <strong class="text-white">Why the split?</strong> The codebase is mid-migration from
+          old Laravel structure (models in <span class="path">app/</span>) to domain-driven
+          organisation (<span class="path">app/Domains/</span>). The <em>Contacts</em> domain was
+          peeled off first. The <em>CRM</em> domain shell was scaffolded but nothing has moved
+          into it yet.
+        </div>
+      </section>
+
+      <!-- ===== DATA MODEL ===== -->
+      <section id="data-model" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">Data model</h2>
+        <p class="mt-2 text-slate-400">The spine is 9 models. Stage membership is modelled as an append-only history (every move creates a row), which gives you a clean audit trail for free.</p>
+
+        <!-- ERD -->
+        <div class="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-6">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+            <!-- Contact -->
+            <div class="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-emerald-300">Entity</div>
+              <div class="mt-1 font-semibold text-white">Contact</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">app/Contact.php</span></div>
+              <ul class="mt-3 space-y-1 text-xs text-slate-300">
+                <li>uuid, first_name, last_name</li>
+                <li>primary_phone_number_id, primary_email_address_id</li>
+                <li>organization_id, profile_photo_path</li>
+                <li>Auditable (Spatie)</li>
+              </ul>
+            </div>
+
+            <!-- ContactWorkflow (join) -->
+            <div class="rounded-lg border border-brand-500/40 bg-brand-500/5 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-brand-300">Join</div>
+              <div class="mt-1 font-semibold text-white">ContactWorkflow</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">crm_contact_workflows</span></div>
+              <ul class="mt-3 space-y-1 text-xs text-slate-300">
+                <li>contact_id, workflow_id</li>
+                <li>current_contact_stage_id</li>
+                <li>assigned_user_id, sort_order</li>
+                <li>opted_out, dry_run</li>
+                <li class="text-brand-300/80">journey AI: entered_stage_at, last_evaluated_at</li>
+              </ul>
+            </div>
+
+            <!-- Workflow -->
+            <div class="rounded-lg border border-indigo-400/30 bg-indigo-400/5 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-indigo-300">Entity</div>
+              <div class="mt-1 font-semibold text-white">Workflow</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">crm_workflows</span></div>
+              <ul class="mt-3 space-y-1 text-xs text-slate-300">
+                <li>institution_id, owner_id</li>
+                <li>name, is_private, status</li>
+                <li>live_version_uuid, draft_version_uuid</li>
+              </ul>
+            </div>
+
+            <!-- ContactStage (history) -->
+            <div class="rounded-lg border border-brand-500/40 bg-brand-500/5 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-brand-300">History</div>
+              <div class="mt-1 font-semibold text-white">ContactStage</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">crm_contact_stages</span></div>
+              <ul class="mt-3 space-y-1 text-xs text-slate-300">
+                <li>contact_workflow_id, workflow_stage_id</li>
+                <li>started_at, ended_at</li>
+                <li>moved_by_user_id <em>or</em> moved_by_automation_id</li>
+              </ul>
+            </div>
+
+            <!-- WorkflowStage -->
+            <div class="rounded-lg border border-indigo-400/30 bg-indigo-400/5 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-indigo-300">Entity</div>
+              <div class="mt-1 font-semibold text-white">WorkflowStage</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">crm_workflow_stages</span></div>
+              <ul class="mt-3 space-y-1 text-xs text-slate-300">
+                <li>workflow_id, name, color</li>
+                <li>sort_order, stage_action</li>
+                <li>has_ai_transition_config</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div class="rounded-lg border border-purple-400/30 bg-purple-400/5 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-purple-300">Rule</div>
+              <div class="mt-1 font-semibold text-white">Automation</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">crm_automations</span></div>
+              <ul class="mt-3 space-y-1 text-xs text-slate-300">
+                <li>workflow_id, target_workflow_stage_id</li>
+                <li>event_fqcn (fully-qualified class name)</li>
+                <li>is_enabled</li>
+              </ul>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Side</div>
+              <div class="mt-1 font-semibold text-white">Label</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">crm_labels</span></div>
+              <p class="mt-3 text-xs text-slate-300">Tagging for contacts via <span class="path">ContactLabel</span> pivot.</p>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Side</div>
+              <div class="mt-1 font-semibold text-white">CustomField + Value</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">crm_custom_fields</span></div>
+              <p class="mt-3 text-xs text-slate-300">Per-institution schema: grouped by <span class="path">CustomFieldSection</span>, stored in <span class="path">CustomFieldValue</span>.</p>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+              <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Side</div>
+              <div class="mt-1 font-semibold text-white">EmailTemplate</div>
+              <div class="mt-1 text-xs text-slate-400"><span class="path">crm_email_templates</span></div>
+              <p class="mt-3 text-xs text-slate-300">Reusable outreach copy, attached to automations or hand-sent.</p>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-lg border border-slate-800 bg-slate-950 p-4 text-xs font-mono text-slate-400">
+<pre>Contact ──&lt; ContactWorkflow &gt;── Workflow ──&lt; WorkflowStage
+                │                              │
+                └──&lt; ContactStage &gt;────────────┘        (append-only history)
+                                               │
+                                       Automation (event_fqcn → target stage)</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== AUTOMATION ENGINE ===== -->
+      <section id="automation-engine" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">Automation engine</h2>
+        <p class="mt-2 text-slate-400">One listener, five event sources, one action. The whole contraption is 200 lines.</p>
+
+        <ol class="mt-6 space-y-4">
+          <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <div class="flex items-start gap-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">1</div>
+              <div>
+                <div class="font-semibold text-white">External event fires</div>
+                <p class="mt-1 text-sm text-slate-400">
+                  One of five events is dispatched from another domain:
+                  <span class="path">LeadCaptureFormSubmitted</span>,
+                  <span class="path">EnrollmentApplicationSubmitted</span>,
+                  <span class="path">ApplicationReceived</span>,
+                  <span class="path">ContactAssignedToInstitution</span>,
+                  <span class="path">ContactScheduledForCourse</span>.
+                </p>
+              </div>
+            </div>
+          </li>
+          <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <div class="flex items-start gap-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">2</div>
+              <div>
+                <div class="font-semibold text-white">Listener catches it</div>
+                <p class="mt-1 text-sm text-slate-400">
+                  <span class="path">app/Listeners/Crm/ProcessWorkflowAutomation.php:27</span>
+                  — typed <span class="path">handle(object $event)</span>, auto-discovered by Laravel
+                  11's event discovery, queued (<span class="path">ShouldQueue</span>).
+                </p>
+              </div>
+            </div>
+          </li>
+          <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <div class="flex items-start gap-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">3</div>
+              <div>
+                <div class="font-semibold text-white">Contact is extracted</div>
+                <p class="mt-1 text-sm text-slate-400">
+                  <span class="path">ContactExtractorFactory::make($eventClass)</span> returns the
+                  right extractor (Enrollment / Funding / LeadCapture / Direct). New event sources
+                  plug in here without touching the listener.
+                </p>
+              </div>
+            </div>
+          </li>
+          <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <div class="flex items-start gap-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">4</div>
+              <div>
+                <div class="font-semibold text-white">Query enabled automations</div>
+                <p class="mt-1 text-sm text-slate-400">
+                  <span class="path">crm_automations</span> WHERE
+                  <span class="path">event_fqcn = get_class($event)</span> AND
+                  <span class="path">is_enabled = true</span> AND workflow is scoped to one of the
+                  contact's institutions.
+                </p>
+              </div>
+            </div>
+          </li>
+          <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <div class="flex items-start gap-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">5</div>
+              <div>
+                <div class="font-semibold text-white">Action moves contact into stage</div>
+                <p class="mt-1 text-sm text-slate-400">
+                  <span class="path">app/Actions/Crm/Contacts/AddContactToWorkflowAndStage.php:23</span>
+                  — invoked per automation match.
+                </p>
+                <ul class="mt-2 list-disc pl-5 text-sm text-slate-400">
+                  <li>New contact: create <span class="path">ContactWorkflow</span> + opening <span class="path">ContactStage</span></li>
+                  <li>Already in target stage: return early (idempotent)</li>
+                  <li>In a different stage: <span class="path">ended_at</span> the current stage, open a new one</li>
+                </ul>
+              </div>
+            </div>
+          </li>
+          <li class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <div class="flex items-start gap-4">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">6</div>
+              <div>
+                <div class="font-semibold text-white">Audit</div>
+                <p class="mt-1 text-sm text-slate-400">
+                  Each <span class="path">ContactStage</span> row stores
+                  <span class="path">moved_by_user_id</span> <em>or</em>
+                  <span class="path">moved_by_automation_id</span> — never both.
+                  <span class="path">WorkflowTransition</span> captures cross-workflow moves.
+                </p>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <!-- ===== UI MAP ===== -->
+      <section id="ui-map" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">UI surface map</h2>
+        <p class="mt-2 text-slate-400">
+          All URLs below assume you're logged in at <span class="path">https://demo.miashare-app.test/portal</span>.
+          Panel is <strong class="text-white">SchoolDashboard</strong>. Nav group: <em>CRM</em> (collapsed by default).
+        </p>
+
+        <div class="mt-5 overflow-hidden rounded-xl border border-slate-800">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-900/80 text-xs uppercase tracking-wider text-slate-400">
+              <tr>
+                <th class="px-4 py-3 text-left">Route</th>
+                <th class="px-4 py-3 text-left">What you do here</th>
+                <th class="px-4 py-3 text-left">Backed by</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 bg-slate-900/40">
+              <tr><td class="px-4 py-3"><span class="path">/portal/unified-contacts</span></td><td class="px-4 py-3 text-slate-300">List, search, filter, create contacts</td><td class="px-4 py-3 text-slate-400">ContactResource (Contacts domain)</td></tr>
+              <tr><td class="px-4 py-3"><span class="path">/portal/unified-contacts/{id}</span></td><td class="px-4 py-3 text-slate-300">Contact detail — 6 sub-tabs: Summary, Communications, Payments, Attendance, Applications &amp; Contracts, Files</td><td class="px-4 py-3 text-slate-400">ViewContact + Livewire subforms</td></tr>
+              <tr><td class="px-4 py-3"><span class="path">/portal/crm/workflows</span></td><td class="px-4 py-3 text-slate-300">Define workflows; inside a workflow: stages &amp; automations via relation managers</td><td class="px-4 py-3 text-slate-400">WorkflowResource</td></tr>
+              <tr><td class="px-4 py-3"><span class="path">/portal/crm/stages</span></td><td class="px-4 py-3 text-slate-300"><strong class="text-white">Kanban board</strong> — one column per stage, drag contacts between stages</td><td class="px-4 py-3 text-slate-400">ContactsFlowKanban (custom Page)</td></tr>
+              <tr><td class="px-4 py-3"><span class="path">/portal/crm/labels</span></td><td class="px-4 py-3 text-slate-300">Colour-coded label library</td><td class="px-4 py-3 text-slate-400">LabelResource</td></tr>
+              <tr><td class="px-4 py-3"><span class="path">/portal/crm/email-templates</span></td><td class="px-4 py-3 text-slate-300">Reusable outreach templates</td><td class="px-4 py-3 text-slate-400">EmailTemplateResource</td></tr>
+              <tr><td class="px-4 py-3"><span class="path">/portal/crm/custom-fields</span></td><td class="px-4 py-3 text-slate-300">Define custom fields &amp; group them into sections</td><td class="px-4 py-3 text-slate-400">CustomFieldResource</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== INTEGRATIONS ===== -->
+      <section id="integrations" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">Integration points</h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18"/><path d="m15 6 6 6-6 6"/></svg>
+              Inbound
+            </div>
+            <h3 class="mt-2 font-semibold text-white">Events the CRM reacts to</h3>
+            <ul class="mt-3 space-y-1.5 text-sm text-slate-300">
+              <li>• <strong>Enrollment:</strong> <span class="path">EnrollmentApplicationSubmitted</span></li>
+              <li>• <strong>LeadCapture:</strong> <span class="path">LeadCaptureFormSubmitted</span></li>
+              <li>• <strong>Funding:</strong> <span class="path">ApplicationReceived</span></li>
+              <li>• <strong>Contacts:</strong> <span class="path">ContactAssignedToInstitution</span></li>
+              <li>• <strong>CourseScheduling:</strong> <span class="path">ContactScheduledForCourse</span></li>
+            </ul>
+          </div>
+
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-sky-300">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12H3"/><path d="m9 18-6-6 6-6"/></svg>
+              Outbound
+            </div>
+            <h3 class="mt-2 font-semibold text-white">What the CRM dispatches</h3>
+            <ul class="mt-3 space-y-1.5 text-sm text-slate-300">
+              <li>• <span class="path">ContactCreated</span> / <span class="path">ContactUpdated</span> / <span class="path">ContactDeleted</span></li>
+              <li>• Listener dispatches <span class="path">MirroredRecordNeedsReimport</span> → Mirror/Redis reindex</li>
+              <li>• Amplitude events for CRM actions (fired from Filament resources)</li>
+            </ul>
+          </div>
+
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-5 md:col-span-2">
+            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-300">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Gaps worth knowing
+            </div>
+            <ul class="mt-3 space-y-1.5 text-sm text-slate-300">
+              <li>• No datamart / reporting wiring for CRM objects observed — workflow metrics are ad-hoc</li>
+              <li>• No built-in Tasks / Activities / Notes entity — the CRM does not model rep-facing to-dos</li>
+              <li>• <span class="path">app/Domains/CRM/config/crm.php</span> is empty — no knobs wired yet</li>
+              <li>• No <span class="path">README.md</span> in <span class="path">app/Domains/CRM/</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== MANUAL TESTS ===== -->
+      <section id="manual-tests" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">Manual test paths</h2>
+        <p class="mt-2 text-slate-400">Eight click-paths that exercise the main surfaces end-to-end. Do them in order the first time.</p>
+
+        <div class="mt-6 space-y-4">
+          <!-- Path 1 -->
+          <details class="group rounded-xl border border-slate-800 bg-slate-900/40 open:bg-slate-900/60" open>
+            <summary class="flex cursor-pointer items-start gap-4 p-5 marker:content-none">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">1</div>
+              <div class="flex-1">
+                <div class="font-semibold text-white">Create &amp; view a contact</div>
+                <div class="mt-1 text-xs text-slate-400">Start: <span class="path">/portal/unified-contacts</span></div>
+              </div>
+              <svg class="h-5 w-5 shrink-0 text-slate-500 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <ol class="list-decimal space-y-1 px-12 pb-5 text-sm text-slate-300">
+              <li>Click <em>New Contact</em> (top-right of the table).</li>
+              <li>Fill first name, last name, email, phone. Save.</li>
+              <li>You land on the detail page — note the URL pattern <span class="path">/portal/unified-contacts/{id}</span>.</li>
+              <li>Confirm the Summary tab shows name, contact methods, and empty state for everything else.</li>
+            </ol>
+          </details>
+
+          <!-- Path 2 -->
+          <details class="group rounded-xl border border-slate-800 bg-slate-900/40 open:bg-slate-900/60">
+            <summary class="flex cursor-pointer items-start gap-4 p-5 marker:content-none">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">2</div>
+              <div class="flex-1">
+                <div class="font-semibold text-white">Browse, search, sort the contacts list</div>
+                <div class="mt-1 text-xs text-slate-400">Start: <span class="path">/portal/unified-contacts</span></div>
+              </div>
+              <svg class="h-5 w-5 shrink-0 text-slate-500 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <ol class="list-decimal space-y-1 px-12 pb-5 text-sm text-slate-300">
+              <li>Type in the search field — debounced search kicks in at ~300ms.</li>
+              <li>Open table filters (status, institution if servicer, labels).</li>
+              <li>Click the Name column header to toggle sort direction.</li>
+              <li>Verify pagination at bottom respects filters.</li>
+            </ol>
+          </details>
+
+          <!-- Path 3 -->
+          <details class="group rounded-xl border border-slate-800 bg-slate-900/40 open:bg-slate-900/60">
+            <summary class="flex cursor-pointer items-start gap-4 p-5 marker:content-none">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">3</div>
+              <div class="flex-1">
+                <div class="font-semibold text-white">Create a workflow &amp; configure stages</div>
+                <div class="mt-1 text-xs text-slate-400">Start: <span class="path">/portal/crm/workflows</span></div>
+              </div>
+              <svg class="h-5 w-5 shrink-0 text-slate-500 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <ol class="list-decimal space-y-1 px-12 pb-5 text-sm text-slate-300">
+              <li>Click <em>Create Workflow</em>. Name it e.g. "Intake Funnel".</li>
+              <li>On the Edit screen, use the <strong>Stages</strong> relation manager to add 3–5 stages (e.g. <em>New</em>, <em>Contacted</em>, <em>Scheduled</em>, <em>Enrolled</em>).</li>
+              <li>Drag the stages to reorder — <span class="path">sort_order</span> persists.</li>
+              <li>Confirm each stage gets a colour (stored on <span class="path">crm_workflow_stages.color</span>).</li>
+            </ol>
+          </details>
+
+          <!-- Path 4 -->
+          <details class="group rounded-xl border border-slate-800 bg-slate-900/40 open:bg-slate-900/60">
+            <summary class="flex cursor-pointer items-start gap-4 p-5 marker:content-none">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">4</div>
+              <div class="flex-1">
+                <div class="font-semibold text-white">Drive the Kanban board</div>
+                <div class="mt-1 text-xs text-slate-400">Start: <span class="path">/portal/crm/stages</span></div>
+              </div>
+              <svg class="h-5 w-5 shrink-0 text-slate-500 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <ol class="list-decimal space-y-1 px-12 pb-5 text-sm text-slate-300">
+              <li>Select the workflow you created from the top dropdown.</li>
+              <li>Add contacts to the first stage via the quick-add button on the column header.</li>
+              <li>Drag a contact card between columns — a new <span class="path">ContactStage</span> row is written, the previous one gets <span class="path">ended_at</span> stamped.</li>
+              <li>Filter by assignee / label to narrow the board.</li>
+              <li>Hover a card — inline actions for SMS, email, assign.</li>
+            </ol>
+          </details>
+
+          <!-- Path 5 -->
+          <details class="group rounded-xl border border-slate-800 bg-slate-900/40 open:bg-slate-900/60">
+            <summary class="flex cursor-pointer items-start gap-4 p-5 marker:content-none">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">5</div>
+              <div class="flex-1">
+                <div class="font-semibold text-white">Add a custom field + label, apply to a contact</div>
+                <div class="mt-1 text-xs text-slate-400">Start: <span class="path">/portal/crm/custom-fields</span></div>
+              </div>
+              <svg class="h-5 w-5 shrink-0 text-slate-500 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <ol class="list-decimal space-y-1 px-12 pb-5 text-sm text-slate-300">
+              <li>Create a field — pick type (text, select, date, etc.), put it in a section, mark required if you want.</li>
+              <li>Head to <span class="path">/portal/crm/labels</span>, create a label (choose a colour).</li>
+              <li>Open any contact, set the custom field value, apply the label.</li>
+              <li>Back on the list — filter by the new label to confirm it applied.</li>
+            </ol>
+          </details>
+
+          <!-- Path 6 -->
+          <details class="group rounded-xl border border-slate-800 bg-slate-900/40 open:bg-slate-900/60">
+            <summary class="flex cursor-pointer items-start gap-4 p-5 marker:content-none">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">6</div>
+              <div class="flex-1">
+                <div class="font-semibold text-white">Tour the full contact detail (6 tabs)</div>
+                <div class="mt-1 text-xs text-slate-400">Start: <span class="path">/portal/unified-contacts/{id}</span></div>
+              </div>
+              <svg class="h-5 w-5 shrink-0 text-slate-500 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <ol class="list-decimal space-y-1 px-12 pb-5 text-sm text-slate-300">
+              <li><strong>Summary</strong> — demographics, contact methods, labels, workflow memberships.</li>
+              <li><strong>Communications</strong> — SMS/email history (driven by the Communications domain).</li>
+              <li><strong>Payments</strong> — list of payments tied to this contact's applications.</li>
+              <li><strong>Attendance</strong> — event-sourced attendance records.</li>
+              <li><strong>Applications &amp; Contracts</strong> — enrollment apps and <span class="path">Isa</span> (funding contract) records.</li>
+              <li><strong>Files</strong> — uploaded docs, linked via the Documents domain.</li>
+            </ol>
+          </details>
+
+          <!-- Path 7 -->
+          <details class="group rounded-xl border border-slate-800 bg-slate-900/40 open:bg-slate-900/60">
+            <summary class="flex cursor-pointer items-start gap-4 p-5 marker:content-none">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">7</div>
+              <div class="flex-1">
+                <div class="font-semibold text-white">Create an email template</div>
+                <div class="mt-1 text-xs text-slate-400">Start: <span class="path">/portal/crm/email-templates</span></div>
+              </div>
+              <svg class="h-5 w-5 shrink-0 text-slate-500 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <ol class="list-decimal space-y-1 px-12 pb-5 text-sm text-slate-300">
+              <li>Click <em>Create</em>. Give it a name, subject, and body (RichEditor).</li>
+              <li>Save. Templates show up where outreach is composed and can be attached to automations.</li>
+            </ol>
+          </details>
+
+          <!-- Path 8 -->
+          <details class="group rounded-xl border border-slate-800 bg-slate-900/40 open:bg-slate-900/60">
+            <summary class="flex cursor-pointer items-start gap-4 p-5 marker:content-none">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 font-semibold text-brand-300">8</div>
+              <div class="flex-1">
+                <div class="font-semibold text-white">Wire an automation &amp; trigger it</div>
+                <div class="mt-1 text-xs text-slate-400">Start: <span class="path">/portal/crm/workflows</span> → edit your workflow</div>
+              </div>
+              <svg class="h-5 w-5 shrink-0 text-slate-500 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <ol class="list-decimal space-y-1 px-12 pb-5 text-sm text-slate-300">
+              <li>On the workflow edit page, open the <strong>Automations</strong> relation manager.</li>
+              <li>Create an automation: pick the event (e.g. <span class="path">LeadCaptureFormSubmitted</span>) → pick target stage (e.g. <em>New</em>) → enable it.</li>
+              <li>Trigger the upstream flow (submit a form on a live lead capture page) — or fire manually in Tinker:</li>
+              <li>
+                <div class="mt-2 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-slate-300">
+event(new \App\Domains\LeadCapture\Events\LeadCaptureFormSubmitted(...));
+                </div>
+              </li>
+              <li>Check the Kanban — the contact should have landed in the target column. The <span class="path">ContactStage</span> row will show <span class="path">moved_by_automation_id</span> populated.</li>
+            </ol>
+          </details>
+        </div>
+      </section>
+
+      <!-- ===== FLAGS / PERMISSIONS ===== -->
+      <section id="flags-perms" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">Flags &amp; permissions</h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <h3 class="font-semibold text-white">Pennant feature flags</h3>
+            <p class="mt-1 text-sm text-slate-400">Both must be active for the full CRM surface.</p>
+            <ul class="mt-3 space-y-1 text-sm text-slate-300">
+              <li>• <span class="path">contact-management</span> — Contact resource visibility</li>
+              <li>• <span class="path">crm-access</span> — Workflows, Stages, Labels, Custom Fields, Email Templates</li>
+            </ul>
+            <p class="mt-3 text-xs text-slate-500">Defined in <span class="path">app/Enums/FeatureSlugEnum.php</span>.</p>
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+            <h3 class="font-semibold text-white">Role gate</h3>
+            <p class="mt-1 text-sm text-slate-400">Authorization handled by <span class="path">app/Policies/ContactPolicy.php</span>.</p>
+            <ul class="mt-3 space-y-1 text-sm text-slate-300">
+              <li>• <span class="path">is_school_user</span> — scoped to their organization</li>
+              <li>• <span class="path">is_servicer_user</span> — sees all organizations</li>
+              <li>• The seeded <span class="path">lee.hilton@lumion.ai</span> is both a school owner and a servicer</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== WHERE NEXT ===== -->
+      <section id="where-next" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white">Where next (file index)</h2>
+        <p class="mt-2 text-slate-400">One path per concept. Open these in your editor to go deeper.</p>
+        <div class="mt-5 overflow-hidden rounded-xl border border-slate-800">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-900/80 text-xs uppercase tracking-wider text-slate-400">
+              <tr><th class="px-4 py-3 text-left">Concept</th><th class="px-4 py-3 text-left">File</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 bg-slate-900/40">
+              <tr><td class="px-4 py-3 text-slate-200">Contact model (legacy location)</td><td class="px-4 py-3"><span class="path">app/Contact.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">CRM models (workflows, stages, etc.)</td><td class="px-4 py-3"><span class="path">app/Models/Crm/</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Automation listener (the whole engine)</td><td class="px-4 py-3"><span class="path">app/Listeners/Crm/ProcessWorkflowAutomation.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Stage movement action (the write path)</td><td class="px-4 py-3"><span class="path">app/Actions/Crm/Contacts/AddContactToWorkflowAndStage.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Kanban page</td><td class="px-4 py-3"><span class="path">app/Filament/SchoolDashboard/Pages/ContactsFlowKanban.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Workflow Filament resource</td><td class="px-4 py-3"><span class="path">app/Filament/SchoolDashboard/Resources/Crm/WorkflowResource.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Contact Filament resource</td><td class="px-4 py-3"><span class="path">app/Domains/Contacts/Filament/SchoolDashboard/Resources/ContactResource.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Feature-flag slugs</td><td class="px-4 py-3"><span class="path">app/Enums/FeatureSlugEnum.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Contact auth policy</td><td class="px-4 py-3"><span class="path">app/Policies/ContactPolicy.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Contact lifecycle events</td><td class="px-4 py-3"><span class="path">app/Events/Contacts/</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">CRM actions (create/update/move)</td><td class="px-4 py-3"><span class="path">app/Actions/Crm/</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Seed scenario (custom field sections)</td><td class="px-4 py-3"><span class="path">app/Scenarios/Crm/CustomFieldSections.php</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Filament feature test (CRM)</td><td class="px-4 py-3"><span class="path">app/Domains/CRM/Tests/Feature/Filament/</span></td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Mirror cache invalidation listener</td><td class="px-4 py-3"><span class="path">app/Listeners/Crm/</span> (see ContactCreatedListener)</td></tr>
+              <tr><td class="px-4 py-3 text-slate-200">Design system reference</td><td class="px-4 py-3"><span class="path">.claude/instructions/design-system.md</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="border-t border-slate-800 pt-8 text-sm text-slate-500">
+        Generated 2026-04-20 from static code analysis. File paths and URLs verified at generation
+        time; drift over time is likely — grep before trusting.
+      </footer>
+    </div>
+  </div>
+</main>
+
+<script>
+  // theme toggle
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+  });
+
+  // copy-to-clipboard
+  document.querySelectorAll('[data-copy]').forEach(el => {
+    el.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const val = el.getAttribute('data-value') || el.textContent.trim();
+      try {
+        await navigator.clipboard.writeText(val);
+        el.classList.add('just-copied');
+        setTimeout(() => el.classList.remove('just-copied'), 1200);
+      } catch {
+        /* ignore */
+      }
+    });
+  });
+
+  // TOC scroll-spy
+  const tocLinks = document.querySelectorAll('.toc a');
+  const sections = Array.from(tocLinks).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const linkByHash = Object.fromEntries(Array.from(tocLinks).map(a => [a.getAttribute('href'), a]));
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const id = '#' + entry.target.id;
+      const link = linkByHash[id];
+      if (!link) return;
+      if (entry.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-100px 0px -60% 0px', threshold: 0 });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
