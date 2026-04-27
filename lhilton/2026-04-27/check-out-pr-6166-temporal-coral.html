@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PR 6166 — AI Voice Agent · End-to-End Local Test Runbook</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Inter', 'Arial', 'sans-serif'],
+          mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; }
+  /* code block niceties */
+  pre code { display: block; }
+  pre { tab-size: 2; }
+  /* Progress bar grow */
+  .progress-fill { transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1); }
+  /* ScrollSpy active nav */
+  .nav-link[data-active="true"] {
+    background: rgb(238 242 255); /* indigo-50 */
+    color: rgb(67 56 202);          /* indigo-700 */
+    font-weight: 600;
+    border-color: rgb(99 102 241);  /* indigo-500 */
+  }
+  .nav-link[data-active="true"] .nav-status-dot { box-shadow: 0 0 0 3px rgb(224 231 255); }
+  /* Subtle anim for "running" state */
+  @keyframes pulse-soft { 0%, 100% { opacity: 1 } 50% { opacity: 0.55 } }
+  .pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+  /* Copied flash */
+  .copied-flash {
+    background: rgb(16 185 129) !important;
+    color: white !important;
+  }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .summary-chevron { transform: rotate(90deg); }
+  .summary-chevron { transition: transform 200ms ease; }
+</style>
+<meta name="share-summary" content="Step-by-step local test runbook for PR #6166 (CRTX-772) covering how to claim the production AI Voice Agent phone number on a developer laptop, bridge it to OpenAI Realtime SIP, and dial it end-to-end. Tracks pre-flight env, DB seed, public tunnel, OpenAI setup, Twilio webhook snapshot/swap, the call:manage step, handoff back to production, and common gotchas.">
+<meta name="share-hash" content="e8e24958bb46901463a349a05b149ac16d96e1ebb1ab77817f91d76b7aee4fbe">
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased">
+
+<!-- ============== HERO ============== -->
+<header class="relative overflow-hidden text-white"
+        style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);">
+  <div class="absolute inset-0 opacity-20"
+       style="background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.5) 0px, transparent 40%),
+                                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.4) 0px, transparent 35%);"></div>
+  <div class="relative max-w-6xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
+    <div class="flex flex-wrap items-center gap-2 text-sm font-medium uppercase tracking-[0.18em] text-white/80 mb-3">
+      <span class="px-2 py-1 rounded bg-white/15 backdrop-blur">CRTX-772</span>
+      <span class="px-2 py-1 rounded bg-white/15 backdrop-blur">branch CRTX-772</span>
+      <a href="https://github.com/MiaShare/miashare-app/pull/6166" target="_blank"
+         class="px-2 py-1 rounded bg-white/15 hover:bg-white/25 backdrop-blur transition">PR #6166 ↗</a>
+    </div>
+    <h1 class="text-3xl lg:text-5xl font-bold leading-tight">
+      AI Voice Agent <span class="text-white/70 font-normal">— End-to-End Local Test Runbook</span>
+    </h1>
+    <p class="mt-4 max-w-3xl text-white/85 text-lg leading-relaxed">
+      Claim production phone <span class="font-mono bg-white/15 px-2 py-0.5 rounded">+1 (478) 800-7559</span> on your laptop,
+      bridge it to OpenAI Realtime SIP, and dial it. This runbook tracks what's
+      already done in your environment vs what you still have to do.
+    </p>
+
+    <!-- Progress -->
+    <div class="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+      <div class="bg-white/10 backdrop-blur rounded-lg p-4 border border-white/10">
+        <div class="text-white/70 text-xs uppercase tracking-wider">Pre-flight</div>
+        <div class="mt-1 font-semibold">Twilio + APP_URL + OPENAI_API_KEY</div>
+        <div class="mt-2 inline-flex items-center gap-1.5 text-emerald-200 text-xs font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span> CONFIRMED IN .env
+        </div>
+      </div>
+      <div class="bg-white/10 backdrop-blur rounded-lg p-4 border border-white/10">
+        <div class="text-white/70 text-xs uppercase tracking-wider">DB schema</div>
+        <div class="mt-1 font-semibold">Migrations applied</div>
+        <div class="mt-2 inline-flex items-center gap-1.5 text-emerald-200 text-xs font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span> DONE
+        </div>
+      </div>
+      <div class="bg-white/10 backdrop-blur rounded-lg p-4 border border-white/10">
+        <div class="text-white/70 text-xs uppercase tracking-wider">Brain prompt</div>
+        <div class="mt-1 font-semibold">prompts.id = 14</div>
+        <div class="mt-2 inline-flex items-center gap-1.5 text-emerald-200 text-xs font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span> SEEDED
+        </div>
+      </div>
+      <div class="bg-white/10 backdrop-blur rounded-lg p-4 border border-white/10">
+        <div class="text-white/70 text-xs uppercase tracking-wider">Steps remaining</div>
+        <div class="mt-1 font-semibold">Env, tunnel, OpenAI webhook, call:manage, dial</div>
+        <div class="mt-2 inline-flex items-center gap-1.5 text-amber-200 text-xs font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span> TODO
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============== PRODUCTION-CLAIM BANNER ============== -->
+<section class="bg-rose-50 border-y border-rose-200">
+  <div class="max-w-6xl mx-auto px-6 lg:px-10 py-4 flex items-start gap-3">
+    <svg class="flex-none w-6 h-6 text-rose-600 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M3.75 19.5h16.5L12 4.5 3.75 19.5z"/>
+    </svg>
+    <div class="text-sm text-rose-900 leading-relaxed">
+      <strong class="font-semibold">Production-claim caveat.</strong>
+      Step 5.4 rewrites the Twilio Phone Number's <code class="font-mono bg-rose-100 px-1 rounded">voiceUrl</code> /
+      <code class="font-mono bg-rose-100 px-1 rounded">smsUrl</code> on the production Twilio resource.
+      <strong>Production callers will hit your laptop</strong> until you point the webhooks back. Take
+      the snapshot in <a href="#snapshot" class="underline hover:no-underline">Step 5b</a> first; flip them back in
+      <a href="#handoff" class="underline hover:no-underline">Hand the number back</a> when you're done.
+    </div>
+  </div>
+</section>
+
+<!-- ============== MAIN GRID ============== -->
+<div class="max-w-6xl mx-auto px-6 lg:px-10 py-10 grid lg:grid-cols-[14rem_minmax(0,1fr)] gap-8 items-start">
+
+  <!-- ============== SIDEBAR NAV ============== -->
+  <aside class="sticky top-6 hidden lg:block">
+    <nav id="side-nav" class="text-sm space-y-1">
+      <a href="#step-1"  class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-amber-400"></span>
+        <span>1. Env keys</span>
+      </a>
+      <a href="#step-2"  class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>2. DB seed state</span>
+      </a>
+      <a href="#step-3"  class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-amber-400"></span>
+        <span>3. Public tunnel</span>
+      </a>
+      <a href="#step-4"  class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-amber-400"></span>
+        <span>4. OpenAI from scratch</span>
+      </a>
+      <a href="#snapshot" class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-rose-400"></span>
+        <span>5b. Snapshot prod</span>
+      </a>
+      <a href="#step-5"  class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-amber-400"></span>
+        <span>5. call:manage</span>
+      </a>
+      <a href="#step-6"  class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-amber-400"></span>
+        <span>6. Dial it</span>
+      </a>
+      <a href="#handoff" class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-slate-300"></span>
+        <span>Hand back</span>
+      </a>
+      <a href="#bites"   class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-slate-300"></span>
+        <span>Things that bite</span>
+      </a>
+      <a href="#flow"    class="nav-link flex items-center gap-2 px-3 py-2 rounded-md border border-transparent text-slate-700 hover:bg-slate-100">
+        <span class="nav-status-dot w-2 h-2 rounded-full bg-slate-300"></span>
+        <span>Architecture</span>
+      </a>
+    </nav>
+    <div class="mt-6 px-3 text-xs text-slate-500">
+      <div class="font-semibold text-slate-600 mb-1">Legend</div>
+      <div class="flex items-center gap-2 mb-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> done & verified</div>
+      <div class="flex items-center gap-2 mb-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> still to do</div>
+      <div class="flex items-center gap-2 mb-1"><span class="w-2 h-2 rounded-full bg-rose-400"></span> destructive — read first</div>
+      <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-300"></span> reference</div>
+    </div>
+  </aside>
+
+  <!-- ============== MAIN CONTENT ============== -->
+  <main class="space-y-12 min-w-0">
+
+    <!-- ARCHITECTURE FLOW (collapsed by default) -->
+    <section id="flow">
+      <details class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-6">
+        <summary class="flex items-center gap-3 group">
+          <svg class="summary-chevron w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+          <h2 class="text-xl font-bold">Architecture: how a call flows end-to-end</h2>
+          <span class="ml-auto text-xs text-slate-500 group-hover:text-slate-700">expand</span>
+        </summary>
+        <div class="mt-4 grid md:grid-cols-2 gap-3 text-sm">
+          <div class="rounded-lg bg-indigo-50 ring-1 ring-indigo-100 p-4">
+            <div class="text-xs uppercase tracking-wider text-indigo-700 font-semibold">1. PSTN → Twilio</div>
+            <p class="mt-1 text-slate-700">Caller dials <span class="font-mono">+14788007559</span>. Twilio receives the call.</p>
+          </div>
+          <div class="rounded-lg bg-indigo-50 ring-1 ring-indigo-100 p-4">
+            <div class="text-xs uppercase tracking-wider text-indigo-700 font-semibold">2. Twilio → your laptop</div>
+            <p class="mt-1 text-slate-700">Twilio POSTs to <span class="font-mono">/webhooks/voice/{voiceCallSid}</span> at your tunnel URL.</p>
+          </div>
+          <div class="rounded-lg bg-violet-50 ring-1 ring-violet-100 p-4">
+            <div class="text-xs uppercase tracking-wider text-violet-700 font-semibold">3. Lumion routes</div>
+            <p class="mt-1 text-slate-700"><span class="font-mono">CallRoutingService</span> → <span class="font-mono">InitialStep</span> → <span class="font-mono">AiAgentBridgeStep</span> returns <span class="font-mono">&lt;Dial&gt;&lt;Sip&gt;</span> with <span class="font-mono">x-lumion-call-ref</span> header.</p>
+          </div>
+          <div class="rounded-lg bg-violet-50 ring-1 ring-violet-100 p-4">
+            <div class="text-xs uppercase tracking-wider text-violet-700 font-semibold">4. Twilio bridges to OpenAI</div>
+            <p class="mt-1 text-slate-700">Twilio dials <span class="font-mono">sip.api.openai.com</span> over TLS. Realtime SIP picks up.</p>
+          </div>
+          <div class="rounded-lg bg-fuchsia-50 ring-1 ring-fuchsia-100 p-4">
+            <div class="text-xs uppercase tracking-wider text-fuchsia-700 font-semibold">5. OpenAI → Lumion (accept)</div>
+            <p class="mt-1 text-slate-700">OpenAI POSTs <span class="font-mono">realtime.call.incoming</span> to <span class="font-mono">/webhooks/openai/realtime</span>. HMAC verified. Lumion mints a <span class="font-mono">VoiceCallToken</span>, calls <span class="font-mono">acceptCall</span>, stamps <span class="font-mono">openai_call_id</span>.</p>
+          </div>
+          <div class="rounded-lg bg-fuchsia-50 ring-1 ring-fuchsia-100 p-4">
+            <div class="text-xs uppercase tracking-wider text-fuchsia-700 font-semibold">6. Tools during the call</div>
+            <p class="mt-1 text-slate-700">Each MCP tool call lands at <span class="font-mono">/mcp/voice-agent</span> (bearer token, sliding TTL). <span class="font-mono">ask_brain</span> dispatches to gpt-5 via <span class="font-mono">CortexService</span>.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============== STEP 1 ============== -->
+    <section id="step-1" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <header class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <span class="flex-none w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center">1</span>
+          <h2 class="text-xl font-bold">Add new env keys</h2>
+          <span class="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 ring-1 ring-amber-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> TODO
+          </span>
+        </header>
+        <div class="p-6 space-y-4">
+          <p class="text-slate-700">Append to <code class="font-mono text-sm bg-slate-100 px-1 rounded">.env</code>. All four values are filled in during Steps 3 + 4 (you're starting fresh on the OpenAI side, so the values in the PR description don't apply).</p>
+          <div class="code-block">
+            <div class="code-header">.env</div>
+            <pre><code># OpenAI Realtime Voice Agent (CRTX-772) — fill in during Steps 3 + 4
+
+# REPLACE the existing OPENAI_API_KEY in your .env: the sk-svcacct-...
+# key from the PR description belongs to the lost account.
+OPENAI_API_KEY=                          # filled in at Step 4.2
+
+OPENAI_REALTIME_PROJECT_ID=              # filled in at Step 4.1 (proj_...)
+OPENAI_REALTIME_WEBHOOK_SECRET=          # filled in at Step 4.4 (whsec_...)
+OPENAI_REALTIME_MCP_SERVER_URL=          # filled in at Step 3 (https://&lt;tunnel&gt;/mcp/voice-agent)</code></pre>
+          </div>
+          <p class="text-sm text-slate-600">
+            The seven other <code class="font-mono">OPENAI_REALTIME_*</code> defaults (model, voice, sip host, ttls) are fine to omit — <code class="font-mono">config/openai-realtime.php</code> has production-safe defaults.
+          </p>
+          <div class="rounded-lg bg-rose-50 ring-1 ring-rose-200 p-4 text-sm text-rose-900">
+            <strong class="font-semibold">Heads up.</strong> Your current
+            <code class="font-mono bg-rose-100 px-1 rounded">OPENAI_API_KEY</code> in <code class="font-mono">.env</code>
+            (a <code class="font-mono">sk-svcacct-…</code> from the PR description) is bound to the lost
+            account and won't authenticate. Same for the seeded <code class="font-mono">proj_3ggCE6LfiN0zd05bJ6HAAOC8</code>
+            and Gabriel's tunnel URL — replace all four lines above with values from your new account.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== STEP 2 ============== -->
+    <section id="step-2" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-emerald-200 overflow-hidden">
+        <header class="px-6 py-4 border-b border-emerald-100 flex items-center gap-3 bg-emerald-50/50">
+          <span class="flex-none w-8 h-8 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </span>
+          <h2 class="text-xl font-bold">DB seed state — already done</h2>
+          <span class="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> VERIFIED
+          </span>
+        </header>
+        <div class="p-6 space-y-4">
+          <p class="text-slate-700">Skip <code class="font-mono">php artisan migrate</code> — applied. Skip the seeder — the row was already in your sanitized prod dump and the seeder is idempotent.</p>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">PR migrations</div>
+              <ul class="mt-2 text-sm space-y-1 text-slate-700">
+                <li>✓ <code class="font-mono">ai_voice_agent_profiles</code> table</li>
+                <li>✓ <code class="font-mono">voice_call_tokens</code> table</li>
+                <li>✓ <code class="font-mono">voice_settings.primary_ai_voice_agent_profile_id</code></li>
+                <li>✓ <code class="font-mono">voice_settings.ai_catch_all_profile_id</code></li>
+              </ul>
+            </div>
+            <div class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Brain prompt</div>
+              <ul class="mt-2 text-sm space-y-1 text-slate-700">
+                <li><span class="font-mono">prompts.id</span> = <strong>14</strong></li>
+                <li><span class="font-mono">identifier</span> = <code class="font-mono bg-white px-1 rounded ring-1 ring-slate-200">voice-agent-ask-brain</code></li>
+                <li><span class="font-mono">model</span> = <strong>gpt-5</strong></li>
+                <li><span class="font-mono">is_active</span> = <strong>1</strong></li>
+              </ul>
+            </div>
+          </div>
+          <div class="rounded-lg bg-amber-50 ring-1 ring-amber-200 p-4 text-sm text-amber-900">
+            <strong class="font-semibold">Naming gotcha:</strong> the PR description and seeder docblock both write
+            <code class="font-mono bg-amber-100 px-1 rounded">VOICE_AGENT_ASK_BRAIN</code>, but the actual DB
+            <code class="font-mono bg-amber-100 px-1 rounded">prompts.identifier</code> is the kebab-case enum
+            value <code class="font-mono bg-amber-100 px-1 rounded">voice-agent-ask-brain</code>. If you grep the wrong form you'll think it's missing.
+          </div>
+          <details class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+            <summary class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              If you wipe and reseed
+            </summary>
+            <div class="mt-3 space-y-3">
+              <div class="code-block">
+                <div class="code-header">artisan</div>
+                <pre><code>php artisan db:seed --class='CortexAi\Prompts\Database\Seeders\VoiceAgentAskBrainPromptSeeder'</code></pre>
+              </div>
+              <div class="code-block">
+                <div class="code-header">verify (mysql)</div>
+                <pre><code>mysql ... forge -e \
+  'SELECT id, identifier, model, is_active FROM prompts WHERE identifier="voice-agent-ask-brain";'</code></pre>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== STEP 3 ============== -->
+    <section id="step-3" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <header class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <span class="flex-none w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center">3</span>
+          <h2 class="text-xl font-bold">Public tunnel (one URL covers everything)</h2>
+          <span class="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 ring-1 ring-amber-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> TODO
+          </span>
+        </header>
+        <div class="p-6 space-y-4">
+          <p class="text-slate-700">All four publicly-reachable surfaces live on the apex Herd app — no subdomain.
+            One tunnel hostname serves all of them: Twilio voice webhooks, OpenAI realtime webhook, MCP server.</p>
+          <div class="grid sm:grid-cols-2 gap-3 text-sm">
+            <div class="rounded-lg bg-indigo-50 ring-1 ring-indigo-100 p-3 font-mono">/webhooks/voice/&#123;...&#125;</div>
+            <div class="rounded-lg bg-indigo-50 ring-1 ring-indigo-100 p-3 font-mono">/webhooks/sms/&#123;...&#125;</div>
+            <div class="rounded-lg bg-indigo-50 ring-1 ring-indigo-100 p-3 font-mono">/webhooks/openai/realtime</div>
+            <div class="rounded-lg bg-indigo-50 ring-1 ring-indigo-100 p-3 font-mono">/mcp/voice-agent</div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="font-semibold text-slate-700">Recommended: <code class="font-mono">herd share</code></div>
+            <p class="text-sm text-slate-600">Uses Expose under the hood, zero extra config. Pin the apex domain (the host that <code class="font-mono">routes/web.php</code> serves — usually whatever's in your <code class="font-mono">APP_URL</code>, NOT a school subdomain).</p>
+            <div class="code-block">
+              <div class="code-header">terminal</div>
+              <pre><code>herd share              # in the project dir
+# or pin a specific domain:
+herd share miashare-app.test</code></pre>
+            </div>
+            <p class="text-sm text-slate-600">Output: <code class="font-mono">https://lee-abcd.sharedwithexpose.com</code>. Keep this terminal open the whole session.</p>
+            <p class="text-sm text-slate-600">Plain Expose works the same: <code class="font-mono">expose share miashare-app.test</code>.</p>
+          </div>
+
+          <div class="space-y-2">
+            <div class="font-semibold text-slate-700">Set the env key</div>
+            <div class="code-block">
+              <div class="code-header">.env</div>
+              <pre><code>OPENAI_REALTIME_MCP_SERVER_URL=https://&lt;your-tunnel-host&gt;/mcp/voice-agent</code></pre>
+            </div>
+            <p class="text-sm text-slate-600">Optional: <code class="font-mono">php artisan config:clear</code> to be safe.</p>
+          </div>
+
+          <details class="rounded-lg bg-amber-50 ring-1 ring-amber-200 p-4">
+            <summary class="text-sm font-semibold text-amber-900 flex items-center gap-2">
+              <svg class="summary-chevron w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              Trust the tunnel host (avoid signature failures)
+            </summary>
+            <p class="mt-3 text-sm text-amber-900">Tunnels rewrite <code class="font-mono">Host</code>, send <code class="font-mono">X-Forwarded-Proto: https</code>, and inject a non-Herd hostname. If <code class="font-mono">App\Http\Middleware\TrustProxies</code> trusts <code class="font-mono">'*'</code> you're fine. If it's narrowed, add the tunnel host. Symptom of misconfig: the OpenAI webhook signature middleware rejects every webhook because <code class="font-mono">request()->fullUrl()</code> reports <code class="font-mono">http://</code>.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== STEP 4: OpenAI from scratch ============== -->
+    <section id="step-4" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <header class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <span class="flex-none w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center">4</span>
+          <h2 class="text-xl font-bold">OpenAI account — from scratch</h2>
+          <span class="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 ring-1 ring-amber-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> TODO
+          </span>
+        </header>
+        <div class="p-6 space-y-5">
+          <p class="text-slate-700">You lost the original account, so you're rebuilding the OpenAI side end-to-end. Five things have to be true before a call can land: <strong>project</strong>, <strong>API key</strong>, <strong>billing</strong>, <strong>realtime webhook</strong>, <strong>model access</strong> (gpt-realtime + gpt-5).</p>
+
+          <!-- 4.0 — Account / Org / Billing -->
+          <div class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">4.0</span>
+              <span class="font-semibold text-slate-800">Account, organization, billing</span>
+            </div>
+            <ol class="mt-2 ml-4 text-sm text-slate-700 space-y-1.5 list-decimal">
+              <li>Sign up / sign in at <a href="https://platform.openai.com/signup" target="_blank" class="text-indigo-600 hover:underline">platform.openai.com</a>. Use a Lumion email so you don't lock yourself out again.</li>
+              <li>If you're creating a fresh org: <a href="https://platform.openai.com/settings/organization/general" target="_blank" class="text-indigo-600 hover:underline">Settings → Organization → General</a>. Set name and invite teammates so the next person who has to test this isn't blocked the way you are.</li>
+              <li><a href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" class="text-indigo-600 hover:underline">Settings → Billing</a> → add a payment method and put $20+ of credits on the org. Realtime + gpt-5 are paid-only — no credits = silent 401-style failures and the agent never speaks.</li>
+              <li>Note the <strong>org ID</strong> (top-right org switcher → copy ID — looks like <code class="font-mono">org-xxxx</code>). Lumion doesn't read this directly, but you'll want it when filing access requests.</li>
+            </ol>
+          </div>
+
+          <!-- 4.1 — Project -->
+          <div class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">4.1</span>
+              <span class="font-semibold text-slate-800">Create the Lumion Voice project</span>
+            </div>
+            <ol class="mt-2 ml-4 text-sm text-slate-700 space-y-1.5 list-decimal">
+              <li><a href="https://platform.openai.com/settings/organization/projects" target="_blank" class="text-indigo-600 hover:underline">Settings → Projects → Create project</a>. Name it something clear like <code class="font-mono">lumion-voice-{your-name}-dev</code>.</li>
+              <li>Open the new project and copy the project ID from the project switcher / project settings page — format <code class="font-mono">proj_…</code>.</li>
+              <li>Drop it into <code class="font-mono">.env</code>:
+                <div class="code-block mt-2">
+                  <div class="code-header">.env</div>
+                  <pre><code>OPENAI_REALTIME_PROJECT_ID=proj_YOUR_NEW_ID</code></pre>
+                </div>
+              </li>
+            </ol>
+            <p class="mt-2 text-xs text-slate-500"><strong>Why this matters at runtime:</strong> Lumion builds the SIP URI as <code class="font-mono">sip:&#123;projectId&#125;@sip.api.openai.com;transport=tls?x-lumion-call-ref=…</code>. OpenAI uses the user-part of that URI to route the SIP call to your project's webhook. Wrong project id = SIP INVITE goes nowhere. (See <a href="https://github.com/MiaShare/miashare-app/blob/CRTX-772/app/Domains/Communications/Services/Voice/Steps/AiAgentBridgeStep.php#L69" target="_blank" class="text-indigo-600 hover:underline"><code class="font-mono">AiAgentBridgeStep.php:69</code></a>.)</p>
+          </div>
+
+          <!-- 4.2 — API key -->
+          <div class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">4.2</span>
+              <span class="font-semibold text-slate-800">Create a service-account API key</span>
+            </div>
+            <ol class="mt-2 ml-4 text-sm text-slate-700 space-y-1.5 list-decimal">
+              <li>Inside the new project: <strong>API keys</strong> → <strong>Service accounts</strong> → <em>Create service account</em>. Service-account keys are tied to the project, not your user — exactly what we want for headless use, and they survive your personal access changing.</li>
+              <li>Name it <code class="font-mono">lumion-voice-runtime</code>.</li>
+              <li>When the secret appears (it's shown <em>once</em>), copy it (format <code class="font-mono">sk-svcacct-…</code>) and replace the existing line in your <code class="font-mono">.env</code>:
+                <div class="code-block mt-2">
+                  <div class="code-header">.env (replace existing line)</div>
+                  <pre><code>OPENAI_API_KEY=sk-svcacct-YOUR_NEW_KEY</code></pre>
+                </div>
+              </li>
+              <li>Sanity check from your terminal:
+                <div class="code-block mt-2">
+                  <div class="code-header">terminal</div>
+                  <pre><code>curl -sS https://api.openai.com/v1/models \
+  -H "Authorization: Bearer $OPENAI_API_KEY" | head -40</code></pre>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Should return a JSON list of models. <code class="font-mono">401</code> = bad key. <code class="font-mono">403</code> = wrong project / billing not set up.</p>
+              </li>
+            </ol>
+          </div>
+
+          <!-- 4.3 — Model access -->
+          <div class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">4.3</span>
+              <span class="font-semibold text-slate-800">Confirm model access (gpt-realtime + gpt-5)</span>
+            </div>
+            <p class="mt-2 text-sm text-slate-700">Two models, two reasons:</p>
+            <table class="mt-2 w-full text-sm">
+              <tbody class="divide-y divide-slate-200">
+                <tr>
+                  <td class="py-1.5 pr-4 font-mono text-indigo-700 align-top whitespace-nowrap">gpt-realtime-1.5</td>
+                  <td class="text-slate-700">The voice agent itself — handles the conversational surface over SIP. Configured per-profile in <code class="font-mono">ai_voice_agent_profiles.model</code>; default is set in <code class="font-mono">config/openai-realtime.php</code>.</td>
+                </tr>
+                <tr>
+                  <td class="py-1.5 pr-4 font-mono text-indigo-700 align-top whitespace-nowrap">gpt-5</td>
+                  <td class="text-slate-700">The "brain" the realtime agent consults via <code class="font-mono">ask_brain</code> for non-trivial reasoning. Pinned by <code class="font-mono">prompts.id = 14</code>'s <code class="font-mono">model</code> column. Without gpt-5 access, AskBrainTool falls back to a degraded canned response and the agent gets dumb.</td>
+                </tr>
+              </tbody>
+            </table>
+            <ol class="mt-3 ml-4 text-sm text-slate-700 space-y-1.5 list-decimal">
+              <li>Check availability in the project: <a href="https://platform.openai.com/docs/models" target="_blank" class="text-indigo-600 hover:underline">platform.openai.com/docs/models</a> — log in, switch to your new project, and search for <code class="font-mono">gpt-realtime</code> and <code class="font-mono">gpt-5</code>. If a model isn't listed, your org's tier doesn't have access yet.</li>
+              <li>Or hit the API:
+                <div class="code-block mt-2">
+                  <div class="code-header">terminal</div>
+                  <pre><code>curl -sS https://api.openai.com/v1/models \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  | grep -E '"id":\s*"(gpt-realtime|gpt-5)'</code></pre>
+                </div>
+              </li>
+              <li>If gpt-5 isn't available, <a href="https://platform.openai.com/settings/organization/limits" target="_blank" class="text-indigo-600 hover:underline">Settings → Limits</a> shows your tier; load more credits to climb tiers, or open a request via the platform's "Request access" UI for the model.</li>
+              <li>Realtime SIP is generally available on paid orgs. If the inbound webhook never fires after Step 4.4, fall back to the gpt-realtime-1.5 model name — older Realtime model names (<code class="font-mono">gpt-4o-realtime-preview</code>) require a different model string in <code class="font-mono">config/openai-realtime.php</code> default and per-profile <code class="font-mono">model</code> column.</li>
+            </ol>
+          </div>
+
+          <!-- 4.4 — Webhook -->
+          <div class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">4.4</span>
+              <span class="font-semibold text-slate-800">Configure the realtime webhook</span>
+            </div>
+            <p class="mt-2 text-sm text-slate-700">OpenAI needs to know where to POST <code class="font-mono">realtime.call.incoming</code> / <code class="font-mono">.ended</code> / <code class="font-mono">.failed</code>. <strong>Step 3 must be live first</strong> — you need your tunnel URL.</p>
+            <ol class="mt-2 ml-4 text-sm text-slate-700 space-y-1.5 list-decimal">
+              <li>Open <a href="https://platform.openai.com/settings/project/webhooks" target="_blank" class="text-indigo-600 hover:underline">Project → Webhooks</a> in the new project. <em>(If that exact path 404s, look under Project Settings → Integrations → Webhooks; OpenAI's nav has shifted.)</em></li>
+              <li><strong>Create endpoint</strong>:
+                <ul class="mt-1 ml-4 space-y-0.5 list-disc">
+                  <li><strong>URL:</strong> <code class="font-mono break-all">https://&lt;your-tunnel-host&gt;/webhooks/openai/realtime</code></li>
+                  <li><strong>Description:</strong> <code class="font-mono">lumion-voice-dev-{your-name}</code></li>
+                  <li><strong>Events to send:</strong> <code class="font-mono">realtime.call.incoming</code>, <code class="font-mono">realtime.call.ended</code>, <code class="font-mono">realtime.call.failed</code></li>
+                </ul>
+              </li>
+              <li>OpenAI shows the signing secret <strong>once</strong> on creation — format <code class="font-mono">whsec_…</code>. Drop it into <code class="font-mono">.env</code>:
+                <div class="code-block mt-2">
+                  <div class="code-header">.env</div>
+                  <pre><code>OPENAI_REALTIME_WEBHOOK_SECRET=whsec_YOUR_NEW_SECRET</code></pre>
+                </div>
+              </li>
+              <li>Reload Laravel config so the new key is picked up:
+                <div class="code-block mt-2">
+                  <div class="code-header">terminal</div>
+                  <pre><code>php artisan config:clear</code></pre>
+                </div>
+              </li>
+              <li><strong>Test the webhook before dialing.</strong> OpenAI's webhook UI usually has a "Send test event" button — fire one and watch <code class="font-mono">tail -f storage/logs/laravel.log</code> on your laptop. You should see the request hit, signature middleware pass, and the controller log "unknown event type" (test events aren't <code class="font-mono">realtime.*</code>). That's success — round trip works.</li>
+            </ol>
+            <details class="mt-3 rounded-lg bg-amber-50 ring-1 ring-amber-200 p-3">
+              <summary class="text-sm font-semibold text-amber-900 flex items-center gap-2">
+                <svg class="summary-chevron w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                Symptoms of webhook misconfig
+              </summary>
+              <div class="mt-2 text-sm text-amber-900 space-y-1">
+                <p><strong>401 / "invalid signature":</strong> wrong secret OR <code class="font-mono">TrustProxies</code> doesn't trust the tunnel (so <code class="font-mono">request()->fullUrl()</code> returns <code class="font-mono">http://</code> and HMAC computes against the wrong canonical URL).</p>
+                <p><strong>404:</strong> tunnel host wrong, or you typed an apex+subdomain like <code class="font-mono">https://acme.&lt;tunnel&gt;/...</code>. The route is on the apex.</p>
+                <p><strong>Times out / no log entry:</strong> tunnel is dead or pointing at the wrong Herd site.</p>
+              </div>
+            </details>
+          </div>
+
+          <!-- 4.5 — Final env sanity -->
+          <div class="rounded-lg bg-emerald-50 ring-1 ring-emerald-200 p-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase tracking-wider text-emerald-800 font-semibold">4.5</span>
+              <span class="font-semibold text-emerald-900">Sanity-check your <code class="font-mono">.env</code> before Step 5</span>
+            </div>
+            <p class="mt-2 text-sm text-slate-700">All four lines should now have real values, no placeholders:</p>
+            <div class="code-block mt-2">
+              <div class="code-header">terminal</div>
+              <pre><code>grep -E '^(OPENAI_API_KEY|OPENAI_REALTIME_PROJECT_ID|OPENAI_REALTIME_WEBHOOK_SECRET|OPENAI_REALTIME_MCP_SERVER_URL)=' \
+  /Users/leezilla/sites/miashare-app/.env</code></pre>
+            </div>
+            <p class="mt-2 text-xs text-slate-600">Expected: <code class="font-mono">sk-svcacct-…</code>, <code class="font-mono">proj_…</code>, <code class="font-mono">whsec_…</code>, <code class="font-mono">https://&lt;tunnel&gt;/mcp/voice-agent</code>. Anything blank, anything still seeded from the PR description, or any <code class="font-mono">localhost</code> in the MCP URL = stop and fix.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== STEP 5b SNAPSHOT ============== -->
+    <section id="snapshot" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-2 ring-rose-300 overflow-hidden">
+        <header class="px-6 py-4 border-b border-rose-200 flex items-center gap-3 bg-rose-50/60">
+          <span class="flex-none w-8 h-8 rounded-full bg-rose-500 text-white font-bold flex items-center justify-center">5b</span>
+          <h2 class="text-xl font-bold">Snapshot prod webhooks BEFORE Step 5.4</h2>
+          <span class="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 ring-1 ring-rose-300">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> DESTRUCTIVE
+          </span>
+        </header>
+        <div class="p-6 space-y-4">
+          <p class="text-slate-700">Before <code class="font-mono">call:manage</code> rewrites Twilio's <code class="font-mono">voiceUrl</code> / <code class="font-mono">smsUrl</code>, capture what they currently are so you can restore them exactly.</p>
+          <div class="code-block">
+            <div class="code-header">Twilio CLI (recommended)</div>
+            <pre><code>twilio api:core:incoming-phone-numbers:fetch \
+  --sid PNbadff9ee2c3d1ce59a241441213c24bf -o json \
+  &gt; /tmp/PNbadff9ee2c3d1ce59a241441213c24bf.before.json</code></pre>
+          </div>
+          <p class="text-sm text-slate-600">Or grab from Twilio Console → Phone Numbers → Active Numbers → <span class="font-mono">+14788007559</span> → Voice Configuration. Copy <code class="font-mono">voiceUrl</code> and <code class="font-mono">smsUrl</code> with their HTTP methods into a scratch file.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== STEP 5 ============== -->
+    <section id="step-5" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <header class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <span class="flex-none w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center">5</span>
+          <h2 class="text-xl font-bold"><code class="font-mono">php artisan call:manage</code></h2>
+          <span class="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 ring-1 ring-amber-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> TODO
+          </span>
+        </header>
+        <div class="p-6 space-y-5">
+          <p class="text-slate-700">Interactive TUI in <code class="font-mono">app/Console/Commands/CallManageCommand.php</code>. Walk it:</p>
+
+          <ol class="space-y-4">
+            <li class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">5.1 — Search institution → <span class="text-indigo-700">Lumion Demo</span></div>
+              <p class="mt-1 text-sm text-slate-700">When prompted, search <code class="font-mono">Lumion Demo</code> (or <code class="font-mono">joinlumion</code>) and pick the only match.</p>
+              <div class="mt-2 grid sm:grid-cols-3 gap-2 text-xs">
+                <div class="rounded bg-white ring-1 ring-slate-200 p-2"><span class="text-slate-500">Name:</span> <strong>Lumion Demo</strong></div>
+                <div class="rounded bg-white ring-1 ring-slate-200 p-2"><span class="text-slate-500">id:</span> <strong>512</strong></div>
+                <div class="rounded bg-white ring-1 ring-slate-200 p-2"><span class="text-slate-500">subdomain:</span> <strong>joinlumion</strong></div>
+              </div>
+              <p class="mt-3 text-sm text-slate-700">Lumion Demo currently has one TwilioNumber attached
+                (<code class="font-mono">+19785107603</code> "Voice Test Phone 3 - Praxis Staging",
+                <code class="font-mono">is_primary = 1</code>). 5.2 swaps it out for the test number.</p>
+            </li>
+
+            <li class="rounded-lg bg-rose-50 ring-1 ring-rose-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-rose-700 font-semibold">5.2 — Delete the existing <code class="font-mono">+19785107603</code></div>
+              <p class="mt-1 text-sm text-slate-700">Main menu → <code class="font-mono">delete</code> → pick <code class="font-mono">+19785107603</code> ("Voice Test Phone 3 - Praxis Staging") → confirm.</p>
+              <div class="mt-2 rounded bg-white ring-1 ring-rose-200 p-3 text-sm text-slate-700">
+                <strong class="font-semibold">What this does (local-only):</strong>
+                soft-deletes the <code class="font-mono">twilio_numbers</code> row and cascades
+                its <code class="font-mono">voice_settings</code>, <code class="font-mono">channels</code>
+                membership, ring-group memberships, and call rows for that number.
+                <strong>Does not touch Twilio</strong> — the Praxis Staging number itself
+                still exists in your Twilio account, with its prod webhooks intact. You can
+                restore the local row by reseeding from the prod dump
+                (<code class="font-mono">.local/seed</code>) when you're done testing.
+              </div>
+              <details class="mt-3 rounded bg-white ring-1 ring-slate-200 p-3">
+                <summary class="text-sm font-semibold flex items-center gap-2">
+                  <svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  Verify the delete landed
+                </summary>
+                <div class="mt-2 code-block">
+                  <div class="code-header">mysql</div>
+                  <pre><code>mysql ... forge -e '
+  SELECT tn.id, tn.sms_number, tn.deleted_at
+    FROM twilio_numbers tn
+    JOIN channels c ON c.id = tn.channel_id
+   WHERE c.institution_id = 512;'</code></pre>
+                </div>
+                <p class="mt-1 text-xs text-slate-600">Either zero rows, or the existing row now has a non-null <code class="font-mono">deleted_at</code>. Either is fine — Step 5.3 will register the new number.</p>
+              </details>
+            </li>
+
+            <li class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">5.3 — Register the new <code class="font-mono">+14788007559</code></div>
+              <p class="mt-1 text-sm text-slate-700">Main menu → <code class="font-mono">register</code> → <code class="font-mono">Look up number in Twilio</code>.</p>
+              <div class="mt-2 grid sm:grid-cols-2 gap-2 text-sm">
+                <div class="rounded bg-white ring-1 ring-slate-200 p-2"><span class="text-slate-500">Phone number:</span> <code class="font-mono">+14788007559</code></div>
+                <div class="rounded bg-white ring-1 ring-slate-200 p-2"><span class="text-slate-500">Expected SID:</span> <code class="font-mono">PNbadff9ee2c3d1ce59a241441213c24bf</code></div>
+              </div>
+              <p class="mt-2 text-sm text-slate-600">Confirm <code class="font-mono">yes</code> — INSERTS fresh rows in <code class="font-mono">twilio_numbers</code>, <code class="font-mono">channels</code>, <code class="font-mono">voice_settings</code>. The new number is now Lumion Demo's <em>only</em> active number, so it'll be primary by default.</p>
+            </li>
+
+            <li class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">5.4 — Create the <code class="font-mono">voice_settings</code> row</div>
+              <p class="mt-1 text-sm text-slate-700">Main menu → <code class="font-mono">voice_settings</code> ("Edit voice settings — greetings, after-hours, voicemail, text-back, recording"). Walk through and save. Defaults are fine for AI-agent testing — the row's existence is what matters, not the values.</p>
+              <div class="mt-2 rounded bg-amber-50 ring-1 ring-amber-200 p-3 text-sm text-amber-900">
+                <strong>Why this is its own step:</strong> <code class="font-mono">register</code> in 5.3 only inserts <code class="font-mono">twilio_numbers</code> + <code class="font-mono">channels</code>, not <code class="font-mono">voice_settings</code>. Skip this and the Assign step in 5.7 fails with <em>"This number has no VoiceSetting yet. Configure voice settings first."</em> (<a href="https://github.com/MiaShare/miashare-app/blob/CRTX-772/app/Console/Commands/CallManageCommand.php#L2197" target="_blank" class="text-amber-900 underline hover:no-underline"><code class="font-mono">CallManageCommand.php:2197</code></a>). The AI profile FKs (<code class="font-mono">primary_ai_voice_agent_profile_id</code>, <code class="font-mono">ai_catch_all_profile_id</code>) are columns on this table.
+              </div>
+              <p class="mt-2 text-sm text-slate-600">Verify (one row should exist now):</p>
+              <div class="code-block">
+                <div class="code-header">mysql</div>
+                <pre><code>mysql ... forge -e '
+  SELECT vs.id, vs.twilio_number_id, vs.greeting_enabled, vs.after_hours_behavior
+    FROM voice_settings vs
+    JOIN twilio_numbers tn ON tn.id = vs.twilio_number_id
+   WHERE tn._phone_number_sid = "PNbadff9ee2c3d1ce59a241441213c24bf";'</code></pre>
+              </div>
+              <p class="mt-1 text-xs text-slate-500">Tip: <code class="font-mono">bootstrap</code> from the main menu does <code class="font-mono">register → voice_settings → webhook</code> in one sweep — useful when you want everything in a single pass instead of jumping back and forth.</p>
+            </li>
+
+            <li class="rounded-lg bg-rose-50 ring-1 ring-rose-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-rose-700 font-semibold">5.5 — Webhook (the destructive moment)</div>
+              <p class="mt-1 text-sm text-slate-700">Main menu → <code class="font-mono">webhook</code> (or <code class="font-mono">bootstrap</code> for the full sweep).</p>
+              <p class="mt-1 text-sm text-slate-700">When prompted "Webhook base URL override":</p>
+              <div class="code-block mt-2">
+                <div class="code-header">enter (origin only — no path, no trailing slash)</div>
+                <pre><code>https://&lt;your-tunnel-host&gt;</code></pre>
+              </div>
+              <p class="mt-2 text-sm text-rose-900">The command appends <code class="font-mono">/webhooks/voice/&#123;voiceCallSid&#125;</code> and <code class="font-mono">/webhooks/sms/&#123;voiceCallSid&#125;</code>. Confirm "Update Twilio Phone Number webhooks? <strong>yes</strong>" — production inbound flips to your laptop now.</p>
+            </li>
+
+            <li class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">5.6 — Create AI profile</div>
+              <p class="mt-1 text-sm text-slate-700">Main menu → AI profile menu → create a new <code class="font-mono">AiVoiceAgentProfile</code> for the institution. Per the actual <code class="font-mono">ai_voice_agent_profiles</code> schema:</p>
+              <table class="mt-2 w-full text-sm">
+                <tbody class="divide-y divide-slate-200">
+                  <tr><td class="py-1.5 pr-4 font-mono text-indigo-700">name</td><td class="text-slate-700">display label</td></tr>
+                  <tr><td class="py-1.5 pr-4 font-mono text-indigo-700">prompt</td><td class="text-slate-700">system instructions, e.g. <em>"You are a friendly admissions assistant for Acme College. Keep replies under 20 seconds. Escalate to the brain for anything beyond pleasantries."</em></td></tr>
+                  <tr><td class="py-1.5 pr-4 font-mono text-indigo-700">voice</td><td class="text-slate-700"><code class="font-mono">alloy</code> default is fine</td></tr>
+                  <tr><td class="py-1.5 pr-4 font-mono text-indigo-700">goal</td><td class="text-slate-700">optional one-liner</td></tr>
+                  <tr><td class="py-1.5 pr-4 font-mono text-indigo-700">model</td><td class="text-slate-700"><code class="font-mono">gpt-realtime-1.5</code> default — leave alone</td></tr>
+                  <tr><td class="py-1.5 pr-4 font-mono text-indigo-700">tools_allowlist</td><td class="text-slate-700">all on for testing, narrow later</td></tr>
+                  <tr><td class="py-1.5 pr-4 font-mono text-indigo-700">turn_detection</td><td class="text-slate-700">leave at defaults</td></tr>
+                </tbody>
+              </table>
+            </li>
+
+            <li class="rounded-lg bg-slate-50 ring-1 ring-slate-200 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">5.7 — Assign profile to number</div>
+              <p class="mt-1 text-sm text-slate-700">Two FK slots on <code class="font-mono">voice_settings</code>:</p>
+              <ul class="mt-2 text-sm text-slate-700 space-y-1">
+                <li>• <code class="font-mono">primary_ai_voice_agent_profile_id</code> — agent picks up directly. <strong>Use this for the test.</strong></li>
+                <li>• <code class="font-mono">ai_catch_all_profile_id</code> — optional after-hours / unmatched-IVR fallback.</li>
+              </ul>
+            </li>
+          </ol>
+
+          <div>
+            <div class="font-semibold text-slate-700 mb-1">Verify before dialing</div>
+            <p class="text-sm text-slate-600 mb-2">Straight SQL — <code class="font-mono">artisan tinker</code> can be flaky in some terminals while Telescope tables churn.</p>
+            <div class="code-block">
+              <div class="code-header">mysql</div>
+              <pre><code>mysql ... forge -e '
+  SELECT tn.sms_number, tn.voice_webhook_base_url,
+         vs.primary_ai_voice_agent_profile_id, p.name AS profile_name
+    FROM twilio_numbers tn
+    JOIN voice_settings vs ON vs.twilio_number_id = tn.id
+    LEFT JOIN ai_voice_agent_profiles p
+           ON p.id = vs.primary_ai_voice_agent_profile_id
+   WHERE tn._phone_number_sid = "PNbadff9ee2c3d1ce59a241441213c24bf";'</code></pre>
+            </div>
+            <p class="mt-2 text-sm text-slate-600">All three should be set: tunnel URL, profile id, profile name.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== STEP 6 ============== -->
+    <section id="step-6" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <header class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <span class="flex-none w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center">6</span>
+          <h2 class="text-xl font-bold">Place the call</h2>
+          <span class="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 ring-1 ring-amber-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> TODO
+          </span>
+        </header>
+        <div class="p-6 space-y-4">
+          <div>
+            <div class="font-semibold text-slate-700 mb-1">Watch logs in a side terminal</div>
+            <div class="code-block">
+              <div class="code-header">terminal</div>
+              <pre><code>php artisan pail --filter=voice
+# or full stream:
+tail -f storage/logs/laravel.log</code></pre>
+            </div>
+          </div>
+
+          <div>
+            <div class="font-semibold text-slate-700 mb-2">Dial <code class="font-mono">+1 (478) 800-7559</code> from your cell. Expected sequence:</div>
+            <ol class="space-y-2 text-sm">
+              <li class="flex gap-3 items-start">
+                <span class="flex-none w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">1</span>
+                <p class="text-slate-700">Twilio POST → <code class="font-mono">/webhooks/voice/&#123;...&#125;</code> → <code class="font-mono">CallRoutingService</code> → <code class="font-mono">InitialStep</code> → <code class="font-mono">AiAgentBridgeStep</code> returns <code class="font-mono">&lt;Dial&gt;&lt;Sip&gt;...&lt;/Sip&gt;&lt;/Dial&gt;</code> with <code class="font-mono">x-lumion-call-ref</code> header.</p>
+              </li>
+              <li class="flex gap-3 items-start">
+                <span class="flex-none w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center mt-0.5">2</span>
+                <p class="text-slate-700">OpenAI POST → <code class="font-mono">/webhooks/openai/realtime</code> (<code class="font-mono">realtime.call.incoming</code>). HMAC passes → controller mints <code class="font-mono">VoiceCallToken</code>, calls OpenAI <code class="font-mono">acceptCall</code>, stamps <code class="font-mono">Call.openai_call_id</code>.</p>
+              </li>
+              <li class="flex gap-3 items-start">
+                <span class="flex-none w-6 h-6 rounded-full bg-fuchsia-100 text-fuchsia-700 text-xs font-bold flex items-center justify-center mt-0.5">3</span>
+                <p class="text-slate-700">You hear the configured greeting (or — without an explicit <code class="font-mono">initial_greeting</code> column on the profile — the agent's first turn from the system prompt).</p>
+              </li>
+              <li class="flex gap-3 items-start">
+                <span class="flex-none w-6 h-6 rounded-full bg-fuchsia-100 text-fuchsia-700 text-xs font-bold flex items-center justify-center mt-0.5">4</span>
+                <p class="text-slate-700">Each MCP tool call (lookups, transfer, ask_brain) → POST <code class="font-mono">/mcp/voice-agent</code> with the bearer token, sliding TTL refreshes.</p>
+              </li>
+              <li class="flex gap-3 items-start">
+                <span class="flex-none w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center mt-0.5">5</span>
+                <p class="text-slate-700">Hang up → <code class="font-mono">realtime.call.ended</code> webhook → token revoked, <code class="font-mono">Call</code> marked <code class="font-mono">Completed</code>.</p>
+              </li>
+            </ol>
+          </div>
+
+          <div>
+            <div class="font-semibold text-slate-700 mb-2">Test checklist</div>
+            <ul class="space-y-1.5 text-sm text-slate-700">
+              <li><label class="inline-flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 rounded border-slate-300 text-indigo-600"> Inbound branded greeting plays</label></li>
+              <li><label class="inline-flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 rounded border-slate-300 text-indigo-600"> Q&amp;A that requires brain consultation (e.g. "what's your refund policy?") — <code class="font-mono">AskBrainTool</code> hits gpt-5</label></li>
+              <li><label class="inline-flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 rounded border-slate-300 text-indigo-600"> Transfer to ring-group member (set one up via <code class="font-mono">call:manage</code> ring group menu first)</label></li>
+              <li><label class="inline-flex items-start gap-2 cursor-pointer"><input type="checkbox" class="mt-0.5 rounded border-slate-300 text-indigo-600"> Authenticated callback flow (caller dials in → menu option → app dials back → <code class="font-mono">Authorized</code> token → opt-out tool reachable)</label></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== HANDOFF ============== -->
+    <section id="handoff" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <header class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <span class="flex-none w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center">↩</span>
+          <h2 class="text-xl font-bold">Hand the number back to production</h2>
+          <span class="ml-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 ring-1 ring-slate-300">
+            POST-TEST
+          </span>
+        </header>
+        <div class="p-6 space-y-4">
+          <p class="text-slate-700">Don't leave production traffic flowing to your laptop. Two routes:</p>
+          <div class="grid md:grid-cols-2 gap-3">
+            <div class="rounded-lg ring-1 ring-emerald-200 bg-emerald-50/50 p-4">
+              <div class="font-semibold text-emerald-900">Easy</div>
+              <p class="text-sm mt-1 text-slate-700">Re-run <code class="font-mono">php artisan call:manage</code> → <code class="font-mono">webhook</code> → enter the prod base URL from your snapshot (e.g. <code class="font-mono">https://admin.joinlumion.com</code>). Same code path that flipped them in Step 5.3, just in reverse.</p>
+            </div>
+            <div class="rounded-lg ring-1 ring-amber-200 bg-amber-50/50 p-4">
+              <div class="font-semibold text-amber-900">Surgical</div>
+              <p class="text-sm mt-1 text-slate-700">In the Twilio Console, paste the original <code class="font-mono">voiceUrl</code> + <code class="font-mono">smsUrl</code> from the snapshot back into Voice / Messaging Configuration. Safer if the snapshot showed a TwiML Bin or Studio flow URL that <code class="font-mono">call:manage</code> wouldn't reproduce verbatim.</p>
+            </div>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-700 mb-1">Verify by re-fetching</div>
+            <div class="code-block">
+              <div class="code-header">terminal</div>
+              <pre><code>twilio api:core:incoming-phone-numbers:fetch \
+  --sid PNbadff9ee2c3d1ce59a241441213c24bf -o json \
+  &gt; /tmp/PNbadff9ee2c3d1ce59a241441213c24bf.after.json
+diff /tmp/PNbadff9ee2c3d1ce59a241441213c24bf.before.json \
+     /tmp/PNbadff9ee2c3d1ce59a241441213c24bf.after.json</code></pre>
+            </div>
+            <p class="mt-2 text-sm text-slate-600">Should be empty (or just timestamp differences).</p>
+          </div>
+          <p class="text-sm text-slate-600">Then <code class="font-mono">kill</code> your <code class="font-mono">herd share</code> process. The TwilioNumber row in your local DB sticks around — harmless. <code class="font-mono">call:manage</code> → delete is a soft delete, doesn't touch Twilio.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== THINGS THAT BITE ============== -->
+    <section id="bites" class="step-section">
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <header class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <span class="flex-none w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center">⚠</span>
+          <h2 class="text-xl font-bold">Things that bite</h2>
+        </header>
+        <div class="p-6 space-y-2 text-sm">
+          <details class="rounded-lg ring-1 ring-slate-200 p-3">
+            <summary class="font-semibold flex items-center gap-2 text-slate-800"><svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg> OpenAI webhook returns 401 / signature invalid</summary>
+            <p class="mt-2 text-slate-700"><strong>Cause:</strong> wrong <code class="font-mono">OPENAI_REALTIME_WEBHOOK_SECRET</code> for this URL. <strong>Fix:</strong> re-copy the secret from the OpenAI dashboard webhook bound to <em>your</em> tunnel.</p>
+          </details>
+          <details class="rounded-lg ring-1 ring-slate-200 p-3">
+            <summary class="font-semibold flex items-center gap-2 text-slate-800"><svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg> Signature rejects despite correct secret</summary>
+            <p class="mt-2 text-slate-700"><strong>Cause:</strong> <code class="font-mono">App\Http\Middleware\TrustProxies</code> doesn't trust the tunnel; <code class="font-mono">request()->fullUrl()</code> returns <code class="font-mono">http://...</code> instead of <code class="font-mono">https://...</code>. <strong>Fix:</strong> trust <code class="font-mono">'*'</code> for proxies, or add the tunnel host explicitly.</p>
+          </details>
+          <details class="rounded-lg ring-1 ring-slate-200 p-3">
+            <summary class="font-semibold flex items-center gap-2 text-slate-800"><svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg> OpenAI accepts call, then nothing — agent silent</summary>
+            <p class="mt-2 text-slate-700"><strong>Cause:</strong> MCP server URL unreachable; OpenAI can't fetch tools. <strong>Fix:</strong> <code class="font-mono">curl https://&lt;tunnel&gt;/mcp/voice-agent</code> from another network — must respond. Verify <code class="font-mono">OPENAI_REALTIME_MCP_SERVER_URL</code> matches your live tunnel.</p>
+          </details>
+          <details class="rounded-lg ring-1 ring-slate-200 p-3">
+            <summary class="font-semibold flex items-center gap-2 text-slate-800"><svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg> Compliance exception, call short-circuits before SIP bridge</summary>
+            <p class="mt-2 text-slate-700"><strong>Cause:</strong> contact opted out / quiet hours / DNC / institution suspended. <strong>Fix:</strong> tinker the contact: <code class="font-mono">optedOut === false</code>, check <code class="font-mono">voice_communication_preference</code>, time of day.</p>
+          </details>
+          <details class="rounded-lg ring-1 ring-slate-200 p-3">
+            <summary class="font-semibold flex items-center gap-2 text-slate-800"><svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg> AskBrainTool returns degraded fallback</summary>
+            <p class="mt-2 text-slate-700"><strong>Cause:</strong> <code class="font-mono">voice-agent-ask-brain</code> prompt missing or inactive. <strong>Fix:</strong> <code class="font-mono">SELECT id, identifier, is_active FROM prompts WHERE identifier="voice-agent-ask-brain";</code> — should be id 14, active 1. If missing, re-run the seeder.</p>
+          </details>
+          <details class="rounded-lg ring-1 ring-slate-200 p-3">
+            <summary class="font-semibold flex items-center gap-2 text-slate-800"><svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg> Call enters menu fine, AI profile picked, but &lt;Dial&gt;&lt;Sip&gt; times out at Twilio</summary>
+            <p class="mt-2 text-slate-700"><strong>Cause:</strong> <code class="font-mono">OPENAI_REALTIME_PROJECT_ID</code> wrong, or service key has no realtime scope. <strong>Fix:</strong> check OpenAI dashboard logs for the project; ensure the API key is allow-listed for Realtime.</p>
+          </details>
+          <details class="rounded-lg ring-1 ring-slate-200 p-3">
+            <summary class="font-semibold flex items-center gap-2 text-slate-800"><svg class="summary-chevron w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg> Long call cuts off at ~35 minutes</summary>
+            <p class="mt-2 text-slate-700"><strong>Cause:</strong> absolute token TTL hit. <strong>Fix:</strong> override <code class="font-mono">OPENAI_REALTIME_TOKEN_ABSOLUTE_TTL_MINUTES</code> for a long test, but reset it for prod.</p>
+          </details>
+          <details class="rounded-lg ring-1 ring-rose-200 p-3 bg-rose-50/40">
+            <summary class="font-semibold flex items-center gap-2 text-rose-900"><svg class="summary-chevron w-3 h-3 text-rose-700" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg> <code class="font-mono">php artisan ...</code> exits 255 with no output</summary>
+            <p class="mt-2 text-slate-700"><strong>Cause:</strong> Telescope tries to write a terminate-time log row against tables that just churned (e.g. shortly after a <code class="font-mono">db:wipe</code> + reseed). <strong>Fix:</strong> either set <code class="font-mono">TELESCOPE_ENABLED=false</code> in <code class="font-mono">.env</code> while testing, or run <code class="font-mono">php artisan migrate --path=vendor/laravel/telescope/database/migrations</code> to repair telescope. For ad-hoc DB inspection, raw <code class="font-mono">mysql</code> against the <code class="font-mono">forge</code> database (the verification queries above) is fine and bypasses the issue entirely.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <footer class="text-xs text-slate-400 pt-4 pb-12 text-center">
+      Companion to <code class="font-mono">.dev/0-claude-plans/check-out-pr-6166-temporal-coral.md</code> · open this file in a browser
+    </footer>
+  </main>
+</div>
+
+<!-- ============== Code-block styling + JS ============== -->
+<style>
+  .code-block {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #0f172a; /* slate-900 */
+    color: #e2e8f0;       /* slate-200 */
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8125rem; /* 13px */
+    position: relative;
+  }
+  .code-block .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .code-block pre {
+    padding: 0.875rem 1rem;
+    overflow-x: auto;
+    line-height: 1.55;
+  }
+  .copy-btn {
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: #cbd5e1;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,0.10); color: white; }
+</style>
+<script>
+  // Augment every .code-block with a copy button
+  document.querySelectorAll('.code-block').forEach((block) => {
+    const header = block.querySelector('.code-header');
+    if (!header) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', async () => {
+      const code = block.querySelector('pre code')?.innerText ?? block.querySelector('pre')?.innerText ?? '';
+      try {
+        await navigator.clipboard.writeText(code);
+        btn.textContent = 'Copied';
+        btn.classList.add('copied-flash');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied-flash');
+        }, 1100);
+      } catch {
+        btn.textContent = 'Err';
+        setTimeout(() => (btn.textContent = 'Copy'), 1100);
+      }
+    });
+    header.appendChild(btn);
+  });
+
+  // Sidebar scroll-spy
+  (function () {
+    const links = Array.from(document.querySelectorAll('#side-nav .nav-link'));
+    if (!links.length) return;
+    const sectionMap = links.map((a) => ({
+      link: a,
+      section: document.querySelector(a.getAttribute('href')),
+    })).filter((x) => x.section);
+
+    const setActive = (id) => {
+      sectionMap.forEach(({ link, section }) => {
+        link.dataset.active = section.id === id ? 'true' : 'false';
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible.length) setActive(visible[0].target.id);
+      },
+      {
+        rootMargin: '-100px 0px -55% 0px',
+        threshold: [0, 0.25, 0.5, 0.75, 1],
+      }
+    );
+    sectionMap.forEach(({ section }) => observer.observe(section));
+
+    // Click → also force-set in case layout is fast
+    links.forEach((link) =>
+      link.addEventListener('click', () => {
+        const id = link.getAttribute('href').slice(1);
+        setActive(id);
+      })
+    );
+  })();
+
+  // Persist test-checklist boxes across reloads
+  (function () {
+    const key = 'pr6166-checklist-v1';
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    const boxes = document.querySelectorAll('input[type="checkbox"]');
+    boxes.forEach((box, i) => {
+      if (saved[i]) box.checked = true;
+      box.addEventListener('change', () => {
+        saved[i] = box.checked;
+        localStorage.setItem(key, JSON.stringify(saved));
+      });
+    });
+  })();
+</script>
+</body>
+</html>
