@@ -1,0 +1,2038 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta name="share-summary" content="Lumion's blueprint for migrating from solo Claude Code workflows to a seven-agent Multica pipeline (PRD Shaper through PR Reviewer), with per-agent prompts, skill assignments, MCP/env wiring, and Claude Code vs Codex runtime choices grounded in eight platform constraints.">
+    <meta name="share-hash" content="fba78e47736698990a9fc3188fe68abc740b0519fe474a5c37832f939514d186">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lumion × Multica · Agent Topology Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..900,0..100&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    /* compiled tailwindcss v4 */
+/*! tailwindcss v4.2.0 | MIT License | https://tailwindcss.com */
+@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-translate-x:0;--tw-translate-y:0;--tw-translate-z:0;--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-space-y-reverse:0;--tw-divide-y-reverse:0;--tw-border-style:solid;--tw-gradient-position:initial;--tw-gradient-from:#0000;--tw-gradient-via:#0000;--tw-gradient-to:#0000;--tw-gradient-stops:initial;--tw-gradient-via-stops:initial;--tw-gradient-from-position:0%;--tw-gradient-via-position:50%;--tw-gradient-to-position:100%;--tw-leading:initial;--tw-font-weight:initial;--tw-tracking:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-backdrop-blur:initial;--tw-backdrop-brightness:initial;--tw-backdrop-contrast:initial;--tw-backdrop-grayscale:initial;--tw-backdrop-hue-rotate:initial;--tw-backdrop-invert:initial;--tw-backdrop-opacity:initial;--tw-backdrop-saturate:initial;--tw-backdrop-sepia:initial;--tw-ease:initial}}}@layer theme{:root,:host{--font-sans:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";--font-serif:ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;--font-mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;--color-red-50:oklch(97.1% .013 17.38);--color-red-100:oklch(93.6% .032 17.717);--color-red-200:oklch(88.5% .062 18.334);--color-red-300:oklch(80.8% .114 19.571);--color-red-400:oklch(70.4% .191 22.216);--color-red-500:oklch(63.7% .237 25.331);--color-red-600:oklch(57.7% .245 27.325);--color-red-700:oklch(50.5% .213 27.518);--color-red-800:oklch(44.4% .177 26.899);--color-red-900:oklch(39.6% .141 25.723);--color-orange-50:oklch(98% .016 73.684);--color-orange-100:oklch(95.4% .038 75.164);--color-orange-200:oklch(90.1% .076 70.697);--color-orange-500:oklch(70.5% .213 47.604);--color-orange-600:oklch(64.6% .222 41.116);--color-orange-700:oklch(55.3% .195 38.402);--color-orange-800:oklch(47% .157 37.304);--color-amber-50:oklch(98.7% .022 95.277);--color-amber-100:oklch(96.2% .059 95.617);--color-amber-200:oklch(92.4% .12 95.746);--color-amber-300:oklch(87.9% .169 91.605);--color-amber-400:oklch(82.8% .189 84.429);--color-amber-500:oklch(76.9% .188 70.08);--color-amber-600:oklch(66.6% .179 58.318);--color-amber-700:oklch(55.5% .163 48.998);--color-amber-800:oklch(47.3% .137 46.201);--color-amber-900:oklch(41.4% .112 45.904);--color-yellow-300:oklch(90.5% .182 98.111);--color-green-50:oklch(98.2% .018 155.826);--color-green-100:oklch(96.2% .044 156.743);--color-green-200:oklch(92.5% .084 155.995);--color-green-300:oklch(87.1% .15 154.449);--color-green-400:oklch(79.2% .209 151.711);--color-green-500:oklch(72.3% .219 149.579);--color-green-600:oklch(62.7% .194 149.214);--color-green-700:oklch(52.7% .154 150.069);--color-green-800:oklch(44.8% .119 151.328);--color-green-900:oklch(39.3% .095 152.535);--color-emerald-50:oklch(97.9% .021 166.113);--color-emerald-100:oklch(95% .052 163.051);--color-emerald-200:oklch(90.5% .093 164.15);--color-emerald-400:oklch(76.5% .177 163.223);--color-emerald-500:oklch(69.6% .17 162.48);--color-emerald-600:oklch(59.6% .145 163.225);--color-emerald-700:oklch(50.8% .118 165.612);--color-emerald-800:oklch(43.2% .095 166.913);--color-emerald-900:oklch(37.8% .077 168.94);--color-teal-50:oklch(98.4% .014 180.72);--color-teal-100:oklch(95.3% .051 180.801);--color-teal-200:oklch(91% .096 180.426);--color-teal-300:oklch(85.5% .138 181.071);--color-teal-400:oklch(77.7% .152 181.912);--color-teal-500:oklch(70.4% .14 182.503);--color-teal-600:oklch(60% .118 184.704);--color-teal-700:oklch(51.1% .096 186.391);--color-teal-800:oklch(43.7% .078 188.216);--color-cyan-100:oklch(95.6% .045 203.388);--color-cyan-600:oklch(60.9% .126 221.723);--color-sky-50:oklch(97.7% .013 236.62);--color-sky-100:oklch(95.1% .026 236.824);--color-sky-400:oklch(74.6% .16 232.661);--color-sky-500:oklch(68.5% .169 237.323);--color-sky-600:oklch(58.8% .158 241.966);--color-sky-700:oklch(50% .134 242.749);--color-blue-50:oklch(97% .014 254.604);--color-blue-100:oklch(93.2% .032 255.585);--color-blue-200:oklch(88.2% .059 254.128);--color-blue-300:oklch(80.9% .105 251.813);--color-blue-400:oklch(70.7% .165 254.624);--color-blue-500:oklch(62.3% .214 259.815);--color-blue-600:oklch(54.6% .245 262.881);--color-blue-700:oklch(48.8% .243 264.376);--color-blue-800:oklch(42.4% .199 265.638);--color-blue-900:oklch(37.9% .146 265.522);--color-blue-950:oklch(28.2% .091 267.935);--color-indigo-50:oklch(96.2% .018 272.314);--color-indigo-100:oklch(93% .034 272.788);--color-indigo-200:oklch(87% .065 274.039);--color-indigo-300:oklch(78.5% .115 274.713);--color-indigo-400:oklch(67.3% .182 276.935);--color-indigo-500:oklch(58.5% .233 277.117);--color-indigo-600:oklch(51.1% .262 276.966);--color-indigo-700:oklch(45.7% .24 277.023);--color-indigo-800:oklch(39.8% .195 277.366);--color-indigo-900:oklch(35.9% .144 278.697);--color-indigo-950:oklch(25.7% .09 281.288);--color-violet-50:oklch(96.9% .016 293.756);--color-violet-100:oklch(94.3% .029 294.588);--color-violet-200:oklch(89.4% .057 293.283);--color-violet-400:oklch(70.2% .183 293.541);--color-violet-500:oklch(60.6% .25 292.717);--color-violet-600:oklch(54.1% .281 293.009);--color-violet-700:oklch(49.1% .27 292.581);--color-violet-800:oklch(43.2% .232 292.759);--color-violet-900:oklch(38% .189 293.745);--color-purple-50:oklch(97.7% .014 308.299);--color-purple-100:oklch(94.6% .033 307.174);--color-purple-200:oklch(90.2% .063 306.703);--color-purple-300:oklch(82.7% .119 306.383);--color-purple-400:oklch(71.4% .203 305.504);--color-purple-500:oklch(62.7% .265 303.9);--color-purple-600:oklch(55.8% .288 302.321);--color-purple-700:oklch(49.6% .265 301.924);--color-pink-50:oklch(97.1% .014 343.198);--color-pink-100:oklch(94.8% .028 342.258);--color-pink-200:oklch(89.9% .061 343.231);--color-pink-400:oklch(71.8% .202 349.761);--color-pink-600:oklch(59.2% .249 .584);--color-pink-700:oklch(52.5% .223 3.958);--color-pink-800:oklch(45.9% .187 3.815);--color-pink-900:oklch(40.8% .153 2.432);--color-rose-50:oklch(96.9% .015 12.422);--color-rose-100:oklch(94.1% .03 12.58);--color-rose-200:oklch(89.2% .058 10.001);--color-rose-300:oklch(81% .117 11.638);--color-rose-400:oklch(71.2% .194 13.428);--color-rose-500:oklch(64.5% .246 16.439);--color-rose-600:oklch(58.6% .253 17.585);--color-rose-700:oklch(51.4% .222 16.935);--color-rose-800:oklch(45.5% .188 13.697);--color-rose-900:oklch(41% .159 10.272);--color-slate-50:oklch(98.4% .003 247.858);--color-slate-100:oklch(96.8% .007 247.896);--color-slate-200:oklch(92.9% .013 255.508);--color-slate-300:oklch(86.9% .022 252.894);--color-slate-400:oklch(70.4% .04 256.788);--color-slate-500:oklch(55.4% .046 257.417);--color-slate-600:oklch(44.6% .043 257.281);--color-slate-700:oklch(37.2% .044 257.287);--color-slate-800:oklch(27.9% .041 260.031);--color-slate-900:oklch(20.8% .042 265.755);--color-gray-50:oklch(98.5% .002 247.839);--color-gray-100:oklch(96.7% .003 264.542);--color-gray-200:oklch(92.8% .006 264.531);--color-gray-300:oklch(87.2% .01 258.338);--color-gray-400:oklch(70.7% .022 261.325);--color-gray-500:oklch(55.1% .027 264.364);--color-gray-600:oklch(44.6% .03 256.802);--color-gray-700:oklch(37.3% .034 259.733);--color-gray-800:oklch(27.8% .033 256.848);--color-gray-900:oklch(21% .034 264.665);--color-stone-50:oklch(98.5% .001 106.423);--color-stone-100:oklch(97% .001 106.424);--color-stone-200:oklch(92.3% .003 48.717);--color-stone-400:oklch(70.9% .01 56.259);--color-stone-600:oklch(44.4% .011 73.639);--color-stone-700:oklch(37.4% .01 67.558);--color-stone-800:oklch(26.8% .007 34.298);--color-stone-900:oklch(21.6% .006 56.043);--color-black:#000;--color-white:#fff;--spacing:.25rem;--container-xl:36rem;--container-2xl:42rem;--container-3xl:48rem;--container-4xl:56rem;--container-5xl:64rem;--container-6xl:72rem;--container-7xl:80rem;--text-xs:.75rem;--text-xs--line-height:calc(1 / .75);--text-sm:.875rem;--text-sm--line-height:calc(1.25 / .875);--text-base:1rem;--text-base--line-height:calc(1.5 / 1);--text-lg:1.125rem;--text-lg--line-height:calc(1.75 / 1.125);--text-xl:1.25rem;--text-xl--line-height:calc(1.75 / 1.25);--text-2xl:1.5rem;--text-2xl--line-height:calc(2 / 1.5);--text-3xl:1.875rem;--text-3xl--line-height:calc(2.25 / 1.875);--text-4xl:2.25rem;--text-4xl--line-height:calc(2.5 / 2.25);--text-5xl:3rem;--text-5xl--line-height:1;--text-6xl:3.75rem;--text-6xl--line-height:1;--text-8xl:6rem;--text-8xl--line-height:1;--text-9xl:8rem;--text-9xl--line-height:1;--font-weight-normal:400;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--font-weight-extrabold:800;--font-weight-black:900;--tracking-tight:-.025em;--tracking-normal:0em;--tracking-wide:.025em;--tracking-wider:.05em;--tracking-widest:.1em;--leading-tight:1.25;--leading-snug:1.375;--leading-relaxed:1.625;--radius-sm:.25rem;--radius-md:.375rem;--radius-lg:.5rem;--radius-xl:.75rem;--radius-2xl:1rem;--radius-3xl:1.5rem;--ease-in:cubic-bezier(.4, 0, 1, 1);--ease-out:cubic-bezier(0, 0, .2, 1);--ease-in-out:cubic-bezier(.4, 0, .2, 1);--animate-ping:ping 1s cubic-bezier(0, 0, .2, 1) infinite;--blur-sm:8px;--blur-md:12px;--blur-2xl:40px;--blur-3xl:64px;--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1);--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono)}}@layer base{*,:after,:before,::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family,ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring{outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab, red, red)){::placeholder{color:color-mix(in oklab, currentcolor 50%, transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block:0}::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-day-field{padding-block:0}::-webkit-datetime-edit-hour-field{padding-block:0}::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-millisecond-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer components;@layer utilities{.pointer-events-none{pointer-events:none}.collapse{visibility:collapse}.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:calc(var(--spacing) * 0)}.inset-x-0{inset-inline:calc(var(--spacing) * 0)}.start{inset-inline-start:var(--spacing)}.end{inset-inline-end:var(--spacing)}.-top-3{top:calc(var(--spacing) * -3)}.-top-12{top:calc(var(--spacing) * -12)}.-top-16{top:calc(var(--spacing) * -16)}.top-0{top:calc(var(--spacing) * 0)}.top-1{top:calc(var(--spacing) * 1)}.right-0{right:calc(var(--spacing) * 0)}.bottom-0{bottom:calc(var(--spacing) * 0)}.bottom-full{bottom:100%}.-left-12{left:calc(var(--spacing) * -12)}.left-0{left:calc(var(--spacing) * 0)}.left-1{left:calc(var(--spacing) * 1)}.left-1\/2{left:50%}.left-2{left:calc(var(--spacing) * 2)}.left-2\.5{left:calc(var(--spacing) * 2.5)}.left-4{left:calc(var(--spacing) * 4)}.z-10{z-index:10}.z-20{z-index:20}.z-30{z-index:30}.z-50{z-index:50}.col-span-12{grid-column:span 12/span 12}.container{width:100%}@media (min-width:40rem){.container{max-width:40rem}}@media (min-width:48rem){.container{max-width:48rem}}@media (min-width:64rem){.container{max-width:64rem}}@media (min-width:80rem){.container{max-width:80rem}}@media (min-width:96rem){.container{max-width:96rem}}.mx-1{margin-inline:calc(var(--spacing) * 1)}.mx-2{margin-inline:calc(var(--spacing) * 2)}.mx-auto{margin-inline:auto}.mt-0{margin-top:calc(var(--spacing) * 0)}.mt-0\.5{margin-top:calc(var(--spacing) * .5)}.mt-1{margin-top:calc(var(--spacing) * 1)}.mt-2{margin-top:calc(var(--spacing) * 2)}.mt-3{margin-top:calc(var(--spacing) * 3)}.mt-4{margin-top:calc(var(--spacing) * 4)}.mt-5{margin-top:calc(var(--spacing) * 5)}.mt-6{margin-top:calc(var(--spacing) * 6)}.mt-8{margin-top:calc(var(--spacing) * 8)}.mt-10{margin-top:calc(var(--spacing) * 10)}.mt-12{margin-top:calc(var(--spacing) * 12)}.mr-1{margin-right:calc(var(--spacing) * 1)}.mr-2{margin-right:calc(var(--spacing) * 2)}.mr-4{margin-right:calc(var(--spacing) * 4)}.mb-0{margin-bottom:calc(var(--spacing) * 0)}.mb-0\.5{margin-bottom:calc(var(--spacing) * .5)}.mb-1{margin-bottom:calc(var(--spacing) * 1)}.mb-1\.5{margin-bottom:calc(var(--spacing) * 1.5)}.mb-2{margin-bottom:calc(var(--spacing) * 2)}.mb-3{margin-bottom:calc(var(--spacing) * 3)}.mb-4{margin-bottom:calc(var(--spacing) * 4)}.mb-5{margin-bottom:calc(var(--spacing) * 5)}.mb-6{margin-bottom:calc(var(--spacing) * 6)}.mb-8{margin-bottom:calc(var(--spacing) * 8)}.mb-10{margin-bottom:calc(var(--spacing) * 10)}.mb-12{margin-bottom:calc(var(--spacing) * 12)}.ml-2{margin-left:calc(var(--spacing) * 2)}.ml-4{margin-left:calc(var(--spacing) * 4)}.ml-5{margin-left:calc(var(--spacing) * 5)}.ml-11{margin-left:calc(var(--spacing) * 11)}.ml-auto{margin-left:auto}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.inline-flex{display:inline-flex}.table{display:table}.h-0{height:calc(var(--spacing) * 0)}.h-0\.5{height:calc(var(--spacing) * .5)}.h-1{height:calc(var(--spacing) * 1)}.h-1\.5{height:calc(var(--spacing) * 1.5)}.h-2{height:calc(var(--spacing) * 2)}.h-2\.5{height:calc(var(--spacing) * 2.5)}.h-3{height:calc(var(--spacing) * 3)}.h-3\.5{height:calc(var(--spacing) * 3.5)}.h-4{height:calc(var(--spacing) * 4)}.h-5{height:calc(var(--spacing) * 5)}.h-6{height:calc(var(--spacing) * 6)}.h-7{height:calc(var(--spacing) * 7)}.h-8{height:calc(var(--spacing) * 8)}.h-9{height:calc(var(--spacing) * 9)}.h-10{height:calc(var(--spacing) * 10)}.h-12{height:calc(var(--spacing) * 12)}.h-14{height:calc(var(--spacing) * 14)}.h-16{height:calc(var(--spacing) * 16)}.h-24{height:calc(var(--spacing) * 24)}.h-32{height:calc(var(--spacing) * 32)}.h-36{height:calc(var(--spacing) * 36)}.h-40{height:calc(var(--spacing) * 40)}.h-full{height:100%}.min-h-\[calc\(100vh-104px\)\]{min-height:calc(100vh - 104px)}.min-h-screen{min-height:100vh}.w-0{width:calc(var(--spacing) * 0)}.w-0\.5{width:calc(var(--spacing) * .5)}.w-1{width:calc(var(--spacing) * 1)}.w-1\/3{width:33.3333%}.w-2{width:calc(var(--spacing) * 2)}.w-3{width:calc(var(--spacing) * 3)}.w-3\.5{width:calc(var(--spacing) * 3.5)}.w-4{width:calc(var(--spacing) * 4)}.w-5{width:calc(var(--spacing) * 5)}.w-6{width:calc(var(--spacing) * 6)}.w-7{width:calc(var(--spacing) * 7)}.w-8{width:calc(var(--spacing) * 8)}.w-9{width:calc(var(--spacing) * 9)}.w-10{width:calc(var(--spacing) * 10)}.w-12{width:calc(var(--spacing) * 12)}.w-14{width:calc(var(--spacing) * 14)}.w-20{width:calc(var(--spacing) * 20)}.w-24{width:calc(var(--spacing) * 24)}.w-32{width:calc(var(--spacing) * 32)}.w-36{width:calc(var(--spacing) * 36)}.w-40{width:calc(var(--spacing) * 40)}.w-72{width:calc(var(--spacing) * 72)}.w-\[120px\]{width:120px}.w-full{width:100%}.w-px{width:1px}.max-w-2xl{max-width:var(--container-2xl)}.max-w-3xl{max-width:var(--container-3xl)}.max-w-4xl{max-width:var(--container-4xl)}.max-w-5xl{max-width:var(--container-5xl)}.max-w-6xl{max-width:var(--container-6xl)}.max-w-7xl{max-width:var(--container-7xl)}.max-w-\[80\%\]{max-width:80%}.max-w-\[85\%\]{max-width:85%}.max-w-\[1400px\]{max-width:1400px}.max-w-\[1600px\]{max-width:1600px}.max-w-xl{max-width:var(--container-xl)}.min-w-0{min-width:calc(var(--spacing) * 0)}.min-w-\[900px\]{min-width:900px}.min-w-full{min-width:100%}.flex-1{flex:1}.flex-shrink{flex-shrink:1}.flex-shrink-0,.shrink-0{flex-shrink:0}.border-collapse{border-collapse:collapse}.-translate-x-1{--tw-translate-x:calc(var(--spacing) * -1);translate:var(--tw-translate-x) var(--tw-translate-y)}.-translate-x-1\/2{--tw-translate-x:calc(calc(1 / 2 * 100%) * -1);translate:var(--tw-translate-x) var(--tw-translate-y)}.-translate-x-6{--tw-translate-x:calc(var(--spacing) * -6);translate:var(--tw-translate-x) var(--tw-translate-y)}.-translate-x-8{--tw-translate-x:calc(var(--spacing) * -8);translate:var(--tw-translate-x) var(--tw-translate-y)}.translate-x-8{--tw-translate-x:calc(var(--spacing) * 8);translate:var(--tw-translate-x) var(--tw-translate-y)}.translate-x-10{--tw-translate-x:calc(var(--spacing) * 10);translate:var(--tw-translate-x) var(--tw-translate-y)}.-translate-y-8{--tw-translate-y:calc(var(--spacing) * -8);translate:var(--tw-translate-x) var(--tw-translate-y)}.-translate-y-10{--tw-translate-y:calc(var(--spacing) * -10);translate:var(--tw-translate-x) var(--tw-translate-y)}.translate-y-6{--tw-translate-y:calc(var(--spacing) * 6);translate:var(--tw-translate-x) var(--tw-translate-y)}.translate-y-8{--tw-translate-y:calc(var(--spacing) * 8);translate:var(--tw-translate-x) var(--tw-translate-y)}.rotate-180{rotate:180deg}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.animate-ping{animation:var(--animate-ping)}.cursor-pointer{cursor:pointer}.resize{resize:both}.list-disc{list-style-type:disc}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-cols-7{grid-template-columns:repeat(7,minmax(0,1fr))}.grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-baseline{align-items:baseline}.items-center{align-items:center}.items-end{align-items:flex-end}.items-start{align-items:flex-start}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}.gap-0{gap:calc(var(--spacing) * 0)}.gap-1{gap:calc(var(--spacing) * 1)}.gap-1\.5{gap:calc(var(--spacing) * 1.5)}.gap-2{gap:calc(var(--spacing) * 2)}.gap-2\.5{gap:calc(var(--spacing) * 2.5)}.gap-3{gap:calc(var(--spacing) * 3)}.gap-4{gap:calc(var(--spacing) * 4)}.gap-5{gap:calc(var(--spacing) * 5)}.gap-6{gap:calc(var(--spacing) * 6)}.gap-8{gap:calc(var(--spacing) * 8)}:where(.space-y-0>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 0) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 0) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-0\.5>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * .5) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * .5) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-1>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 1) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 1) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-1\.5>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 1.5) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 1.5) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-2>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-3>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-4>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-5>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 5) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 5) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-6>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 6) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-8>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 8) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 8) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-10>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 10) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 10) * calc(1 - var(--tw-space-y-reverse)))}:where(.divide-y>:not(:last-child)){--tw-divide-y-reverse:0;border-bottom-style:var(--tw-border-style);border-top-style:var(--tw-border-style);border-top-width:calc(1px * var(--tw-divide-y-reverse));border-bottom-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)))}:where(.divide-gray-50>:not(:last-child)){border-color:var(--color-gray-50)}:where(.divide-gray-100>:not(:last-child)){border-color:var(--color-gray-100)}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:var(--radius-2xl)}.rounded-3xl{border-radius:var(--radius-3xl)}.rounded-full{border-radius:3.40282e38px}.rounded-lg{border-radius:var(--radius-lg)}.rounded-md{border-radius:var(--radius-md)}.rounded-sm{border-radius:var(--radius-sm)}.rounded-xl{border-radius:var(--radius-xl)}.rounded-t-lg{border-top-left-radius:var(--radius-lg);border-top-right-radius:var(--radius-lg)}.rounded-tl-xl{border-top-left-radius:var(--radius-xl)}.rounded-r-lg{border-top-right-radius:var(--radius-lg);border-bottom-right-radius:var(--radius-lg)}.rounded-r-xl{border-top-right-radius:var(--radius-xl);border-bottom-right-radius:var(--radius-xl)}.rounded-tr-xl{border-top-right-radius:var(--radius-xl)}.rounded-br-md{border-bottom-right-radius:var(--radius-md)}.rounded-bl-md{border-bottom-left-radius:var(--radius-md)}.border{border-style:var(--tw-border-style);border-width:1px}.border-0{border-style:var(--tw-border-style);border-width:0}.border-2{border-style:var(--tw-border-style);border-width:2px}.border-4{border-style:var(--tw-border-style);border-width:4px}.border-t{border-top-style:var(--tw-border-style);border-top-width:1px}.border-r{border-right-style:var(--tw-border-style);border-right-width:1px}.border-r-0{border-right-style:var(--tw-border-style);border-right-width:0}.border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}.border-b-2{border-bottom-style:var(--tw-border-style);border-bottom-width:2px}.border-l-2{border-left-style:var(--tw-border-style);border-left-width:2px}.border-l-4{border-left-style:var(--tw-border-style);border-left-width:4px}.border-dashed{--tw-border-style:dashed;border-style:dashed}.border-amber-100{border-color:var(--color-amber-100)}.border-amber-200{border-color:var(--color-amber-200)}.border-amber-300{border-color:var(--color-amber-300)}.border-amber-400{border-color:var(--color-amber-400)}.border-amber-400\/20{border-color:#fcbb0033}@supports (color:color-mix(in lab, red, red)){.border-amber-400\/20{border-color:color-mix(in oklab, var(--color-amber-400) 20%, transparent)}}.border-amber-400\/30{border-color:#fcbb004d}@supports (color:color-mix(in lab, red, red)){.border-amber-400\/30{border-color:color-mix(in oklab, var(--color-amber-400) 30%, transparent)}}.border-amber-500{border-color:var(--color-amber-500)}.border-blue-100{border-color:var(--color-blue-100)}.border-blue-200{border-color:var(--color-blue-200)}.border-blue-300{border-color:var(--color-blue-300)}.border-blue-400{border-color:var(--color-blue-400)}.border-blue-500{border-color:var(--color-blue-500)}.border-emerald-100{border-color:var(--color-emerald-100)}.border-emerald-200{border-color:var(--color-emerald-200)}.border-gray-50{border-color:var(--color-gray-50)}.border-gray-100{border-color:var(--color-gray-100)}.border-gray-200{border-color:var(--color-gray-200)}.border-gray-300{border-color:var(--color-gray-300)}.border-gray-400{border-color:var(--color-gray-400)}.border-gray-700{border-color:var(--color-gray-700)}.border-green-200{border-color:var(--color-green-200)}.border-green-300{border-color:var(--color-green-300)}.border-green-400{border-color:var(--color-green-400)}.border-green-400\/30{border-color:#05df724d}@supports (color:color-mix(in lab, red, red)){.border-green-400\/30{border-color:color-mix(in oklab, var(--color-green-400) 30%, transparent)}}.border-indigo-100{border-color:var(--color-indigo-100)}.border-indigo-400{border-color:var(--color-indigo-400)}.border-indigo-500{border-color:var(--color-indigo-500)}.border-orange-100{border-color:var(--color-orange-100)}.border-orange-200{border-color:var(--color-orange-200)}.border-pink-200{border-color:var(--color-pink-200)}.border-purple-200{border-color:var(--color-purple-200)}.border-purple-300{border-color:var(--color-purple-300)}.border-purple-400{border-color:var(--color-purple-400)}.border-red-200{border-color:var(--color-red-200)}.border-red-300{border-color:var(--color-red-300)}.border-red-400{border-color:var(--color-red-400)}.border-red-400\/30{border-color:#ff65684d}@supports (color:color-mix(in lab, red, red)){.border-red-400\/30{border-color:color-mix(in oklab, var(--color-red-400) 30%, transparent)}}.border-red-500{border-color:var(--color-red-500)}.border-red-600{border-color:var(--color-red-600)}.border-rose-100{border-color:var(--color-rose-100)}.border-rose-200{border-color:var(--color-rose-200)}.border-rose-300{border-color:var(--color-rose-300)}.border-rose-400{border-color:var(--color-rose-400)}.border-rose-500{border-color:var(--color-rose-500)}.border-sky-400{border-color:var(--color-sky-400)}.border-slate-50{border-color:var(--color-slate-50)}.border-slate-100{border-color:var(--color-slate-100)}.border-slate-200{border-color:var(--color-slate-200)}.border-slate-700{border-color:var(--color-slate-700)}.border-stone-50{border-color:var(--color-stone-50)}.border-stone-100{border-color:var(--color-stone-100)}.border-stone-200{border-color:var(--color-stone-200)}.border-teal-100{border-color:var(--color-teal-100)}.border-teal-300{border-color:var(--color-teal-300)}.border-teal-300\/30{border-color:#46ecd54d}@supports (color:color-mix(in lab, red, red)){.border-teal-300\/30{border-color:color-mix(in oklab, var(--color-teal-300) 30%, transparent)}}.border-teal-500{border-color:var(--color-teal-500)}.border-transparent{border-color:#0000}.border-violet-100{border-color:var(--color-violet-100)}.border-violet-200{border-color:var(--color-violet-200)}.border-white{border-color:var(--color-white)}.border-white\/10{border-color:#ffffff1a}@supports (color:color-mix(in lab, red, red)){.border-white\/10{border-color:color-mix(in oklab, var(--color-white) 10%, transparent)}}.border-white\/15{border-color:#ffffff26}@supports (color:color-mix(in lab, red, red)){.border-white\/15{border-color:color-mix(in oklab, var(--color-white) 15%, transparent)}}.border-white\/20{border-color:#fff3}@supports (color:color-mix(in lab, red, red)){.border-white\/20{border-color:color-mix(in oklab, var(--color-white) 20%, transparent)}}.bg-amber-50{background-color:var(--color-amber-50)}.bg-amber-100{background-color:var(--color-amber-100)}.bg-amber-400{background-color:var(--color-amber-400)}.bg-amber-400\/10{background-color:#fcbb001a}@supports (color:color-mix(in lab, red, red)){.bg-amber-400\/10{background-color:color-mix(in oklab, var(--color-amber-400) 10%, transparent)}}.bg-amber-500{background-color:var(--color-amber-500)}.bg-amber-500\/5{background-color:#f99c000d}@supports (color:color-mix(in lab, red, red)){.bg-amber-500\/5{background-color:color-mix(in oklab, var(--color-amber-500) 5%, transparent)}}.bg-black{background-color:var(--color-black)}.bg-black\/30{background-color:#0000004d}@supports (color:color-mix(in lab, red, red)){.bg-black\/30{background-color:color-mix(in oklab, var(--color-black) 30%, transparent)}}.bg-blue-50{background-color:var(--color-blue-50)}.bg-blue-100{background-color:var(--color-blue-100)}.bg-blue-200{background-color:var(--color-blue-200)}.bg-blue-400{background-color:var(--color-blue-400)}.bg-blue-500{background-color:var(--color-blue-500)}.bg-blue-600{background-color:var(--color-blue-600)}.bg-cyan-100{background-color:var(--color-cyan-100)}.bg-emerald-50{background-color:var(--color-emerald-50)}.bg-emerald-400{background-color:var(--color-emerald-400)}.bg-emerald-500{background-color:var(--color-emerald-500)}.bg-emerald-500\/10{background-color:#00bb7f1a}@supports (color:color-mix(in lab, red, red)){.bg-emerald-500\/10{background-color:color-mix(in oklab, var(--color-emerald-500) 10%, transparent)}}.bg-gray-50{background-color:var(--color-gray-50)}.bg-gray-50\/50{background-color:#f9fafb80}@supports (color:color-mix(in lab, red, red)){.bg-gray-50\/50{background-color:color-mix(in oklab, var(--color-gray-50) 50%, transparent)}}.bg-gray-100{background-color:var(--color-gray-100)}.bg-gray-200{background-color:var(--color-gray-200)}.bg-gray-300{background-color:var(--color-gray-300)}.bg-gray-400{background-color:var(--color-gray-400)}.bg-gray-500{background-color:var(--color-gray-500)}.bg-gray-600{background-color:var(--color-gray-600)}.bg-gray-800{background-color:var(--color-gray-800)}.bg-gray-900{background-color:var(--color-gray-900)}.bg-green-50{background-color:var(--color-green-50)}.bg-green-100{background-color:var(--color-green-100)}.bg-green-200{background-color:var(--color-green-200)}.bg-green-400{background-color:var(--color-green-400)}.bg-green-500{background-color:var(--color-green-500)}.bg-green-500\/20{background-color:#00c75833}@supports (color:color-mix(in lab, red, red)){.bg-green-500\/20{background-color:color-mix(in oklab, var(--color-green-500) 20%, transparent)}}.bg-green-600{background-color:var(--color-green-600)}.bg-green-900{background-color:var(--color-green-900)}.bg-green-900\/50{background-color:#0d542b80}@supports (color:color-mix(in lab, red, red)){.bg-green-900\/50{background-color:color-mix(in oklab, var(--color-green-900) 50%, transparent)}}.bg-indigo-50{background-color:var(--color-indigo-50)}.bg-indigo-50\/50{background-color:#eef2ff80}@supports (color:color-mix(in lab, red, red)){.bg-indigo-50\/50{background-color:color-mix(in oklab, var(--color-indigo-50) 50%, transparent)}}.bg-indigo-500{background-color:var(--color-indigo-500)}.bg-indigo-500\/10{background-color:#625fff1a}@supports (color:color-mix(in lab, red, red)){.bg-indigo-500\/10{background-color:color-mix(in oklab, var(--color-indigo-500) 10%, transparent)}}.bg-orange-50{background-color:var(--color-orange-50)}.bg-orange-50\/50{background-color:#fff7ed80}@supports (color:color-mix(in lab, red, red)){.bg-orange-50\/50{background-color:color-mix(in oklab, var(--color-orange-50) 50%, transparent)}}.bg-orange-100{background-color:var(--color-orange-100)}.bg-orange-500{background-color:var(--color-orange-500)}.bg-orange-600{background-color:var(--color-orange-600)}.bg-pink-50{background-color:var(--color-pink-50)}.bg-pink-100{background-color:var(--color-pink-100)}.bg-purple-50{background-color:var(--color-purple-50)}.bg-purple-100{background-color:var(--color-purple-100)}.bg-purple-400{background-color:var(--color-purple-400)}.bg-purple-500{background-color:var(--color-purple-500)}.bg-red-50{background-color:var(--color-red-50)}.bg-red-50\/50{background-color:#fef2f280}@supports (color:color-mix(in lab, red, red)){.bg-red-50\/50{background-color:color-mix(in oklab, var(--color-red-50) 50%, transparent)}}.bg-red-100{background-color:var(--color-red-100)}.bg-red-300{background-color:var(--color-red-300)}.bg-red-400{background-color:var(--color-red-400)}.bg-red-500{background-color:var(--color-red-500)}.bg-red-500\/20{background-color:#fb2c3633}@supports (color:color-mix(in lab, red, red)){.bg-red-500\/20{background-color:color-mix(in oklab, var(--color-red-500) 20%, transparent)}}.bg-rose-50{background-color:var(--color-rose-50)}.bg-rose-100{background-color:var(--color-rose-100)}.bg-rose-500{background-color:var(--color-rose-500)}.bg-sky-50{background-color:var(--color-sky-50)}.bg-sky-50\/50{background-color:#f0f9ff80}@supports (color:color-mix(in lab, red, red)){.bg-sky-50\/50{background-color:color-mix(in oklab, var(--color-sky-50) 50%, transparent)}}.bg-sky-100{background-color:var(--color-sky-100)}.bg-sky-500{background-color:var(--color-sky-500)}.bg-slate-50{background-color:var(--color-slate-50)}.bg-slate-100{background-color:var(--color-slate-100)}.bg-slate-200{background-color:var(--color-slate-200)}.bg-slate-400{background-color:var(--color-slate-400)}.bg-slate-900{background-color:var(--color-slate-900)}.bg-stone-50{background-color:var(--color-stone-50)}.bg-teal-50{background-color:var(--color-teal-50)}.bg-teal-300{background-color:var(--color-teal-300)}.bg-teal-400{background-color:var(--color-teal-400)}.bg-teal-400\/10{background-color:#00d3bd1a}@supports (color:color-mix(in lab, red, red)){.bg-teal-400\/10{background-color:color-mix(in oklab, var(--color-teal-400) 10%, transparent)}}.bg-violet-50{background-color:var(--color-violet-50)}.bg-violet-50\/30{background-color:#f5f3ff4d}@supports (color:color-mix(in lab, red, red)){.bg-violet-50\/30{background-color:color-mix(in oklab, var(--color-violet-50) 30%, transparent)}}.bg-violet-100{background-color:var(--color-violet-100)}.bg-violet-500{background-color:var(--color-violet-500)}.bg-white{background-color:var(--color-white)}.bg-white\/5{background-color:#ffffff0d}@supports (color:color-mix(in lab, red, red)){.bg-white\/5{background-color:color-mix(in oklab, var(--color-white) 5%, transparent)}}.bg-white\/10{background-color:#ffffff1a}@supports (color:color-mix(in lab, red, red)){.bg-white\/10{background-color:color-mix(in oklab, var(--color-white) 10%, transparent)}}.bg-white\/15{background-color:#ffffff26}@supports (color:color-mix(in lab, red, red)){.bg-white\/15{background-color:color-mix(in oklab, var(--color-white) 15%, transparent)}}.bg-white\/80{background-color:#fffc}@supports (color:color-mix(in lab, red, red)){.bg-white\/80{background-color:color-mix(in oklab, var(--color-white) 80%, transparent)}}.bg-yellow-300{background-color:var(--color-yellow-300)}.bg-gradient-to-br{--tw-gradient-position:to bottom right in oklab;background-image:linear-gradient(var(--tw-gradient-stops))}.bg-gradient-to-l{--tw-gradient-position:to left in oklab;background-image:linear-gradient(var(--tw-gradient-stops))}.bg-gradient-to-r{--tw-gradient-position:to right in oklab;background-image:linear-gradient(var(--tw-gradient-stops))}.from-\[\#11142B\]{--tw-gradient-from:#11142b;--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-amber-50{--tw-gradient-from:var(--color-amber-50);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-amber-500{--tw-gradient-from:var(--color-amber-500);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-blue-50{--tw-gradient-from:var(--color-blue-50);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-blue-600{--tw-gradient-from:var(--color-blue-600);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-emerald-50{--tw-gradient-from:var(--color-emerald-50);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-gray-900{--tw-gradient-from:var(--color-gray-900);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-indigo-50{--tw-gradient-from:var(--color-indigo-50);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-indigo-500{--tw-gradient-from:var(--color-indigo-500);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-indigo-600{--tw-gradient-from:var(--color-indigo-600);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-pink-400{--tw-gradient-from:var(--color-pink-400);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-red-600{--tw-gradient-from:var(--color-red-600);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-slate-700{--tw-gradient-from:var(--color-slate-700);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-slate-800{--tw-gradient-from:var(--color-slate-800);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-slate-900{--tw-gradient-from:var(--color-slate-900);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-stone-800{--tw-gradient-from:var(--color-stone-800);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-teal-500{--tw-gradient-from:var(--color-teal-500);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-transparent{--tw-gradient-from:transparent;--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-violet-400{--tw-gradient-from:var(--color-violet-400);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.from-white{--tw-gradient-from:var(--color-white);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.via-\[\#1a1f3d\]{--tw-gradient-via:#1a1f3d;--tw-gradient-via-stops:var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-via-stops)}.via-amber-50{--tw-gradient-via:var(--color-amber-50);--tw-gradient-via-stops:var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-via-stops)}.via-blue-950{--tw-gradient-via:var(--color-blue-950);--tw-gradient-via-stops:var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-via-stops)}.via-gray-800{--tw-gradient-via:var(--color-gray-800);--tw-gradient-via-stops:var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-via-stops)}.via-indigo-950{--tw-gradient-via:var(--color-indigo-950);--tw-gradient-via-stops:var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-via-stops)}.via-orange-500{--tw-gradient-via:var(--color-orange-500);--tw-gradient-via-stops:var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-via-stops)}.via-purple-600{--tw-gradient-via:var(--color-purple-600);--tw-gradient-via-stops:var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-via-stops)}.via-teal-500{--tw-gradient-via:var(--color-teal-500);--tw-gradient-via-stops:var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-via-stops)}.to-\[\#11142B\]{--tw-gradient-to:#11142b;--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-amber-400{--tw-gradient-to:var(--color-amber-400);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-emerald-50{--tw-gradient-to:var(--color-emerald-50);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-emerald-50\/40{--tw-gradient-to:#ecfdf566}@supports (color:color-mix(in lab, red, red)){.to-emerald-50\/40{--tw-gradient-to:color-mix(in oklab, var(--color-emerald-50) 40%, transparent)}}.to-emerald-50\/40{--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-gray-900{--tw-gradient-to:var(--color-gray-900);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-indigo-500{--tw-gradient-to:var(--color-indigo-500);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-indigo-800{--tw-gradient-to:var(--color-indigo-800);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-orange-50{--tw-gradient-to:var(--color-orange-50);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-orange-600{--tw-gradient-to:var(--color-orange-600);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-orange-700{--tw-gradient-to:var(--color-orange-700);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-purple-50{--tw-gradient-to:var(--color-purple-50);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-purple-700{--tw-gradient-to:var(--color-purple-700);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-slate-900{--tw-gradient-to:var(--color-slate-900);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-stone-900{--tw-gradient-to:var(--color-stone-900);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-teal-700{--tw-gradient-to:var(--color-teal-700);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-transparent{--tw-gradient-to:transparent;--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.to-violet-500{--tw-gradient-to:var(--color-violet-500);--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position))}.bg-clip-text{-webkit-background-clip:text;background-clip:text}.p-1{padding:calc(var(--spacing) * 1)}.p-1\.5{padding:calc(var(--spacing) * 1.5)}.p-2{padding:calc(var(--spacing) * 2)}.p-2\.5{padding:calc(var(--spacing) * 2.5)}.p-3{padding:calc(var(--spacing) * 3)}.p-3\.5{padding:calc(var(--spacing) * 3.5)}.p-4{padding:calc(var(--spacing) * 4)}.p-5{padding:calc(var(--spacing) * 5)}.p-6{padding:calc(var(--spacing) * 6)}.p-8{padding:calc(var(--spacing) * 8)}.px-1{padding-inline:calc(var(--spacing) * 1)}.px-1\.5{padding-inline:calc(var(--spacing) * 1.5)}.px-2{padding-inline:calc(var(--spacing) * 2)}.px-2\.5{padding-inline:calc(var(--spacing) * 2.5)}.px-3{padding-inline:calc(var(--spacing) * 3)}.px-4{padding-inline:calc(var(--spacing) * 4)}.px-5{padding-inline:calc(var(--spacing) * 5)}.px-6{padding-inline:calc(var(--spacing) * 6)}.py-0{padding-block:calc(var(--spacing) * 0)}.py-0\.5{padding-block:calc(var(--spacing) * .5)}.py-1{padding-block:calc(var(--spacing) * 1)}.py-1\.5{padding-block:calc(var(--spacing) * 1.5)}.py-2{padding-block:calc(var(--spacing) * 2)}.py-2\.5{padding-block:calc(var(--spacing) * 2.5)}.py-3{padding-block:calc(var(--spacing) * 3)}.py-4{padding-block:calc(var(--spacing) * 4)}.py-6{padding-block:calc(var(--spacing) * 6)}.py-8{padding-block:calc(var(--spacing) * 8)}.py-10{padding-block:calc(var(--spacing) * 10)}.py-12{padding-block:calc(var(--spacing) * 12)}.py-16{padding-block:calc(var(--spacing) * 16)}.pt-1{padding-top:calc(var(--spacing) * 1)}.pt-2{padding-top:calc(var(--spacing) * 2)}.pt-4{padding-top:calc(var(--spacing) * 4)}.pt-6{padding-top:calc(var(--spacing) * 6)}.pt-14{padding-top:calc(var(--spacing) * 14)}.pt-16{padding-top:calc(var(--spacing) * 16)}.pr-4{padding-right:calc(var(--spacing) * 4)}.pr-5{padding-right:calc(var(--spacing) * 5)}.pb-5{padding-bottom:calc(var(--spacing) * 5)}.pb-8{padding-bottom:calc(var(--spacing) * 8)}.pb-12{padding-bottom:calc(var(--spacing) * 12)}.pb-16{padding-bottom:calc(var(--spacing) * 16)}.pb-20{padding-bottom:calc(var(--spacing) * 20)}.pl-2{padding-left:calc(var(--spacing) * 2)}.pl-4{padding-left:calc(var(--spacing) * 4)}.pl-10{padding-left:calc(var(--spacing) * 10)}.pl-12{padding-left:calc(var(--spacing) * 12)}.text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}.font-mono{font-family:var(--font-mono)}.font-sans{font-family:var(--font-sans)}.font-serif{font-family:var(--font-serif)}.text-2xl{font-size:var(--text-2xl);line-height:var(--tw-leading,var(--text-2xl--line-height))}.text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}.text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}.text-5xl{font-size:var(--text-5xl);line-height:var(--tw-leading,var(--text-5xl--line-height))}.text-6xl{font-size:var(--text-6xl);line-height:var(--tw-leading,var(--text-6xl--line-height))}.text-8xl{font-size:var(--text-8xl);line-height:var(--tw-leading,var(--text-8xl--line-height))}.text-base{font-size:var(--text-base);line-height:var(--tw-leading,var(--text-base--line-height))}.text-lg{font-size:var(--text-lg);line-height:var(--tw-leading,var(--text-lg--line-height))}.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}.text-xl{font-size:var(--text-xl);line-height:var(--tw-leading,var(--text-xl--line-height))}.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.leading-\[1\.05\]{--tw-leading:1.05;line-height:1.05}.leading-none{--tw-leading:1;line-height:1}.leading-relaxed{--tw-leading:var(--leading-relaxed);line-height:var(--leading-relaxed)}.leading-snug{--tw-leading:var(--leading-snug);line-height:var(--leading-snug)}.leading-tight{--tw-leading:var(--leading-tight);line-height:var(--leading-tight)}.font-black{--tw-font-weight:var(--font-weight-black);font-weight:var(--font-weight-black)}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-extrabold{--tw-font-weight:var(--font-weight-extrabold);font-weight:var(--font-weight-extrabold)}.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}.font-normal{--tw-font-weight:var(--font-weight-normal);font-weight:var(--font-weight-normal)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.tracking-\[0\.2em\]{--tw-tracking:.2em;letter-spacing:.2em}.tracking-\[0\.3em\]{--tw-tracking:.3em;letter-spacing:.3em}.tracking-\[0\.25em\]{--tw-tracking:.25em;letter-spacing:.25em}.tracking-normal{--tw-tracking:var(--tracking-normal);letter-spacing:var(--tracking-normal)}.tracking-tight{--tw-tracking:var(--tracking-tight);letter-spacing:var(--tracking-tight)}.tracking-wide{--tw-tracking:var(--tracking-wide);letter-spacing:var(--tracking-wide)}.tracking-wider{--tw-tracking:var(--tracking-wider);letter-spacing:var(--tracking-wider)}.tracking-widest{--tw-tracking:var(--tracking-widest);letter-spacing:var(--tracking-widest)}.whitespace-nowrap{white-space:nowrap}.text-amber-100{color:var(--color-amber-100)}.text-amber-100\/80{color:#fef3c6cc}@supports (color:color-mix(in lab, red, red)){.text-amber-100\/80{color:color-mix(in oklab, var(--color-amber-100) 80%, transparent)}}.text-amber-200{color:var(--color-amber-200)}.text-amber-300{color:var(--color-amber-300)}.text-amber-400{color:var(--color-amber-400)}.text-amber-500{color:var(--color-amber-500)}.text-amber-600{color:var(--color-amber-600)}.text-amber-700{color:var(--color-amber-700)}.text-amber-800{color:var(--color-amber-800)}.text-amber-900{color:var(--color-amber-900)}.text-blue-100{color:var(--color-blue-100)}.text-blue-200{color:var(--color-blue-200)}.text-blue-300{color:var(--color-blue-300)}.text-blue-400{color:var(--color-blue-400)}.text-blue-500{color:var(--color-blue-500)}.text-blue-600{color:var(--color-blue-600)}.text-blue-700{color:var(--color-blue-700)}.text-blue-800{color:var(--color-blue-800)}.text-blue-900{color:var(--color-blue-900)}.text-cyan-600{color:var(--color-cyan-600)}.text-emerald-400{color:var(--color-emerald-400)}.text-emerald-500{color:var(--color-emerald-500)}.text-emerald-600{color:var(--color-emerald-600)}.text-emerald-700{color:var(--color-emerald-700)}.text-emerald-900{color:var(--color-emerald-900)}.text-gray-100{color:var(--color-gray-100)}.text-gray-200{color:var(--color-gray-200)}.text-gray-300{color:var(--color-gray-300)}.text-gray-400{color:var(--color-gray-400)}.text-gray-500{color:var(--color-gray-500)}.text-gray-600{color:var(--color-gray-600)}.text-gray-700{color:var(--color-gray-700)}.text-gray-800{color:var(--color-gray-800)}.text-gray-900{color:var(--color-gray-900)}.text-green-200{color:var(--color-green-200)}.text-green-300{color:var(--color-green-300)}.text-green-400{color:var(--color-green-400)}.text-green-500{color:var(--color-green-500)}.text-green-600{color:var(--color-green-600)}.text-green-700{color:var(--color-green-700)}.text-green-800{color:var(--color-green-800)}.text-indigo-100{color:var(--color-indigo-100)}.text-indigo-200{color:var(--color-indigo-200)}.text-indigo-300{color:var(--color-indigo-300)}.text-indigo-400{color:var(--color-indigo-400)}.text-indigo-500{color:var(--color-indigo-500)}.text-indigo-600{color:var(--color-indigo-600)}.text-indigo-700{color:var(--color-indigo-700)}.text-indigo-800{color:var(--color-indigo-800)}.text-indigo-900{color:var(--color-indigo-900)}.text-orange-500{color:var(--color-orange-500)}.text-orange-600{color:var(--color-orange-600)}.text-orange-700{color:var(--color-orange-700)}.text-orange-800{color:var(--color-orange-800)}.text-pink-600{color:var(--color-pink-600)}.text-pink-700{color:var(--color-pink-700)}.text-pink-800{color:var(--color-pink-800)}.text-pink-900{color:var(--color-pink-900)}.text-purple-500{color:var(--color-purple-500)}.text-purple-600{color:var(--color-purple-600)}.text-purple-700{color:var(--color-purple-700)}.text-red-200{color:var(--color-red-200)}.text-red-300{color:var(--color-red-300)}.text-red-400{color:var(--color-red-400)}.text-red-500{color:var(--color-red-500)}.text-red-600{color:var(--color-red-600)}.text-red-700{color:var(--color-red-700)}.text-red-800{color:var(--color-red-800)}.text-red-900{color:var(--color-red-900)}.text-rose-400{color:var(--color-rose-400)}.text-rose-500{color:var(--color-rose-500)}.text-rose-600{color:var(--color-rose-600)}.text-rose-700{color:var(--color-rose-700)}.text-rose-800{color:var(--color-rose-800)}.text-rose-900{color:var(--color-rose-900)}.text-sky-600{color:var(--color-sky-600)}.text-sky-700{color:var(--color-sky-700)}.text-slate-50{color:var(--color-slate-50)}.text-slate-300{color:var(--color-slate-300)}.text-slate-400{color:var(--color-slate-400)}.text-slate-500{color:var(--color-slate-500)}.text-slate-600{color:var(--color-slate-600)}.text-slate-700{color:var(--color-slate-700)}.text-slate-900{color:var(--color-slate-900)}.text-stone-400{color:var(--color-stone-400)}.text-stone-600{color:var(--color-stone-600)}.text-stone-700{color:var(--color-stone-700)}.text-stone-900{color:var(--color-stone-900)}.text-teal-100{color:var(--color-teal-100)}.text-teal-100\/90{color:#cbfbf1e6}@supports (color:color-mix(in lab, red, red)){.text-teal-100\/90{color:color-mix(in oklab, var(--color-teal-100) 90%, transparent)}}.text-teal-200{color:var(--color-teal-200)}.text-teal-300{color:var(--color-teal-300)}.text-teal-300\/70{color:#46ecd5b3}@supports (color:color-mix(in lab, red, red)){.text-teal-300\/70{color:color-mix(in oklab, var(--color-teal-300) 70%, transparent)}}.text-teal-600{color:var(--color-teal-600)}.text-teal-700{color:var(--color-teal-700)}.text-teal-800{color:var(--color-teal-800)}.text-transparent{color:#0000}.text-violet-200{color:var(--color-violet-200)}.text-violet-500{color:var(--color-violet-500)}.text-violet-600{color:var(--color-violet-600)}.text-violet-700{color:var(--color-violet-700)}.text-violet-800{color:var(--color-violet-800)}.text-violet-900{color:var(--color-violet-900)}.text-white{color:var(--color-white)}.text-white\/20{color:#fff3}@supports (color:color-mix(in lab, red, red)){.text-white\/20{color:color-mix(in oklab, var(--color-white) 20%, transparent)}}.text-white\/30{color:#ffffff4d}@supports (color:color-mix(in lab, red, red)){.text-white\/30{color:color-mix(in oklab, var(--color-white) 30%, transparent)}}.text-white\/50{color:#ffffff80}@supports (color:color-mix(in lab, red, red)){.text-white\/50{color:color-mix(in oklab, var(--color-white) 50%, transparent)}}.text-white\/60{color:#fff9}@supports (color:color-mix(in lab, red, red)){.text-white\/60{color:color-mix(in oklab, var(--color-white) 60%, transparent)}}.text-white\/70{color:#ffffffb3}@supports (color:color-mix(in lab, red, red)){.text-white\/70{color:color-mix(in oklab, var(--color-white) 70%, transparent)}}.text-white\/80{color:#fffc}@supports (color:color-mix(in lab, red, red)){.text-white\/80{color:color-mix(in oklab, var(--color-white) 80%, transparent)}}.text-white\/90{color:#ffffffe6}@supports (color:color-mix(in lab, red, red)){.text-white\/90{color:color-mix(in oklab, var(--color-white) 90%, transparent)}}.uppercase{text-transform:uppercase}.italic{font-style:italic}.not-italic{font-style:normal}.line-through{text-decoration-line:line-through}.underline{text-decoration-line:underline}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.placeholder-gray-500::placeholder{color:var(--color-gray-500)}.opacity-5{opacity:.05}.opacity-10{opacity:.1}.opacity-40{opacity:.4}.opacity-75{opacity:.75}.opacity-90{opacity:.9}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px var(--tw-shadow-color,#0000001a), 0 4px 6px -4px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px var(--tw-shadow-color,#0000001a), 0 2px 4px -2px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring-2{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring-4{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring-white{--tw-ring-color:var(--color-white)}.ring-white\/20{--tw-ring-color:#fff3}@supports (color:color-mix(in lab, red, red)){.ring-white\/20{--tw-ring-color:color-mix(in oklab, var(--color-white) 20%, transparent)}}.blur-2xl{--tw-blur:blur(var(--blur-2xl));filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.blur-3xl{--tw-blur:blur(var(--blur-3xl));filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)}.backdrop-blur-md{--tw-backdrop-blur:blur(var(--blur-md));-webkit-backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)}.backdrop-blur-sm{--tw-backdrop-blur:blur(var(--blur-sm));-webkit-backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-all{transition-property:all;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-colors{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-transform{transition-property:transform,translate,scale,rotate;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.ease-in{--tw-ease:var(--ease-in);transition-timing-function:var(--ease-in)}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}.ease-out{--tw-ease:var(--ease-out);transition-timing-function:var(--ease-out)}.select-none{-webkit-user-select:none;user-select:none}@media (hover:hover){.group-hover\:block:is(:where(.group):hover *){display:block}.hover\:border-amber-200:hover{border-color:var(--color-amber-200)}.hover\:border-blue-200:hover{border-color:var(--color-blue-200)}.hover\:border-blue-300:hover{border-color:var(--color-blue-300)}.hover\:border-blue-500:hover{border-color:var(--color-blue-500)}.hover\:border-gray-200:hover{border-color:var(--color-gray-200)}.hover\:border-green-200:hover{border-color:var(--color-green-200)}.hover\:border-purple-200:hover{border-color:var(--color-purple-200)}.hover\:bg-amber-50:hover{background-color:var(--color-amber-50)}.hover\:bg-amber-600:hover{background-color:var(--color-amber-600)}.hover\:bg-blue-50:hover{background-color:var(--color-blue-50)}.hover\:bg-blue-700:hover{background-color:var(--color-blue-700)}.hover\:bg-gray-50:hover{background-color:var(--color-gray-50)}.hover\:bg-gray-200:hover{background-color:var(--color-gray-200)}.hover\:bg-gray-700:hover{background-color:var(--color-gray-700)}.hover\:bg-gray-800:hover{background-color:var(--color-gray-800)}.hover\:bg-green-50:hover{background-color:var(--color-green-50)}.hover\:bg-orange-50:hover{background-color:var(--color-orange-50)}.hover\:bg-orange-700:hover{background-color:var(--color-orange-700)}.hover\:bg-purple-50:hover{background-color:var(--color-purple-50)}.hover\:bg-red-50:hover{background-color:var(--color-red-50)}.hover\:bg-sky-50:hover{background-color:var(--color-sky-50)}.hover\:bg-white\/10:hover{background-color:#ffffff1a}@supports (color:color-mix(in lab, red, red)){.hover\:bg-white\/10:hover{background-color:color-mix(in oklab, var(--color-white) 10%, transparent)}}.hover\:text-blue-400:hover{color:var(--color-blue-400)}.hover\:text-blue-800:hover{color:var(--color-blue-800)}.hover\:text-emerald-800:hover{color:var(--color-emerald-800)}.hover\:text-gray-300:hover{color:var(--color-gray-300)}.hover\:text-gray-600:hover{color:var(--color-gray-600)}.hover\:text-gray-900:hover{color:var(--color-gray-900)}.hover\:text-violet-800:hover{color:var(--color-violet-800)}.hover\:underline:hover{text-decoration-line:underline}.hover\:opacity-90:hover{opacity:.9}.hover\:shadow-sm:hover{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.hover\:shadow-xl:hover{--tw-shadow:0 20px 25px -5px var(--tw-shadow-color,#0000001a), 0 8px 10px -6px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}}.focus\:border-blue-500:focus{border-color:var(--color-blue-500)}.focus\:border-transparent:focus{border-color:#0000}.focus\:ring-2:focus{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.focus\:ring-\[\#5261CE\]:focus{--tw-ring-color:#5261ce}.focus\:outline-none:focus{--tw-outline-style:none;outline-style:none}@media (min-width:40rem){.sm\:block{display:block}.sm\:flex{display:flex}.sm\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.sm\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.sm\:flex-row{flex-direction:row}.sm\:p-6{padding:calc(var(--spacing) * 6)}.sm\:px-6{padding-inline:calc(var(--spacing) * 6)}}@media (min-width:48rem){.md\:col-span-2{grid-column:span 2/span 2}.md\:grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.md\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.md\:flex-row{flex-direction:row}.md\:items-end{align-items:flex-end}.md\:justify-between{justify-content:space-between}.md\:p-8{padding:calc(var(--spacing) * 8)}.md\:p-10{padding:calc(var(--spacing) * 10)}.md\:text-2xl{font-size:var(--text-2xl);line-height:var(--tw-leading,var(--text-2xl--line-height))}.md\:text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}.md\:text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}.md\:text-5xl{font-size:var(--text-5xl);line-height:var(--tw-leading,var(--text-5xl--line-height))}.md\:text-6xl{font-size:var(--text-6xl);line-height:var(--tw-leading,var(--text-6xl--line-height))}.md\:text-9xl{font-size:var(--text-9xl);line-height:var(--tw-leading,var(--text-9xl--line-height))}.md\:text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}}@media (min-width:64rem){.lg\:sticky{position:sticky}.lg\:top-\[104px\]{top:104px}.lg\:col-span-3{grid-column:span 3/span 3}.lg\:col-span-4{grid-column:span 4/span 4}.lg\:col-span-8{grid-column:span 8/span 8}.lg\:col-span-9{grid-column:span 9/span 9}.lg\:block{display:block}.lg\:grid{display:grid}.lg\:hidden{display:none}.lg\:transform-none{transform:none}.lg\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.lg\:grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}.lg\:gap-8{gap:calc(var(--spacing) * 8)}.lg\:p-8{padding:calc(var(--spacing) * 8)}.lg\:px-8{padding-inline:calc(var(--spacing) * 8)}}}@property --tw-translate-x{syntax:"*";inherits:false;initial-value:0}@property --tw-translate-y{syntax:"*";inherits:false;initial-value:0}@property --tw-translate-z{syntax:"*";inherits:false;initial-value:0}@property --tw-rotate-x{syntax:"*";inherits:false}@property --tw-rotate-y{syntax:"*";inherits:false}@property --tw-rotate-z{syntax:"*";inherits:false}@property --tw-skew-x{syntax:"*";inherits:false}@property --tw-skew-y{syntax:"*";inherits:false}@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-divide-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-gradient-position{syntax:"*";inherits:false}@property --tw-gradient-from{syntax:"<color>";inherits:false;initial-value:#0000}@property --tw-gradient-via{syntax:"<color>";inherits:false;initial-value:#0000}@property --tw-gradient-to{syntax:"<color>";inherits:false;initial-value:#0000}@property --tw-gradient-stops{syntax:"*";inherits:false}@property --tw-gradient-via-stops{syntax:"*";inherits:false}@property --tw-gradient-from-position{syntax:"<length-percentage>";inherits:false;initial-value:0%}@property --tw-gradient-via-position{syntax:"<length-percentage>";inherits:false;initial-value:50%}@property --tw-gradient-to-position{syntax:"<length-percentage>";inherits:false;initial-value:100%}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-tracking{syntax:"*";inherits:false}@property --tw-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:"*";inherits:false}@property --tw-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:"*";inherits:false}@property --tw-inset-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:"*";inherits:false}@property --tw-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:"*";inherits:false}@property --tw-inset-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:"*";inherits:false}@property --tw-ring-offset-width{syntax:"<length>";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:"*";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-blur{syntax:"*";inherits:false}@property --tw-brightness{syntax:"*";inherits:false}@property --tw-contrast{syntax:"*";inherits:false}@property --tw-grayscale{syntax:"*";inherits:false}@property --tw-hue-rotate{syntax:"*";inherits:false}@property --tw-invert{syntax:"*";inherits:false}@property --tw-opacity{syntax:"*";inherits:false}@property --tw-saturate{syntax:"*";inherits:false}@property --tw-sepia{syntax:"*";inherits:false}@property --tw-drop-shadow{syntax:"*";inherits:false}@property --tw-drop-shadow-color{syntax:"*";inherits:false}@property --tw-drop-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:"*";inherits:false}@property --tw-backdrop-blur{syntax:"*";inherits:false}@property --tw-backdrop-brightness{syntax:"*";inherits:false}@property --tw-backdrop-contrast{syntax:"*";inherits:false}@property --tw-backdrop-grayscale{syntax:"*";inherits:false}@property --tw-backdrop-hue-rotate{syntax:"*";inherits:false}@property --tw-backdrop-invert{syntax:"*";inherits:false}@property --tw-backdrop-opacity{syntax:"*";inherits:false}@property --tw-backdrop-saturate{syntax:"*";inherits:false}@property --tw-backdrop-sepia{syntax:"*";inherits:false}@property --tw-ease{syntax:"*";inherits:false}@keyframes ping{75%,to{opacity:0;transform:scale(2)}}
+    /* end tailwind */
+  :root{
+    --bg: #0E0D0B;
+    --bg-2: #15130F;
+    --ink: #F2EFE8;
+    --ink-dim: #B8B2A6;
+    --muted: #8C8780;
+    --line: #2A2620;
+    --accent: #E8FF1A;
+    --accent-warm: #FF7A1A;
+
+    /* per-agent identity */
+    --prd: #B584FF;
+    --plan: #7B8CFF;
+    --arch: #4FC9E8;
+    --ticket: #2DD4BF;
+    --impl: #C0FF3E;
+    --qa: #F5B23E;
+    --review: #FF6B7A;
+  }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-feature-settings: "ss01", "ss02";
+    background-image:
+      radial-gradient(ellipse at 30% -10%, rgba(232,255,26,0.05), transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(255,122,26,0.04), transparent 60%);
+    background-attachment: fixed;
+  }
+  /* subtle grain */
+  body::before {
+    content:''; position: fixed; inset:0; pointer-events:none; z-index:0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: .6; mix-blend-mode: overlay;
+  }
+  main, header, nav { position: relative; z-index: 1; }
+
+  .display { font-family: 'Fraunces', serif; font-variation-settings: "opsz" 144, "SOFT" 50; letter-spacing: -0.02em; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .rule { background: linear-gradient(90deg, var(--line), transparent); height: 1px; }
+  .hairline { border-color: var(--line); }
+  .ink-dim { color: var(--ink-dim); }
+  .ink-mute { color: var(--muted); }
+
+  .chip {
+    display: inline-flex; align-items:center; gap: .375rem;
+    padding: .15rem .55rem; border-radius: 999px;
+    font-size: .7rem; font-weight: 500; letter-spacing: .02em;
+    border: 1px solid var(--line); color: var(--ink-dim);
+    background: rgba(255,255,255,0.02);
+    white-space: nowrap;
+  }
+  .chip.accent { color: #0E0D0B; background: var(--accent); border-color: var(--accent); }
+  .chip.warm { color: var(--accent-warm); border-color: var(--accent-warm); }
+
+  .tab-btn {
+    position: relative; padding: .65rem 0; margin-right: 2rem;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: .8rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); transition: color .2s;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--ink); }
+  .tab-btn.active::after {
+    content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+    background: var(--accent);
+  }
+
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display:none; }
+  details[open] .chev { transform: rotate(90deg); }
+  .chev { transition: transform .2s; }
+
+  pre.code {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1rem 1.125rem;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    line-height: 1.55;
+    color: #DCD7CB;
+  }
+  pre.code .k { color: #E8FF1A; }
+  pre.code .c { color: #6B6760; font-style: italic; }
+  pre.code .s { color: #FF7A1A; }
+
+  /* agent card accent */
+  .agent-card { border: 1px solid var(--line); background: rgba(255,255,255,0.015); border-radius: 14px; }
+  .agent-card .strip { height: 4px; border-radius: 3px; }
+
+  /* dedicated backend label */
+  .backend-pill {
+    display: inline-flex; align-items: center; gap: .55rem;
+    padding: .4rem .75rem .4rem .55rem;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem; font-weight: 600;
+    letter-spacing: .01em;
+  }
+  .backend-pill .dot {
+    width: 18px; height: 18px; border-radius: 4px;
+    display:inline-flex; align-items:center; justify-content:center;
+    color: #0E0D0B; font-weight: 800; font-size: .7rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* checkbox */
+  .check {
+    appearance: none; -webkit-appearance: none;
+    width: 1.05rem; height: 1.05rem; min-width: 1.05rem;
+    border: 1.5px solid var(--muted); border-radius: 4px;
+    cursor: pointer; transition: all .15s; position: relative;
+    background: transparent; margin-top: .15rem;
+  }
+  .check:hover { border-color: var(--ink); }
+  .check:checked {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .check:checked::after {
+    content:''; position:absolute; left: 5px; top: 1px;
+    width: 4px; height: 9px; border: solid #0E0D0B;
+    border-width: 0 1.5px 1.5px 0; transform: rotate(45deg);
+  }
+
+  .progress-shell { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent) 0%, #fff7a0 50%, var(--accent) 100%); transition: width .35s cubic-bezier(.2,.8,.2,1); }
+
+  .num-tag {
+    font-family: 'Fraunces', serif; font-weight: 500;
+    font-size: 5rem; line-height: 1;
+    color: var(--accent);
+    opacity: .85;
+  }
+
+  .pull {
+    border-left: 2px solid var(--accent);
+    padding-left: 1.25rem;
+  }
+
+  .copy-btn {
+    background: var(--line); border: none; color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace; font-size: .65rem;
+    padding: .25rem .55rem; border-radius: 4px; cursor:pointer;
+    letter-spacing: .08em;
+  }
+  .copy-btn:hover { background: var(--accent); color: #0E0D0B; }
+  .copy-btn.ok { background: var(--accent); color: #0E0D0B; }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade .25s ease-out; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .corner { position: absolute; width: 12px; height: 12px; border: 1px solid var(--muted); }
+  .corner.tl { top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .corner.tr { top:-1px; right:-1px; border-left:none; border-bottom:none; }
+  .corner.bl { bottom:-1px; left:-1px; border-right:none; border-top:none; }
+  .corner.br { bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+  /* status transition mini-table */
+  .ttable td, .ttable th { padding: .35rem .65rem; border-bottom: 1px solid var(--line); font-size: .82rem; }
+  .ttable th { color: var(--muted); font-weight: 500; text-align: left; letter-spacing: .04em; text-transform: uppercase; font-size: .68rem; }
+
+  .glyph {
+    width: 36px; height: 36px; border-radius: 8px;
+    display:inline-flex; align-items:center; justify-content:center;
+    color: #0E0D0B;
+  }
+
+  /* phase header block in implementation tab */
+  .phase-h {
+    display:flex; align-items: baseline; gap: .85rem;
+    margin-bottom: .9rem;
+  }
+  .phase-h .num {
+    font-family: 'Fraunces', serif; font-size: 1.55rem; line-height: 1;
+    color: var(--accent); font-weight: 400;
+    min-width: 2.4rem;
+  }
+  .phase-h .ttl { font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: -.005em; }
+  .phase-h .meta { color: var(--muted); font-size: .75rem; margin-left: auto; }
+
+  .phase {
+    border-left: 1px solid var(--line);
+    padding-left: 1.5rem;
+    margin-left: .75rem;
+    padding-bottom: 1.5rem;
+  }
+  .phase.done { border-color: var(--accent); }
+
+  .item-row {
+    display: flex; gap: .75rem; align-items: flex-start;
+    padding: .55rem 0;
+    border-bottom: 1px dashed transparent;
+  }
+  .item-row label { cursor: pointer; flex: 1; line-height: 1.45; font-size: .9rem; }
+  .item-row.done label { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--accent); text-decoration-thickness: 1px; }
+
+  .small-cap { text-transform: uppercase; letter-spacing: .14em; font-size: .68rem; color: var(--muted); font-weight: 500; }
+
+  .danger { color: #FF8B8B; }
+
+  /* mobile */
+  @media (max-width: 640px) {
+    .num-tag { font-size: 3rem; }
+    .tab-btn { margin-right: 1rem; padding: .5rem 0; font-size: .7rem; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- HEADER -->
+<header class="border-b hairline">
+  <div class="max-w-6xl mx-auto px-6 lg:px-10 py-5 flex items-baseline justify-between gap-6 flex-wrap">
+    <div class="flex items-baseline gap-4">
+      <span class="mono text-xs ink-mute">№ 001</span>
+      <span class="mono text-xs ink-mute hidden sm:inline">·</span>
+      <span class="mono text-xs ink-mute">LUMION × MULTICA</span>
+    </div>
+    <div class="mono text-xs ink-mute">Build № 2026.04 · Single-file artifact</div>
+  </div>
+  <nav class="max-w-6xl mx-auto px-6 lg:px-10 flex flex-wrap items-center" role="tablist">
+    <button class="tab-btn active" data-tab="pipeline" role="tab">The Pipeline</button>
+    <button class="tab-btn" data-tab="agents" role="tab">Agents</button>
+    <button class="tab-btn" data-tab="skills" role="tab">Skills</button>
+    <button class="tab-btn" data-tab="implement" role="tab">Implementation</button>
+  </nav>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
+
+  <!-- ============================== TAB 1: PIPELINE ============================== -->
+  <section class="panel active" id="panel-pipeline" role="tabpanel">
+
+    <!-- HERO -->
+    <div class="grid grid-cols-12 gap-6 mb-16">
+      <div class="col-span-12 lg:col-span-8">
+        <p class="small-cap mb-6">A research-grounded agent topology · for Lee Hilton</p>
+        <h1 class="display text-5xl lg:text-7xl leading-[0.95] mb-6">
+          A seven-agent <em class="text-[color:var(--accent)] not-italic">pipeline</em>
+          for the Lumion Laravel monorepo, running on Multica.
+        </h1>
+        <p class="text-lg ink-dim leading-relaxed max-w-2xl">
+          PRD → Plan → Architecture → Tickets → Code → Tests → Review.
+          Claude Code as the default runtime, Codex on the review surface, CodeRabbit on both
+          sides of the PR boundary, and a single handoff skill carrying the workflow contract
+          that Multica itself doesn't enforce.
+        </p>
+      </div>
+      <div class="col-span-12 lg:col-span-4 lg:pl-8 lg:border-l hairline">
+        <p class="small-cap mb-3">At a glance</p>
+        <dl class="space-y-3 text-sm">
+          <div class="flex justify-between gap-4 border-b hairline pb-2"><dt class="ink-mute">Agents</dt><dd>7 core + 1 optional</dd></div>
+          <div class="flex justify-between gap-4 border-b hairline pb-2"><dt class="ink-mute">New skills</dt><dd>14 SKILL.md files</dd></div>
+          <div class="flex justify-between gap-4 border-b hairline pb-2"><dt class="ink-mute">Public skills</dt><dd>9 imported</dd></div>
+          <div class="flex justify-between gap-4 border-b hairline pb-2"><dt class="ink-mute">Runtimes</dt><dd>Claude Code + Codex</dd></div>
+          <div class="flex justify-between gap-4 border-b hairline pb-2"><dt class="ink-mute">Branch target</dt><dd class="mono text-xs">master</dd></div>
+          <div class="flex justify-between gap-4"><dt class="ink-mute">Human gate</dt><dd>Per-stage @lee</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <!-- VISUAL PIPELINE -->
+    <div class="mb-20">
+      <div class="flex items-baseline gap-4 mb-6">
+        <span class="num-tag">01</span>
+        <h2 class="display text-3xl">The flow</h2>
+        <span class="ink-mute mono text-xs hidden sm:inline">— each circle is an agent · each line is a comment @-mention</span>
+      </div>
+
+      <div class="border hairline rounded-xl p-6 lg:p-10 bg-[color:var(--bg-2)] relative overflow-x-auto">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+
+        <svg viewBox="0 0 1100 280" class="w-full" style="min-width: 900px;" aria-label="Seven-agent pipeline">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#5d564b"/>
+            </marker>
+            <pattern id="dots" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r=".6" fill="#3a3429"/>
+            </pattern>
+          </defs>
+          <!-- backdrop dots -->
+          <rect x="0" y="0" width="1100" height="280" fill="url(#dots)" opacity="0.4"/>
+
+          <!-- connecting line -->
+          <path d="M 90 140 L 1010 140" stroke="#3a3429" stroke-width="1" stroke-dasharray="4 6" />
+
+          <!-- 7 nodes -->
+          <!-- 1 PRD Shaper -->
+          <g transform="translate(90,140)">
+            <circle r="40" fill="#0E0D0B" stroke="#B584FF" stroke-width="1.5"/>
+            <g transform="translate(-12,-12)">
+              <rect x="0" y="0" width="20" height="24" rx="2" fill="none" stroke="#B584FF" stroke-width="1.5"/>
+              <line x1="4" y1="6" x2="16" y2="6" stroke="#B584FF" stroke-width="1.5"/>
+              <line x1="4" y1="11" x2="13" y2="11" stroke="#B584FF" stroke-width="1.5"/>
+              <text x="9" y="22" font-size="9" fill="#B584FF" font-weight="700" text-anchor="middle">?</text>
+            </g>
+            <text y="68" text-anchor="middle" fill="#F2EFE8" font-size="11" font-family="IBM Plex Sans" font-weight="600">PRD Shaper</text>
+            <text y="82" text-anchor="middle" fill="#8C8780" font-size="9" font-family="JetBrains Mono">claude code</text>
+          </g>
+
+          <!-- 2 Project Planner -->
+          <g transform="translate(243,140)">
+            <circle r="40" fill="#0E0D0B" stroke="#7B8CFF" stroke-width="1.5"/>
+            <g transform="translate(-13,-11)">
+              <line x1="0" y1="22" x2="26" y2="22" stroke="#7B8CFF" stroke-width="1.5"/>
+              <rect x="2" y="14" width="6" height="8" fill="#7B8CFF"/>
+              <rect x="11" y="6" width="6" height="16" fill="#7B8CFF"/>
+              <rect x="20" y="10" width="6" height="12" fill="#7B8CFF"/>
+            </g>
+            <text y="68" text-anchor="middle" fill="#F2EFE8" font-size="11" font-family="IBM Plex Sans" font-weight="600">Project Planner</text>
+            <text y="82" text-anchor="middle" fill="#8C8780" font-size="9" font-family="JetBrains Mono">claude code</text>
+          </g>
+
+          <!-- 3 Architect -->
+          <g transform="translate(396,140)">
+            <circle r="40" fill="#0E0D0B" stroke="#4FC9E8" stroke-width="1.5"/>
+            <g transform="translate(-13,-13)" stroke="#4FC9E8" stroke-width="1.5" fill="none">
+              <line x1="0" y1="0" x2="26" y2="0"/>
+              <line x1="0" y1="9" x2="26" y2="9"/>
+              <line x1="0" y1="18" x2="26" y2="18"/>
+              <line x1="0" y1="26" x2="26" y2="26"/>
+              <line x1="0" y1="0" x2="0" y2="26"/>
+              <line x1="9" y1="0" x2="9" y2="26"/>
+              <line x1="18" y1="0" x2="18" y2="26"/>
+              <line x1="26" y1="0" x2="26" y2="26"/>
+            </g>
+            <text y="68" text-anchor="middle" fill="#F2EFE8" font-size="11" font-family="IBM Plex Sans" font-weight="600">Architect</text>
+            <text y="82" text-anchor="middle" fill="#8C8780" font-size="9" font-family="JetBrains Mono">claude code</text>
+          </g>
+
+          <!-- 4 Ticket Writer -->
+          <g transform="translate(549,140)">
+            <circle r="40" fill="#0E0D0B" stroke="#2DD4BF" stroke-width="1.5"/>
+            <g transform="translate(-14,-10)">
+              <path d="M 0 0 L 28 0 L 28 8 A 4 4 0 0 0 28 16 L 28 20 L 0 20 L 0 16 A 4 4 0 0 0 0 8 Z" fill="none" stroke="#2DD4BF" stroke-width="1.5"/>
+              <line x1="14" y1="0" x2="14" y2="20" stroke="#2DD4BF" stroke-width="1" stroke-dasharray="2 2"/>
+            </g>
+            <text y="68" text-anchor="middle" fill="#F2EFE8" font-size="11" font-family="IBM Plex Sans" font-weight="600">Ticket Writer</text>
+            <text y="82" text-anchor="middle" fill="#8C8780" font-size="9" font-family="JetBrains Mono">claude code</text>
+          </g>
+
+          <!-- 5 Implementer -->
+          <g transform="translate(702,140)">
+            <circle r="44" fill="#0E0D0B" stroke="#C0FF3E" stroke-width="2"/>
+            <text y="6" text-anchor="middle" fill="#C0FF3E" font-size="22" font-family="JetBrains Mono" font-weight="700">&lt;/&gt;</text>
+            <text y="72" text-anchor="middle" fill="#F2EFE8" font-size="11" font-family="IBM Plex Sans" font-weight="600">Implementer</text>
+            <text y="86" text-anchor="middle" fill="#8C8780" font-size="9" font-family="JetBrains Mono">claude code · ×3</text>
+          </g>
+
+          <!-- 6 QA Runner -->
+          <g transform="translate(855,140)">
+            <circle r="40" fill="#0E0D0B" stroke="#F5B23E" stroke-width="1.5"/>
+            <g transform="translate(-12,-12)" stroke="#F5B23E" stroke-width="1.8" fill="none">
+              <path d="M 2 12 L 9 19 L 22 4"/>
+            </g>
+            <text y="68" text-anchor="middle" fill="#F2EFE8" font-size="11" font-family="IBM Plex Sans" font-weight="600">QA Runner</text>
+            <text y="82" text-anchor="middle" fill="#8C8780" font-size="9" font-family="JetBrains Mono">claude code</text>
+          </g>
+
+          <!-- 7 PR Reviewer -->
+          <g transform="translate(1010,140)">
+            <circle r="40" fill="#0E0D0B" stroke="#FF6B7A" stroke-width="1.5"/>
+            <g transform="translate(-12,-12)" stroke="#FF6B7A" stroke-width="1.6" fill="none">
+              <circle cx="9" cy="9" r="7"/>
+              <line x1="14.5" y1="14.5" x2="22" y2="22"/>
+            </g>
+            <text y="68" text-anchor="middle" fill="#F2EFE8" font-size="11" font-family="IBM Plex Sans" font-weight="600">PR Reviewer</text>
+            <text y="82" text-anchor="middle" fill="#8C8780" font-size="9" font-family="JetBrains Mono">codex</text>
+          </g>
+
+          <!-- handoff annotations -->
+          <g font-family="JetBrains Mono" font-size="8.5" fill="#5d564b">
+            <text x="166" y="124" text-anchor="middle">@plan</text>
+            <text x="320" y="124" text-anchor="middle">@arch</text>
+            <text x="473" y="124" text-anchor="middle">@ticket</text>
+            <text x="626" y="124" text-anchor="middle">@impl</text>
+            <text x="779" y="124" text-anchor="middle">@qa</text>
+            <text x="932" y="124" text-anchor="middle">@review</text>
+          </g>
+
+          <!-- human gate marker -->
+          <g transform="translate(1010,200)">
+            <line x1="0" y1="-10" x2="0" y2="0" stroke="#E8FF1A" stroke-width="1.5" stroke-dasharray="2 2"/>
+            <text y="14" text-anchor="middle" fill="#E8FF1A" font-size="9.5" font-family="JetBrains Mono">@lee · merge</text>
+          </g>
+        </svg>
+
+        <p class="ink-mute text-sm mt-6 mono">
+          Multica gives you the actor model. The lines between these circles are <span class="text-[color:var(--accent)]">comment @-mentions</span> —
+          there is no first-class chaining primitive. The <code class="text-[color:var(--accent)]">multica-handoff-protocol</code> skill carries the contract.
+        </p>
+      </div>
+    </div>
+
+    <!-- EXEC SUMMARY -->
+    <div class="grid grid-cols-12 gap-8 mb-20">
+      <div class="col-span-12 lg:col-span-4">
+        <span class="num-tag">02</span>
+        <h2 class="display text-3xl mt-2">Executive summary</h2>
+      </div>
+      <div class="col-span-12 lg:col-span-8 space-y-5 text-[15px] leading-relaxed">
+        <p>
+          Ship a <strong>seven-agent core</strong> — PRD Shaper, Project Planner, Architect, Ticket Writer,
+          Implementer, QA Runner, PR Reviewer — plus an optional Triage agent for inbound bugs.
+          <strong>Five run on Claude Code</strong> (planning + implementation surfaces that benefit from MCP and
+          skill auto-discovery), <strong>one runs on Codex</strong> (PR Reviewer, where the reasoning model and
+          now-fixed session resumption shine).
+        </p>
+        <p>
+          The handoff substrate is a single skill — <code class="mono text-sm text-[color:var(--accent)]">multica-handoff-protocol</code> —
+          that every agent attaches, defining the exact comment template and status transition each role
+          owns. Fourteen new SKILL.md files form the technical backbone covering codebase orientation,
+          multi-tenancy, Cortex/Prism, Filament 3, Livewire 3, Linear ticket format, ADRs, Pest/Larastan
+          ordering, GitHub PR conventions, and CodeRabbit CLI usage.
+        </p>
+        <p>
+          <strong>CodeRabbit goes in two places</strong>: the GitHub App on PRs (human-facing review surface)
+          and the CLI inside the Implementer's pre-PR self-review loop using
+          <code class="mono text-sm">cr --agent</code> JSON output.
+        </p>
+        <div class="pull">
+          <p class="display text-xl leading-snug">
+            The biggest tradeoff to internalize: Multica gives you the actor model and event substrate
+            but no orchestration kernel. Your skills carry the workflow contract.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSTRAINTS -->
+    <div class="mb-20">
+      <div class="flex items-baseline gap-4 mb-8">
+        <span class="num-tag">03</span>
+        <h2 class="display text-3xl">Eight platform constraints that shaped this</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-[color:var(--line)] border hairline">
+        <!-- repeated cells -->
+        <div class="bg-[color:var(--bg)] p-6">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="mono text-xs text-[color:var(--accent)]">C·1</span>
+            <h3 class="font-semibold">Multica's public docs aren't reachable</h3>
+          </div>
+          <p class="ink-dim text-sm">
+            <code class="mono text-xs">multica.ai/docs/&lt;slug&gt;</code> 404s. Docs source lives in
+            <code class="mono text-xs">apps/docs</code> but is excluded from the Vercel deploy
+            (<code class="mono text-xs">b1b66ab</code>). Every Multica fact in this guide is sourced
+            from the GitHub repo, the official changelog, and DeepWiki — not from a docs spec page.
+          </p>
+        </div>
+        <div class="bg-[color:var(--bg)] p-6">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="mono text-xs text-[color:var(--accent)]">C·2</span>
+            <h3 class="font-semibold">Codex resumption is now fixed</h3>
+          </div>
+          <p class="ink-dim text-sm">
+            Changelog v0.2.1 (2026-04-16): <em>"Codex threads resume across tasks on the same issue."</em>
+            Stale priors saying Codex can't resume are out of date. Cursor and Gemini remain unverified.
+          </p>
+        </div>
+        <div class="bg-[color:var(--bg)] p-6">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="mono text-xs text-[color:var(--accent)]">C·3</span>
+            <h3 class="font-semibold">No agent-chaining primitive</h3>
+          </div>
+          <p class="ink-dim text-sm">
+            Convention is: post a Markdown comment containing
+            <code class="mono text-xs">@NextAgent &lt;handoff&gt;</code> and the daemon claims a task.
+            Commit <code class="mono text-xs">e198a67</code> warns agents that mention syntax is an action,
+            not a text reference. There is no <code class="mono text-xs">/handoff</code> syntax, no API,
+            no transition trigger.
+          </p>
+        </div>
+        <div class="bg-[color:var(--bg)] p-6">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="mono text-xs text-[color:var(--accent)]">C·4</span>
+            <h3 class="font-semibold">Filament 3 is "previous version"</h3>
+          </div>
+          <p class="ink-dim text-sm">
+            filamentphp.com marks 3 as previous and 4 as current as of early 2026. Your stack is
+            locked to 3 deliberately — skill files target 3.x explicitly so agents don't half-apply
+            Filament 4 patterns. Migration window is Open Question № 4.
+          </p>
+        </div>
+        <div class="bg-[color:var(--bg)] p-6">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="mono text-xs text-[color:var(--accent)]">C·5</span>
+            <h3 class="font-semibold">MCP usable on Claude Code; rest unverified</h3>
+          </div>
+          <p class="ink-dim text-sm">
+            <code class="mono text-xs">mcp_config</code> per-agent exists (re-added v0.2.7). Claude Code
+            consumes it reliably per its external docs. Could not source-verify which other runtimes
+            read it inside Multica. Don't assert "silently ignored" — assert "Claude Code is the safe MCP host."
+          </p>
+        </div>
+        <div class="bg-[color:var(--bg)] p-6">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="mono text-xs text-[color:var(--accent)]">C·6</span>
+            <h3 class="font-semibold">Supported tool list is moving</h3>
+          </div>
+          <p class="ink-dim text-sm">
+            README lists 8; Kimi (v0.2.8) and Copilot (v0.2.1) are changelog adds; Kiro is in PR #1527.
+            Treat the supported-tool list as adapter-driven, not a fixed contract.
+          </p>
+        </div>
+        <div class="bg-[color:var(--bg)] p-6">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="mono text-xs text-[color:var(--accent)]">C·7</span>
+            <h3 class="font-semibold">Autopilot is cron-only</h3>
+          </div>
+          <p class="ink-dim text-sm">
+            Webhook and API trigger types were explicitly <strong>removed</strong> from
+            <code class="mono text-xs">autopilot trigger-add</code> in v0.2.6
+            (<code class="mono text-xs">ce610a6 refactor(cli): drop webhook/api</code>). Reserved, not wired.
+          </p>
+        </div>
+        <div class="bg-[color:var(--bg)] p-6">
+          <div class="flex items-start gap-3 mb-2">
+            <span class="mono text-xs text-[color:var(--accent)]">C·8</span>
+            <h3 class="font-semibold">Result-comment posting is mandated</h3>
+          </div>
+          <p class="ink-dim text-sm">
+            Release v0.2.8 explicitly requires posting the result as a numbered step in the agent
+            prompt — agents had been failing to do it. Every system prompt below enforces this.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOOL SELECTION -->
+    <div class="mb-20">
+      <div class="flex items-baseline gap-4 mb-8">
+        <span class="num-tag">04</span>
+        <h2 class="display text-3xl">Why Claude Code by default, Codex on review</h2>
+      </div>
+      <div class="overflow-x-auto border hairline rounded-xl">
+        <table class="w-full text-sm">
+          <thead class="text-left">
+            <tr class="border-b hairline">
+              <th class="p-4 small-cap font-medium">Capability</th>
+              <th class="p-4 small-cap font-medium" style="color:var(--impl)">Claude Code</th>
+              <th class="p-4 small-cap font-medium" style="color:var(--review)">Codex</th>
+              <th class="p-4 small-cap font-medium ink-mute">Cursor</th>
+              <th class="p-4 small-cap font-medium ink-mute">Others</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b hairline">
+              <td class="p-4">MCP support (verified)</td>
+              <td class="p-4">Strong</td>
+              <td class="p-4 ink-mute">Unverified</td>
+              <td class="p-4 ink-mute">Unverified</td>
+              <td class="p-4 ink-mute">Unverified</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="p-4">Skill auto-loading</td>
+              <td class="p-4">.claude/skills/</td>
+              <td class="p-4">$CODEX_HOME/skills/</td>
+              <td class="p-4 ink-mute">.cursor/rules/.mdc, different format</td>
+              <td class="p-4 ink-mute">Varies</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="p-4">Session resumption</td>
+              <td class="p-4">Working</td>
+              <td class="p-4">Working <span class="chip ml-2" style="color:var(--accent); border-color:var(--accent)">v0.2.1</span></td>
+              <td class="p-4 danger">Broken</td>
+              <td class="p-4 ink-mute">Mixed</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="p-4">Reasoning depth on artifacts</td>
+              <td class="p-4">Strong</td>
+              <td class="p-4">Strong (often the differentiator)</td>
+              <td class="p-4 ink-mute">Moderate</td>
+              <td class="p-4 ink-mute">Varies</td>
+            </tr>
+            <tr>
+              <td class="p-4">Writing quality (PRDs / ADRs)</td>
+              <td class="p-4">Strong</td>
+              <td class="p-4">Strong</td>
+              <td class="p-4 ink-mute">Moderate</td>
+              <td class="p-4 ink-mute">Moderate</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="ink-dim text-sm mt-4 max-w-3xl">
+        <strong>Rule.</strong> Default Claude Code for any agent that needs MCP, multi-turn work, or rich
+        skill auto-loading. Use Codex for the PR Reviewer (and a future Plan Critic) where reasoning model
+        strength on a finished artifact is the differentiator and MCP isn't required. Avoid Cursor,
+        Gemini, and the experimental adapters until session resumption and skill paths are repository-verified.
+      </p>
+    </div>
+
+    <!-- CODERABBIT CALL-OUT -->
+    <div class="mb-20 grid grid-cols-12 gap-8 items-start">
+      <div class="col-span-12 lg:col-span-5">
+        <span class="num-tag">05</span>
+        <h2 class="display text-3xl mt-2">CodeRabbit goes in two places</h2>
+      </div>
+      <div class="col-span-12 lg:col-span-7 space-y-5 text-[15px] leading-relaxed">
+        <p>
+          Run <strong>both surfaces</strong>. The CLI's <code class="mono text-sm">--agent</code> mode
+          (introduced v0.3.11, browser-based auth in v0.4.0 on April 1, 2026) was designed for exactly
+          the pre-PR self-review loop. The two surfaces don't overlap: the CLI cannot review an opened
+          PR by URL, and the App doesn't review uncommitted code.
+        </p>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="border hairline p-4 rounded-lg">
+            <div class="small-cap mb-2" style="color:var(--impl)">Pre-PR · Implementer</div>
+            <p class="text-sm ink-dim">
+              <code class="mono text-xs">cr --agent --base master --type uncommitted</code>.
+              Address <code class="mono text-xs">severity ≥ warning</code> before opening the PR.
+            </p>
+          </div>
+          <div class="border hairline p-4 rounded-lg">
+            <div class="small-cap mb-2" style="color:var(--review)">Post-PR · GitHub App</div>
+            <p class="text-sm ink-dim">
+              <code class="mono text-xs">@coderabbitai review</code>, walkthroughs, pre-merge checks.
+              Codex Reviewer triages findings, dismisses false positives with reasoning.
+            </p>
+          </div>
+        </div>
+        <p class="ink-mute text-sm">
+          Skip CLI only if Pro plan rate limits (5/hr) bite hard and the Usage-based Add-on at
+          $0.25/file isn't budgeted. Otherwise it's a clear win — same engine reviewing your draft
+          and your PR.
+        </p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============================== TAB 2: AGENTS ============================== -->
+  <section class="panel" id="panel-agents" role="tabpanel">
+
+    <p class="small-cap mb-6">The roster · seven core, one optional</p>
+    <h1 class="display text-4xl lg:text-5xl mb-3">Seven agents, one contract.</h1>
+    <p class="ink-dim text-lg max-w-3xl mb-12">
+      Each agent below comes with identity, full system prompt, attached skills, custom env / args,
+      and concurrency. Agents share a baseline contract carried entirely by the
+      <code class="mono text-sm">multica-handoff-protocol</code> skill — agent-specific instructions stay short.
+    </p>
+
+    <div id="agent-list" class="space-y-6"></div>
+
+  </section>
+
+  <!-- ============================== TAB 3: SKILLS ============================== -->
+  <section class="panel" id="panel-skills" role="tabpanel">
+
+    <p class="small-cap mb-6">Skill catalog · 14 new + 9 imported</p>
+    <h1 class="display text-4xl lg:text-5xl mb-3">The skills carry the contract.</h1>
+    <p class="ink-dim text-lg max-w-3xl mb-12">
+      Multica adopts the <a class="underline decoration-dotted hover:text-[color:var(--accent)]" href="https://agentskills.io" target="_blank" rel="noopener">Anthropic Agent Skills</a> open standard.
+      Author once, target the standard — Multica's daemon copies into runtime-specific paths
+      (<code class="mono text-sm">.claude/skills/</code>, <code class="mono text-sm">$CODEX_HOME/skills/</code>, etc.).
+      All names below are kebab-case, ≤64 chars, descriptions ≤1024 chars and front-loaded with trigger phrases.
+    </p>
+
+    <div class="flex items-baseline gap-4 mb-6">
+      <span class="num-tag">A</span>
+      <h2 class="display text-3xl">New skills to author</h2>
+      <span class="ink-mute mono text-xs hidden sm:inline">— full SKILL.md content for each</span>
+    </div>
+    <div id="new-skills" class="space-y-3 mb-20"></div>
+
+    <div class="flex items-baseline gap-4 mb-6">
+      <span class="num-tag">B</span>
+      <h2 class="display text-3xl">Public skills to import</h2>
+    </div>
+    <div id="public-skills" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+
+  </section>
+
+  <!-- ============================== TAB 4: IMPLEMENTATION ============================== -->
+  <section class="panel" id="panel-implement" role="tabpanel">
+
+    <div class="grid grid-cols-12 gap-8 mb-12">
+      <div class="col-span-12 lg:col-span-7">
+        <p class="small-cap mb-6">The bootstrap · ten phases</p>
+        <h1 class="display text-4xl lg:text-5xl mb-3">Set it up in this order.</h1>
+        <p class="ink-dim text-[15px] max-w-2xl">
+          Skills first, agents bottom-up (Implementer → QA → Reviewer), smoke test, then planning agents
+          top-down. Your progress saves between sessions.
+        </p>
+      </div>
+      <div class="col-span-12 lg:col-span-5">
+        <div class="border hairline rounded-xl p-5 bg-[color:var(--bg-2)] relative">
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <div class="flex items-baseline justify-between mb-2">
+            <span class="small-cap">Progress</span>
+            <span class="mono text-xs ink-dim"><span id="prog-count">0</span> / <span id="prog-total">0</span></span>
+          </div>
+          <div class="progress-shell mb-3">
+            <div class="progress-bar" id="prog-bar" style="width:0%"></div>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="display text-2xl"><span id="prog-pct">0</span>%</span>
+            <button id="reset-btn" class="copy-btn">Reset all</button>
+          </div>
+        </div>
+        <p class="mono text-[10px] ink-mute mt-3 leading-relaxed">
+          Persistence note · localStorage doesn't run inside Claude.ai artifacts (sandbox blocks it).
+          This page uses <code>window.storage</code>, Claude's artifact persistence API. Same outcome —
+          your checks survive sessions.
+        </p>
+      </div>
+    </div>
+
+    <div id="checklist"></div>
+
+  </section>
+
+</main>
+
+<footer class="border-t hairline mt-20">
+  <div class="max-w-6xl mx-auto px-6 lg:px-10 py-8 flex flex-wrap items-baseline justify-between gap-4">
+    <p class="mono text-xs ink-mute">Lumion / MiaShare · Multica agent topology</p>
+    <p class="mono text-xs ink-mute">Built with the frontend-design skill · Fraunces × IBM Plex Sans × JetBrains Mono</p>
+  </div>
+</footer>
+
+<!-- ===== DATA + LOGIC ===== -->
+<script>
+/* ---------- AGENT DATA ---------- */
+const AGENTS = [
+  {
+    id: 'prd-shaper',
+    name: 'PRD Shaper',
+    color: 'var(--prd)',
+    runtime: 'Claude Code',
+    role: 'Takes rough product input — Notion draft, Slack thread, Linear issue, paragraph in a comment — and produces a refined PRD the Project Planner can act on.',
+    why: 'Heavy MCP use (Notion + Slack + Linear simultaneously), narrative refinement where Claude\'s writing quality matters more than reasoning depth.',
+    glyph: `<rect x="0" y="0" width="20" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="4" y1="6" x2="16" y2="6" stroke="currentColor" stroke-width="1.6"/><line x1="4" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.6"/><text x="9" y="22" font-size="9" fill="currentColor" font-weight="700" text-anchor="middle">?</text>`,
+    skills: ['multica-handoff-protocol','prd-shaper-workflow','linear-ticket-format','lumion-codebase-orientation','lee-voice-applied-to-comments','context7-usage','doc-coauthoring (public)'],
+    env: ['LINEAR_API_KEY','NOTION_API_KEY','SLACK_BOT_TOKEN'],
+    args: '--max-turns 30  --append-system-prompt "Recency-check every technical claim. Flag anything older than 18 months."',
+    concurrency: 2,
+    transitions: [['backlog → in_progress','start work'],['in_progress → blocked','question round'],['blocked → in_progress','resume'],['in_progress → todo','handoff to @project-planner']],
+    prompt: `You are the PRD Shaper for Lumion / MiaShare.
+
+Your job is to take rough product input — a Notion draft, a Slack thread, an existing
+Linear issue, or a paragraph the human typed into a comment — and produce a refined
+PRD that the Project Planner agent can act on.
+
+You do not invent features. You ask clarifying questions until the PRD is unambiguous,
+then you write it.
+
+Skills you must consult before doing anything:
+- multica-handoff-protocol (mandatory comment template + status transitions)
+- prd-shaper-workflow (the question loop)
+- linear-ticket-format (output schema if the PRD lands as a Linear issue)
+- lumion-codebase-orientation (so PRD constraints align with what already exists)
+
+MCP servers available: Notion (read), Slack (read), Linear (read+write), context7 (read).
+
+Operating loop:
+1. Read every comment on the issue, plus any linked Notion pages and Slack threads.
+2. If the source material is ambiguous, post ONE comment with up to five numbered
+   questions and transition the issue to \`blocked\`. Do not loop on questions; one
+   round, then proceed with explicit assumptions.
+3. Once you have answers (or have stated assumptions), write the PRD into the issue
+   description (or a child Notion page if the human asked for that). PRD format is
+   defined by the prd-shaper-workflow skill.
+4. Post the closing comment per multica-handoff-protocol with @project-planner in the
+   handoff line, transition the issue to \`todo\`.
+
+Hard rules:
+- Never modify code. You are a documentation-only agent.
+- Never break tenancy assumptions or invent new subsystems — if a feature requires
+  touching Cortex, ContextEngine, Prism Relay, or the in-flight Journey Orchestration
+  Engine, flag it explicitly and ask Lee for direction in your closing comment.
+- Recency: any technical claim about a library must be sourced from context7 or
+  official docs less than 18 months old.
+
+Output discipline: structured comments. No marketing language. No hedging unless a
+real unknown exists.`
+  },
+  {
+    id: 'project-planner',
+    name: 'Project Planner',
+    color: 'var(--plan)',
+    runtime: 'Claude Code',
+    role: 'Consumes a refined PRD and produces a project plan: phases, milestones, dependency ordering, risk callouts, recommended ticket prefix split.',
+    why: 'Linear MCP write access for milestone creation; skill auto-discovery for the planning template.',
+    glyph: `<line x1="0" y1="22" x2="26" y2="22" stroke="currentColor" stroke-width="1.6"/><rect x="2" y="14" width="6" height="8" fill="currentColor"/><rect x="11" y="6" width="6" height="16" fill="currentColor"/><rect x="20" y="10" width="6" height="12" fill="currentColor"/>`,
+    skills: ['multica-handoff-protocol','linear-ticket-format','lumion-codebase-orientation','architecture-decision-record','lee-voice-applied-to-comments','context7-usage'],
+    env: ['LINEAR_API_KEY','NOTION_API_KEY'],
+    args: '--max-turns 20',
+    concurrency: 2,
+    transitions: [['todo → in_progress','start'],['in_progress → todo','handoff'],['in_progress → blocked','PRD contradictions']],
+    prompt: `You are the Project Planner for Lumion / MiaShare.
+
+You consume a refined PRD and produce a project plan: phases, milestones, dependency
+ordering, risk callouts, and a recommended ticket prefix split (CRTX, PRAX, ORYX, PHX).
+
+Skills:
+- multica-handoff-protocol
+- linear-ticket-format (so your phases line up with how tickets will be cut)
+- lumion-codebase-orientation
+- architecture-decision-record (you do NOT write ADRs, but you mark which phases need one)
+
+MCP: Linear (read+write), Notion (read), context7 (read).
+
+Operating loop:
+1. Read the PRD on the current issue and every comment.
+2. Produce a plan as a structured markdown comment with these sections:
+   - Phases (ordered, each with a one-line outcome)
+   - Critical-path dependencies
+   - Risks and unknowns (one bullet each)
+   - Phases that need an ADR before implementation
+   - Phases that touch unsettled architecture (Journey Orchestration, agent layer)
+     — these are flagged for Lee, not auto-decided
+   - Estimated ticket count per prefix (CRTX/PRAX/ORYX/PHX)
+3. Post the handoff comment with @architect, transition to \`in_progress\` if the
+   project requires architecture work, or \`todo\` if it's a small incremental change
+   that can skip straight to ticket writing — in which case mention @ticket-writer
+   instead and explain the skip in the handoff comment.
+
+Hard rules:
+- Do not produce tickets. That is the Ticket Writer's job.
+- Do not make architecture decisions. That is the Architect's job.
+- If the PRD is internally contradictory, transition to \`blocked\` and @-mention Lee
+  with the specific contradictions enumerated.`
+  },
+  {
+    id: 'architect',
+    name: 'Architect',
+    color: 'var(--arch)',
+    runtime: 'Claude Code',
+    role: 'Takes a project plan and produces architecture decisions: ADRs, module boundaries, data-model sketches, integration patterns. Defers to Lee on unsettled architecture.',
+    why: 'Heavy context7 MCP use; reads across the codebase; longer context window matters here.',
+    glyph: `<g stroke="currentColor" stroke-width="1.6" fill="none"><line x1="0" y1="0" x2="26" y2="0"/><line x1="0" y1="9" x2="26" y2="9"/><line x1="0" y1="18" x2="26" y2="18"/><line x1="0" y1="26" x2="26" y2="26"/><line x1="0" y1="0" x2="0" y2="26"/><line x1="9" y1="0" x2="9" y2="26"/><line x1="18" y1="0" x2="18" y2="26"/><line x1="26" y1="0" x2="26" y2="26"/></g>`,
+    skills: ['multica-handoff-protocol','architecture-decision-record','lumion-codebase-orientation','lumion-multitenancy','lumion-prism-cortex','lumion-filament-conventions','lumion-livewire-alpine','context7-usage','github-pr-conventions','lee-voice-applied-to-comments','mcp-builder (public)'],
+    env: ['LINEAR_API_KEY','GITHUB_TOKEN','CONTEXT7_API_KEY'],
+    args: '--max-turns 50  --append-system-prompt "When in doubt about Journey Orchestration Engine or agent layer, ASK. Do not assume."',
+    concurrency: 1,
+    transitions: [['todo → in_progress','start'],['in_progress → blocked','Lee gate'],['in_progress → todo','handoff to @ticket-writer']],
+    prompt: `You are the Architect for Lumion / MiaShare.
+
+You take a project plan and produce architecture decisions: ADRs, module boundaries,
+data-model sketches, integration patterns. You write decisions, not code.
+
+Skills (mandatory consult):
+- multica-handoff-protocol
+- architecture-decision-record (your output template)
+- lumion-codebase-orientation
+- lumion-multitenancy
+- lumion-prism-cortex
+- lumion-filament-conventions
+- lumion-livewire-alpine
+- context7-usage
+
+MCP: context7 (primary), Linear (read+write), GitHub (read).
+
+Operating loop:
+1. Read the project plan on the issue, then read the current codebase via the GitHub
+   MCP for any module the plan touches.
+2. For every phase flagged as needing an ADR by the Project Planner, write an ADR
+   following the architecture-decision-record skill template. ADRs land as either
+   files in the repo at docs/adr/NNN-slug.md (open a PR against master per
+   github-pr-conventions) OR as comments on the issue if the human requested no
+   commit yet. Default: open a PR.
+3. For phases that touch unsettled architecture — Journey Orchestration Engine,
+   AI agent orchestration layer (LangGraph sidecar vs Neuron AI), Prism Relay
+   contracts — DO NOT MAKE A DECISION. Post a structured comment with:
+     a. The architectural question
+     b. The two-to-four candidate paths with tradeoffs
+     c. Your recommendation IF you have one, with confidence level
+     d. The explicit phrase: "@lee please direct"
+   Transition the issue to \`blocked\` until Lee responds. When Lee responds, resume
+   from the most recent comment.
+4. When all ADRs for the project are written and no architecture remains unsettled,
+   post the handoff comment with @ticket-writer, transition to \`todo\`.
+
+Hard rules:
+- Never decide on the Journey Orchestration Engine internals or the agent
+  orchestration layer (LangGraph vs Neuron AI) without explicit Lee approval. The
+  100-iteration ralph-wiggum loop is the validation source — defer.
+- Every ADR must align with: column-scoped multi-tenancy, Cortex/Prism conventions,
+  Filament 3 patterns the team uses today, Reverb broadcasting via asBroadcast().
+- Cite context7 sources for every library claim. Flag anything older than 18 months.
+- The team is PHP-only. Architecture proposals that introduce a Python sidecar must
+  be flagged with explicit operational cost — do not default to Python solutions.`
+  },
+  {
+    id: 'ticket-writer',
+    name: 'Ticket Writer',
+    color: 'var(--ticket)',
+    runtime: 'Claude Code',
+    role: 'Takes architecture + project plan and produces well-formed Linear tickets ready for implementation, with file references and explicit test plans.',
+    why: 'Linear MCP write access plus GitHub MCP for file references; skill auto-discovery for ticket format.',
+    glyph: `<path d="M 0 0 L 28 0 L 28 8 A 4 4 0 0 0 28 16 L 28 20 L 0 20 L 0 16 A 4 4 0 0 0 0 8 Z" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="14" y1="0" x2="14" y2="20" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/>`,
+    skills: ['multica-handoff-protocol','linear-ticket-format','lumion-codebase-orientation','architecture-decision-record','github-pr-conventions','lee-voice-applied-to-comments','context7-usage','linear-claude-skill (public)'],
+    env: ['LINEAR_API_KEY','GITHUB_TOKEN'],
+    args: '--max-turns 30',
+    concurrency: 2,
+    transitions: [['todo → in_progress','start'],['in_progress → todo','handoff to @implementer']],
+    prompt: `You are the Ticket Writer for Lumion / MiaShare.
+
+You take a project plan plus its ADRs and produce well-formed Linear tickets ready for
+implementation.
+
+Skills:
+- multica-handoff-protocol
+- linear-ticket-format (the canonical template — prefixes CRTX, PRAX, ORYX, PHX)
+- lumion-codebase-orientation
+- architecture-decision-record (you READ ADRs, you don't write them)
+- github-pr-conventions (so acceptance criteria align with how PRs will be reviewed)
+
+MCP: Linear (read+write), GitHub (read), context7 (read).
+
+Operating loop:
+1. Read the project plan and every ADR linked from it.
+2. For each phase, produce one or more tickets per linear-ticket-format. Each ticket
+   has: title with prefix, problem statement, acceptance criteria as a checklist,
+   technical notes citing files and ADRs, out-of-scope callouts, test plan.
+3. Create the tickets in Linear via MCP. Set their assignee to @implementer.
+4. Post a handoff comment on the parent project issue with the list of ticket IDs
+   created and a one-line summary of each. @-mention @implementer in the handoff
+   comment so the daemon picks up the first ticket. Transition the parent to \`todo\`.
+
+Hard rules:
+- Every ticket must reference at least one specific file path in the repo. No
+  ticket may say "find the right place to add this."
+- Every ticket must list an explicit test scenario. No ticket may say "add tests."
+- Tickets that touch unsettled architecture must @-mention @architect before
+  @implementer.
+- If a phase's scope is ambiguous, transition the parent issue to \`blocked\` and
+  @-mention @project-planner with the specific gaps.`
+  },
+  {
+    id: 'implementer',
+    name: 'Implementer',
+    color: 'var(--impl)',
+    runtime: 'Claude Code',
+    role: 'Picks up a Linear ticket and produces a PR against master that satisfies acceptance criteria. Does NOT run the test suite — that is the QA Runner agent\'s job.',
+    why: 'Heavy-coding role; Claude Code\'s tool use, MCP, and skill ecosystem are non-negotiable. Cursor would tempt but its broken session resumption disqualifies it.',
+    glyph: `<text y="6" text-anchor="middle" fill="currentColor" font-size="22" font-family="JetBrains Mono" font-weight="700">&lt;/&gt;</text>`,
+    skills: ['multica-handoff-protocol','lumion-codebase-orientation','lumion-multitenancy','lumion-prism-cortex','lumion-filament-conventions','lumion-livewire-alpine','linear-ticket-format','github-pr-conventions','coderabbit-cli-integration','context7-usage','superpowers/receiving-code-review (public)','webapp-testing (public)'],
+    env: ['GITHUB_TOKEN','LINEAR_API_KEY','CONTEXT7_API_KEY','CODERABBIT_API_KEY','MYSQL_URL','REDIS_URL'],
+    args: '--max-turns 80  --append-system-prompt "Always branch off master. Always run pint+phpstan+coderabbit before opening PR. Never run pest yourself."',
+    concurrency: 3,
+    transitions: [['todo → in_progress','start'],['in_progress → in_review','PR opened'],['in_progress → blocked','escalate']],
+    prompt: `You are the Implementer for Lumion / MiaShare.
+
+You take a Linear ticket and produce a PR against \`master\` that satisfies the ticket's
+acceptance criteria. You do NOT run the test suite — that's the QA Runner agent's job.
+
+Skills (mandatory consult):
+- multica-handoff-protocol
+- lumion-codebase-orientation
+- lumion-multitenancy
+- lumion-prism-cortex
+- lumion-filament-conventions
+- lumion-livewire-alpine
+- linear-ticket-format (so you know what "done" means for this ticket)
+- github-pr-conventions
+- coderabbit-cli-integration (your pre-PR self-review loop)
+- context7-usage
+
+MCP: context7 (primary), GitHub (read+write), Linear (read+write).
+
+Operating loop:
+1. Read the ticket. If acceptance criteria are ambiguous or the ticket lacks file
+   references, transition to \`blocked\` and @-mention @ticket-writer.
+2. Create a branch named \`feat/<TICKET-ID>-kebab-slug\` (or \`fix/\`, \`chore/\`, etc.,
+   per github-pr-conventions). Branch off \`master\`.
+3. Implement the change. Strictly follow the lumion-* skills for tenancy, Cortex,
+   Filament, Livewire patterns. Do not introduce new dependencies without an ADR.
+4. Run the local pre-PR review loop:
+     ./vendor/bin/pint --dirty
+     ./vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+     coderabbit --agent --base master   # JSON output, parse and address findings
+   Fix any pint/phpstan/CodeRabbit findings before opening the PR. Do NOT run pest;
+   that is the QA Runner's job and runs against the opened PR.
+5. Commit using Conventional Commits. Open a PR against \`master\` with the team's PR
+   template fully filled. Include \`Closes <TICKET-ID>\` in the body.
+6. Post a handoff comment on the Linear ticket linking the PR. @-mention @qa-runner
+   first — they must pass before review. Transition the issue to \`in_review\`.
+
+Hard rules:
+- Always against \`master\`. Never push directly to \`master\`.
+- Never disable a tenancy scope or skip a Filament/Livewire convention silently.
+  If the ticket requires breaking a convention, transition to \`blocked\` and
+  @-mention @architect.
+- Never modify Cortex, ContextEngine, or Prism Relay public surfaces without an
+  ADR linked from the ticket. If you find yourself needing to, stop and
+  @-mention @architect.
+- Do not run the test suite. The QA Runner runs it against the PR.
+- Address every CodeRabbit finding marked severity >= "warning" before opening
+  the PR. Document explicit dismissals in the PR body.`
+  },
+  {
+    id: 'qa-runner',
+    name: 'QA Runner',
+    color: 'var(--qa)',
+    runtime: 'Claude Code',
+    role: 'Runs the test suite against PRs opened by the Implementer. Does NOT write production code. May modify tests if a test itself is wrong, with justification.',
+    why: 'MUST be a separate agent from implementer per Lee\'s rule. Failure-interpretation loop benefits from Claude\'s reasoning. Defaulting to Claude Code keeps MCP/skills uniform.',
+    glyph: `<g stroke="currentColor" stroke-width="2" fill="none"><path d="M 2 12 L 9 19 L 22 4"/></g>`,
+    skills: ['multica-handoff-protocol','php-laravel-test-runner','lumion-codebase-orientation','lumion-filament-conventions','lumion-livewire-alpine','github-pr-conventions','lee-voice-applied-to-comments'],
+    env: ['GITHUB_TOKEN','LINEAR_API_KEY','MYSQL_URL','REDIS_URL','APP_ENV=testing'],
+    args: '--max-turns 40  --append-system-prompt "Never modify production code. Test fixes only with explicit justification."',
+    concurrency: 3,
+    transitions: [['in_review → in_progress','failure → implementer'],['in_review → in_review','pass → reviewer']],
+    prompt: `You are the QA Runner for Lumion / MiaShare.
+
+You run the test suite against PRs opened by the Implementer. You do NOT write
+production code. You may modify tests if a test itself is wrong, but only with a
+clear comment justifying the fix.
+
+Skills:
+- multica-handoff-protocol
+- php-laravel-test-runner (the canonical command sequence and failure interpretation)
+- lumion-codebase-orientation
+- lumion-filament-conventions (because Filament tests have specific helpers)
+- lumion-livewire-alpine
+- github-pr-conventions
+
+MCP: GitHub (read+write), Linear (read+write).
+
+Operating loop:
+1. Detect the PR linked from the issue (handoff comment from @implementer should
+   include it). Check it out locally.
+2. Run, in order, capturing JUnit output:
+     ./vendor/bin/pint --test
+     ./vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+     ./vendor/bin/pest --group=arch
+     ./vendor/bin/pest --parallel --ci --log-junit=build/junit.xml
+3. Parse JUnit XML. Categorize failures: production bug (call back to implementer),
+   test bug (you fix with a commit on the same branch), flake (re-run once with
+   --retry).
+4. Post a structured QA report comment on the Linear ticket using the template in
+   php-laravel-test-runner. Include: pint result, phpstan result, arch-test result,
+   pest pass/fail counts, top 3 failures with file:line, decision.
+5. Decision rules:
+     - All green → @-mention @pr-reviewer, transition to \`in_review\`.
+     - Production bug → @-mention @implementer, transition to \`in_progress\`,
+       attach failure summary.
+     - Test bug → fix it on the same branch, commit, re-run, then continue.
+     - Flake → re-run once. If it persists, treat as production bug.
+
+Hard rules:
+- Never bypass a failing assertion. Never rewrite a production class to make a test
+  pass. If you suspect a test is wrong, fix the test only if you can articulate why
+  in the QA report.
+- Never run tests on \`master\` directly. Always against the PR's branch.
+- If the PR doesn't exist or has merge conflicts with master, transition to
+  \`blocked\` and @-mention @implementer.`
+  },
+  {
+    id: 'pr-reviewer',
+    name: 'PR Reviewer',
+    color: 'var(--review)',
+    runtime: 'Codex',
+    role: 'Reviews PRs that already passed the QA Runner. Catches what tests don\'t: design coherence, tenancy violations, race conditions, ADR drift, false positives in CodeRabbit\'s PR-side review.',
+    why: 'The one place Codex\'s reasoning model materially helps. False-positive triage on CodeRabbit findings, holistic review without MCP needs. Session resumption fixed in v0.2.1.',
+    glyph: `<g stroke="currentColor" stroke-width="1.8" fill="none"><circle cx="9" cy="9" r="7"/><line x1="14.5" y1="14.5" x2="22" y2="22"/></g>`,
+    skills: ['multica-handoff-protocol','lumion-codebase-orientation','lumion-multitenancy','lumion-prism-cortex','lumion-filament-conventions','lumion-livewire-alpine','github-pr-conventions','linear-ticket-format','code-review-skill (public)','pr-reviewer-skill (public)'],
+    env: ['GITHUB_TOKEN','LINEAR_API_KEY'],
+    args: '(Codex doesn\'t use --max-turns) — set --reasoning high if exposed via custom_args',
+    concurrency: 3,
+    transitions: [['in_review → in_progress','changes requested'],['in_review → in_review','approved, awaiting human merge']],
+    prompt: `You are the PR Reviewer for Lumion / MiaShare. You run on Codex.
+
+You review PRs that have already passed the QA Runner's test gate. Your job is to
+catch the things tests don't catch: design coherence, tenancy violations, subtle
+race conditions, missing ADR alignment, false positives in CodeRabbit's PR-side
+review, and Lumion-specific convention drift.
+
+Skills:
+- multica-handoff-protocol
+- lumion-codebase-orientation
+- lumion-multitenancy (highest priority — tenant leaks are the most damaging miss)
+- lumion-prism-cortex
+- lumion-filament-conventions
+- lumion-livewire-alpine
+- github-pr-conventions
+- linear-ticket-format (so you can verify acceptance criteria alignment)
+
+You do NOT have MCP access. Use the GitHub CLI (\`gh\`) for PR interaction.
+
+Operating loop:
+1. Pull the PR with \`gh pr view <num> --json ...\` and \`gh pr diff <num>\`.
+2. Read the original ticket on Linear (use \`multica issue get <id>\` from the CLI
+   that's on PATH — the daemon injects it). Verify acceptance criteria are
+   addressed.
+3. Read every CodeRabbit GitHub-App comment on the PR. For each:
+     - If it's a true finding the author missed, agree and mark for fix.
+     - If it's a false positive, post a \`gh pr review\` comment dismissing it with
+       reasoning.
+4. Add your own review covering: tenancy, Cortex/Prism patterns, Filament/Livewire
+   conventions, ADR alignment, naming, error handling, test coverage gaps.
+5. Post review with \`gh pr review <num>\` — \`--approve\`, \`--request-changes\`, or
+   \`--comment\` as appropriate. Use inline comments on specific lines for
+   actionable items.
+6. Post a handoff comment on the Linear ticket summarizing the review outcome.
+     - Approved → @-mention Lee for merge, transition to \`in_review\` (await human
+       merge).
+     - Changes requested → @-mention @implementer, transition to \`in_progress\`.
+
+Hard rules:
+- Never approve a PR with a tenancy violation, regardless of how minor.
+- Never approve a PR that touches Cortex, ContextEngine, or Prism Relay public
+  surfaces without a linked ADR.
+- Never merge. Humans merge.
+- If you cannot resolve a design disagreement with the author, escalate to
+  @architect with the specific question.`
+  }
+];
+
+/* ---------- SKILLS DATA ---------- */
+const NEW_SKILLS = [
+  { name: 'multica-handoff-protocol', desc: 'Defines the comment template, status transition, and @-mention pattern every Lumion agent uses to hand off work. Required reading at the start of every task.' },
+  { name: 'lee-voice-applied-to-comments', desc: 'Voice and tone discipline for agent comments to humans. Professional agent voice grounded in Lee\'s preferences — not Lee\'s personal voice.' },
+  { name: 'lumion-codebase-orientation', desc: 'Map of the MiaShare/miashare-app monorepo: where Cortex / ContextEngine / Prism Relay live, conventions, in-flight architecture decisions to defer on.' },
+  { name: 'lumion-multitenancy', desc: 'Column-scoped multi-tenancy rules. Required patterns, banned patterns, review checklist, isolation test pattern. Tenant leaks are the highest-severity bug class.' },
+  { name: 'lumion-prism-cortex', desc: 'How to write LLM calls in Lumion using Cortex (custom prompt engine wrapping echolabsdev/prism), ContextEngine (Qdrant + Firecrawl), Prism Relay (MCP exposure with asBroadcast streaming).' },
+  { name: 'lumion-filament-conventions', desc: 'Filament 3 patterns the team uses. Resource layout, form schemas, table actions, tenancy integration. Filament 4 patterns must NOT be applied.' },
+  { name: 'lumion-livewire-alpine', desc: 'Livewire 3 + Alpine.js patterns for customer-facing UI. Form objects, Reverb listeners, banned patterns (wire:poll faster than 5s, inline JS).' },
+  { name: 'linear-ticket-format', desc: 'Lumion ticket schema for Linear: prefixes (CRTX, PRAX, ORYX, PHX), title format, acceptance criteria template, required technical notes.' },
+  { name: 'architecture-decision-record', desc: 'ADR template the Architect agent produces. Condensed Nygard-style format. Lands at docs/adr/NNN-slug.md via PR against master.' },
+  { name: 'php-laravel-test-runner', desc: 'Canonical test command sequence (Pint, Larastan, Pest 4 with Filament + Livewire helpers) and JUnit failure interpretation. The QA Runner\'s primary skill.' },
+  { name: 'github-pr-conventions', desc: 'Branch naming, commit format (Conventional Commits v1.0.0), and PR template for the MiaShare/miashare-app repository. PRs always against master.' },
+  { name: 'coderabbit-cli-integration', desc: 'How to invoke CodeRabbit CLI v0.4.0 (April 2026) inside an agent task to self-review uncommitted code before opening a PR. Pairs with the GitHub App for post-PR review.' },
+  { name: 'context7-usage', desc: 'How to query the context7 MCP server for up-to-date library documentation. Primary technical doc source. Recency-check every result — flag anything older than 18 months.' },
+  { name: 'prd-shaper-workflow', desc: 'Question loop and PRD output template for the PRD Shaper agent. One round of clarifying questions, then explicit assumptions if still ambiguous. Do not loop.' }
+];
+
+const PUBLIC_SKILLS = [
+  { name: 'skill-creator', src: 'Anthropic', purpose: 'Meta-skill for authoring new skills', url: 'github.com/anthropics/skills/tree/main/skills/skill-creator' },
+  { name: 'mcp-builder', src: 'Anthropic', purpose: 'Build/extend MCP servers — useful when Architect touches Prism Relay', url: 'github.com/anthropics/skills/tree/main/skills/mcp-builder' },
+  { name: 'doc-coauthoring', src: 'Anthropic', purpose: '3-phase document collaboration — PRD shaping', url: 'github.com/anthropics/skills/tree/main/skills/doc-coauthoring' },
+  { name: 'webapp-testing', src: 'Anthropic', purpose: 'Playwright UI verification for Filament/Livewire pre-PR sanity', url: 'github.com/anthropics/skills/tree/main/skills/webapp-testing' },
+  { name: 'superpowers/receiving-code-review', src: 'obra', purpose: 'Discipline for Implementer responding to review feedback', url: 'github.com/obra/superpowers/blob/main/skills/receiving-code-review/SKILL.md' },
+  { name: 'code-review-skill', src: 'awesome-skills', purpose: 'Multi-language structured review patterns', url: 'github.com/awesome-skills/code-review-skill' },
+  { name: 'pr-reviewer-skill', src: 'SpillwaveSolutions', purpose: 'gh CLI–based PR review workflow', url: 'github.com/SpillwaveSolutions/pr-reviewer-skill' },
+  { name: 'linear-claude-skill', src: 'wrsmith108', purpose: 'Linear API patterns', url: 'github.com/wrsmith108/linear-claude-skill' },
+  { name: 'coderabbitai/skills', src: 'CodeRabbit official', purpose: 'CodeRabbit CLI integration', url: 'github.com/coderabbitai/skills' }
+];
+
+/* ---------- SKILL.md FULL CONTENT (for the expandables) ---------- */
+const SKILL_BODIES = {
+  'multica-handoff-protocol': `---
+name: multica-handoff-protocol
+description: Defines the comment template, status transition, and @-mention pattern every Lumion agent uses to hand off work to the next agent in the pipeline. Use whenever finishing a task, blocking on input, or transitioning issue status. Required reading at the start of every task.
+---
+
+# Multica handoff protocol
+
+Multica has no built-in agent-chaining primitive. Handoffs happen by convention:
+the finishing agent posts a structured Markdown comment that @-mentions the next
+agent, then transitions the issue to the appropriate status. The daemon claims a
+task for the mentioned agent. There is no \`/handoff\` syntax, no API, no transition
+trigger. The @-mention IS the action.
+
+## When to post a handoff comment
+
+Always, at every status transition. v0.2.8 of Multica explicitly mandates posting
+the result comment as a numbered step — agents that skip this leave their result
+in terminal output where humans never see it.
+
+## Comment template
+
+Every handoff comment follows this exact shape:
+
+\`\`\`
+## <Role> → <Next Role>
+
+**Outcome:** <one sentence>
+
+**What was done:**
+- <bullet>
+- <bullet>
+
+**Artifacts:**
+- <PR link, ADR path, ticket ID, file refs>
+
+**Open questions or assumptions:**
+- <bullet, or "None.">
+
+**Handoff:** @<next-agent> <one-line directive>
+
+**Status transition:** <previous> → <new>
+\`\`\`
+
+The \`## Role → Next Role\` header is mandatory; humans skim by it.
+
+## Status transitions each role owns
+
+| Role | Owns transitions |
+| --- | --- |
+| PRD Shaper | backlog → in_progress, in_progress → blocked, blocked → in_progress, in_progress → todo |
+| Project Planner | todo → in_progress, in_progress → todo, in_progress → blocked |
+| Architect | todo → in_progress, in_progress → blocked, in_progress → todo |
+| Ticket Writer | todo → in_progress, in_progress → todo |
+| Implementer | todo → in_progress, in_progress → in_review, in_progress → blocked |
+| QA Runner | in_review → in_progress, in_review → in_review |
+| PR Reviewer | in_review → in_progress, in_review → in_review |
+
+\`done\` is set by the human merging the PR, or by an autopilot once the PR is
+merged. Never auto-\`done\` from an agent.
+
+## Hard rules
+
+- Use \`@<agent-name>\` exactly as the agent is named in the workspace. The daemon's
+  mention parser is case-sensitive (commit \`e198a67\`).
+- A handoff comment must contain exactly one \`@-mention\` of a downstream agent, or
+  exactly one \`@-mention\` of \`@lee\` for human gates.
+- Status changes are advisory. Do not depend on a downstream agent reading the
+  status — depend on the @-mention.
+- Replies in a thread where you previously participated re-trigger you. Do not
+  reply to your own threads unless you intend to keep working.
+
+## Blocked / human-input pattern
+
+\`\`\`
+## <Role> — Blocked on Lee
+
+**Reason:** <one sentence>
+
+**Specific questions:**
+1. <question>
+2. <question>
+
+**Tentative recommendation (if you have one):** <one paragraph>
+
+**Handoff:** @lee please direct
+
+**Status transition:** in_progress → blocked
+\`\`\`
+
+When Lee responds, the agent's reply re-triggers it (per v0.1.15/0.1.24 mention
+inheritance). Resume from the most recent comment.
+
+## Multica CLI inside agent tasks
+
+The \`multica\` CLI is on PATH (changelog v0.1.18). Use it for:
+
+\`\`\`bash
+multica issue create --title "..." --assignee <agent>
+multica issue update <id> --status <status>
+multica issue get <id>
+multica issue subscriber add <id> @lee
+\`\`\`
+
+Prefer comment @-mentions for handoffs; use the CLI for sub-issue creation or
+programmatic status updates that don't need a comment.`,
+
+  'lumion-codebase-orientation': `---
+name: lumion-codebase-orientation
+description: Map of the MiaShare/miashare-app Laravel monorepo for Lumion. Use whenever navigating the codebase, locating Cortex/ContextEngine/Prism Relay, or aligning new code with existing module boundaries. Mandatory before opening any PR or writing any architecture decision.
+---
+
+# Lumion / MiaShare codebase orientation
+
+Single Laravel 11 monorepo at \`https://github.com/MiaShare/miashare-app\`. PHP 8.3+,
+Filament 3, Livewire 3, Alpine, Tailwind, MySQL, Redis, Laravel Horizon, Laravel
+Reverb (Pusher protocol). Master branch is \`master\`.
+
+## Subsystem map
+
+| Subsystem | Purpose | Where it lives | Skill |
+| --- | --- | --- | --- |
+| Cortex | Custom LLM prompt engine wrapping echolabsdev/prism | \`app/Cortex/\` | lumion-prism-cortex |
+| ContextEngine | RAG via Qdrant + Firecrawl | \`app/ContextEngine/\` | lumion-prism-cortex |
+| Prism Relay | Exposes tools via MCP using \`asBroadcast()\` streaming | \`app/PrismRelay/\` | lumion-prism-cortex |
+| Filament panels | Admin UI | \`app/Filament/\` | lumion-filament-conventions |
+| Livewire components | Customer UI | \`app/Livewire/\` | lumion-livewire-alpine |
+| Domain models | Tenant-scoped models | \`app/Models/\` | lumion-multitenancy |
+| Jobs / queues | Horizon-managed | \`app/Jobs/\` | — |
+| Tests | Pest 4 with Filament + Livewire helpers | \`tests/\` | php-laravel-test-runner |
+
+## Conventions
+
+- Tenancy is column-scoped. Every tenant-scoped model has a \`tenant_id\` column;
+  query scopes are applied via global scopes.
+- LLM calls go through Cortex. Direct Prism calls outside \`app/Cortex/\` are a smell.
+- Streaming uses \`asBroadcast()\` + Reverb.
+- Filament resources live in \`app/Filament/<Panel>/Resources/\`.
+- In-flight, undecided systems (defer to Architect, who defers to Lee):
+    - Journey Orchestration Engine (laravel-workflow + spatie/laravel-event-sourcing
+      + symfony/expression-language + lorisleiva/laravel-actions)
+    - AI agent orchestration layer (LangGraph Python sidecar vs Neuron AI PHP)
+
+## Ticket prefixes
+
+| Prefix | Domain |
+| --- | --- |
+| CRTX | Cortex / LLM |
+| PRAX | Practical / customer-facing features |
+| ORYX | Operations / infra |
+| PHX | Phoenix / new features |
+
+(Confirm exact mapping with Lee — Open Question № 5.)
+
+## What NOT to do
+
+- Do not introduce a Python sidecar without an ADR and Lee approval.
+- Do not add a new direct dependency without an ADR.
+- Do not bypass tenancy global scopes "for performance" — flag in review.
+- Do not add Filament 4 patterns to a Filament 3 codebase.`,
+
+  'lumion-multitenancy': `---
+name: lumion-multitenancy
+description: Column-scoped multi-tenancy rules for the MiaShare codebase. Use whenever writing or reviewing any database query, model, or background job. Tenant leaks are the highest-severity bug class — review every query against this skill.
+---
+
+# Column-scoped multi-tenancy
+
+Lumion uses column-scoped tenancy, not database-per-tenant. Every tenant-scoped
+table has a \`tenant_id\` column, and a global scope on the model enforces filtering.
+
+## Required patterns
+
+- Every tenant-scoped model declares \`protected static function booted(): void\` and
+  applies a \`TenantScope\` global scope.
+- Migrations include \`$table->foreignId('tenant_id')->constrained()->index();\`.
+- Background jobs accept tenant context explicitly — constructor argument or
+  \`Tenant::set()\` call at the start of \`handle()\`. Never rely on the request-bound
+  tenant inside a queued job.
+- Filament resources in tenant-aware panels rely on the global scope automatically;
+  do not pass \`tenant_id\` in form data.
+
+## Banned patterns
+
+- \`Model::withoutGlobalScopes()\` outside explicit admin tooling. Scope it:
+  \`withoutGlobalScope(TenantScope::class)\`.
+- Raw \`DB::table()\` queries on tenant-scoped tables.
+- Cross-tenant joins (except admin-only contexts).
+- Caching keys that omit \`tenant_id\`.
+
+## Review checklist
+
+When reviewing any PR that touches DB or models:
+
+1. Does every new query touch \`tenant_id\`, directly or via a scope?
+2. Does every new background job carry tenant context explicitly?
+3. Does every new cache key include \`tenant_id\`?
+4. Does every new Filament resource or Livewire component respect the current tenant?
+5. Are tests written with \`actingAs($user)\` and verify cross-tenant isolation?
+
+## Test pattern
+
+\`\`\`php
+it('does not leak across tenants', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $userA = User::factory()->for($tenantA)->create();
+    Post::factory()->for($tenantA)->count(3)->create();
+    Post::factory()->for($tenantB)->count(2)->create();
+    $this->actingAs($userA);
+    expect(Post::count())->toBe(3);
+});
+\`\`\``,
+
+  'lumion-prism-cortex': `---
+name: lumion-prism-cortex
+description: How to write LLM calls in Lumion using Cortex (custom prompt engine wrapping echolabsdev/prism), ContextEngine (RAG via Qdrant + Firecrawl), and Prism Relay (MCP exposure with asBroadcast streaming). Use whenever adding, modifying, or reviewing LLM-touching code.
+---
+
+# Cortex, ContextEngine, and Prism Relay
+
+Three subsystems, three responsibilities. Never call Prism directly outside
+\`app/Cortex/\`. Cortex is the only entry point for LLM calls.
+
+## Cortex (LLM prompt engine)
+
+Wraps \`echolabsdev/prism\` (now \`prism-php/prism\`) — Prism v0.99+ as of April 2026.
+Cortex adds: prompt templates, telemetry, tenant attribution, retries, provider
+failover.
+
+\`\`\`php
+use App\\Cortex\\Prompts\\SomePrompt;
+
+$response = Cortex::prompt(SomePrompt::class)
+    ->with(['user' => $user, 'context' => $contextDocs])
+    ->generate();
+\`\`\`
+
+If you need raw Prism (rare; requires ADR):
+
+\`\`\`php
+use Prism\\Prism\\Facades\\Prism;
+use Prism\\Prism\\Enums\\Provider;
+
+$response = Prism::text()
+    ->using(Provider::Anthropic, 'claude-3-5-sonnet-20241022')
+    ->withSystemPrompt('...')
+    ->withPrompt('...')
+    ->asText();
+\`\`\`
+
+## Streaming via asBroadcast()
+
+\`->asBroadcast(Channel $channel)\` is a first-party Prism method. Broadcasts stream
+events over Laravel's broadcasting layer to Reverb.
+
+\`\`\`php
+Cortex::prompt(SomePrompt::class)
+    ->with(['user' => $this->user])
+    ->stream()
+    ->asBroadcast(new Channel($this->channel));
+\`\`\`
+
+## ContextEngine (RAG)
+
+\`\`\`php
+use App\\ContextEngine\\Engine;
+$relevantDocs = Engine::for($tenant)->query($searchString)->topK(5)->retrieve();
+\`\`\`
+
+Tenant-scoped at namespace level — never query without \`for($tenant)\`.
+
+## Prism Relay (MCP server)
+
+Tools declared in \`app/PrismRelay/Tools/\`. Streaming via \`asBroadcast()\`. Do not
+bypass Cortex inside a Relay tool.
+
+## Hard rules
+
+- Cortex is the only LLM entry point. Direct Prism calls outside \`app/Cortex/\`
+  require an ADR.
+- ContextEngine queries always carry tenant scope.
+- Streaming always goes through \`asBroadcast()\` to Reverb.
+- Use \`PrismFake::fake([...])\` and \`PrismFake::streamResponse([...])\` in tests.
+- Recency-check provider model names every time — model IDs change.`,
+
+  'php-laravel-test-runner': `---
+name: php-laravel-test-runner
+description: Canonical test command sequence for the Lumion Laravel monorepo (Pint, Larastan, Pest 4 with Filament + Livewire helpers) and how to interpret JUnit failures. Use whenever running tests on a PR or fixing test failures. The QA Runner agent's primary skill.
+---
+
+# Test runner discipline
+
+Stack: Laravel 11 + PHP 8.3+ + Pest 4 (PHPUnit 12-based) + Larastan 3 + Pint.
+
+## Canonical sequence (do not reorder)
+
+\`\`\`bash
+./vendor/bin/pint --test
+./vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+./vendor/bin/pest --group=arch
+./vendor/bin/pest --parallel --ci --log-junit=build/junit.xml
+\`\`\`
+
+## Interpreting JUnit XML
+
+Pest's \`--log-junit\` produces standard PHPUnit-format JUnit XML. Parse with any
+XML library; key fields are \`testcase[name|classname|time]\` and \`failure[message]\`.
+
+Caveat: Pest's \`file\` attribute can point at the eval'd test factory rather than
+the source test file (issue pestphp/pest#48). Resolve real file paths from
+\`classname\` mapped against \`tests/\` glob.
+
+## Failure categorization
+
+| Failure | Action |
+| --- | --- |
+| Pint failure | Run \`pint --dirty\`, commit, re-run |
+| Phpstan failure | Fix code or add scoped baseline entry with explanation |
+| Arch test failure | Almost always a real convention violation — fix code |
+| Pest production bug | Hand back to @implementer with file:line |
+| Pest test bug | Fix on same branch with justification |
+| Flake | Re-run once with \`--retry\`. If persistent, treat as production bug |
+
+## QA report comment template
+
+\`\`\`markdown
+## QA Runner — <PR-NUMBER>
+
+**Result:** PASS | FAIL | NEEDS-FIX
+
+**Pint:** clean | <N> violations
+**Larastan (level X):** clean | <N> errors
+**Arch tests:** clean | <N> failures
+**Pest:** <pass>/<total> in <time>s
+
+**Top failures (if any):**
+1. \`tests/Feature/...::test name\` — <one-line cause>
+
+**Decision:** <handoff to @implementer | handoff to @pr-reviewer>
+
+**Status transition:** in_review → <new>
+\`\`\`
+
+## Hard rules
+
+- Never run tests on \`master\`. Always against the PR's branch.
+- Never modify production code.
+- Never silence a Larastan rule globally — scoped baseline only.
+- Never approve skipped tests without explanation.`,
+
+  'github-pr-conventions': `---
+name: github-pr-conventions
+description: Branch naming, commit format (Conventional Commits v1.0.0), and PR template for the MiaShare/miashare-app repository. Use whenever opening a PR, writing a commit, or naming a branch. PRs always against master.
+---
+
+# GitHub PR conventions
+
+Repository: \`github.com/MiaShare/miashare-app\`. Master branch: \`master\`. All PRs
+against \`master\`.
+
+## Branch naming
+
+\`<type>/<TICKET-ID>-kebab-slug\`
+
+Types: \`feat\`, \`fix\`, \`chore\`, \`refactor\`, \`docs\`, \`test\`, \`perf\`, \`ci\`, \`build\`.
+
+## Commit format (Conventional Commits v1.0.0)
+
+\`\`\`
+<type>(<scope>): <imperative summary>
+
+<optional body>
+
+<optional footers, including BREAKING CHANGE: ...>
+\`\`\`
+
+## PR template
+
+\`\`\`markdown
+## Closes <TICKET-ID>
+
+## Summary
+
+<2-3 sentences>
+
+## Type of change
+
+- [ ] feat
+- [ ] fix
+- [ ] chore / refactor / docs
+
+## Migrations
+
+- [ ] Includes migrations (rollback tested)
+- [ ] No migrations
+
+## Test checklist
+
+- [ ] Pint clean
+- [ ] Larastan level X clean
+- [ ] Pest <N>/<N> green
+- [ ] Tenant isolation tests added (if tenant-scoped)
+
+## Deployment notes
+
+<queue restart, Horizon, Reverb, cache clear, env var changes>
+
+## CodeRabbit
+
+- [ ] CLI run pre-PR (--agent JSON), findings addressed or dismissed with reasoning
+- [ ] GitHub App review will run on open
+\`\`\`
+
+## gh CLI patterns
+
+\`\`\`bash
+gh pr create --base master --head <branch> --title "feat(scope): summary" --body "$(cat .github/pr-body.md)"
+gh pr view <num> --json number,title,state,mergeable,reviewDecision,statusCheckRollup
+gh pr diff <num>
+gh pr review <num> --approve | --request-changes -b "..." | --comment -b "..."
+\`\`\`
+
+## Hard rules
+
+- Always against \`master\`. Never \`main\`.
+- Every PR \`Closes <TICKET-ID>\` in the body.
+- Every commit follows Conventional Commits v1.0.0.`
+};
+
+/* ---------- IMPLEMENTATION CHECKLIST DATA ---------- */
+const PHASES = [
+  {
+    id: 'p1',
+    title: 'Provision MCP servers & API keys',
+    note: 'Workspace-level secrets surfaced into agent custom_env',
+    items: [
+      'Linear API key obtained',
+      'GitHub personal access token (read+write)',
+      'Notion API key',
+      'Slack bot token',
+      'context7 API key',
+      'CodeRabbit Agentic API key (Subscription & Billing → Usage-based Add-on → API Keys)',
+      'Workspace-level secrets configured in Multica',
+      'Confirm mcp_config consumption on Claude Code agents (Open Question № 1)',
+      'Confirm $CODEX_HOME/skills/ path empirically (Open Question № 3)',
+    ]
+  },
+  {
+    id: 'p2',
+    title: 'Author the 14 new SKILL.md files',
+    note: 'Anthropic Agent Skills standard · kebab-case names ≤64 chars',
+    items: [
+      'multica-handoff-protocol/SKILL.md',
+      'lee-voice-applied-to-comments/SKILL.md',
+      'lumion-codebase-orientation/SKILL.md',
+      'lumion-multitenancy/SKILL.md',
+      'lumion-prism-cortex/SKILL.md',
+      'lumion-filament-conventions/SKILL.md',
+      'lumion-livewire-alpine/SKILL.md',
+      'linear-ticket-format/SKILL.md',
+      'architecture-decision-record/SKILL.md',
+      'php-laravel-test-runner/SKILL.md',
+      'github-pr-conventions/SKILL.md',
+      'coderabbit-cli-integration/SKILL.md',
+      'context7-usage/SKILL.md',
+      'prd-shaper-workflow/SKILL.md',
+    ]
+  },
+  {
+    id: 'p3',
+    title: 'Commit skills to a shared repo',
+    note: 'MiaShare/miashare-skills · synced into Multica via v0.2.15 import',
+    items: [
+      'Create new repo MiaShare/miashare-skills',
+      'Commit all 14 SKILL.md files',
+      'Tag v0.1.0',
+      'Document import path for Multica',
+      'Run "Import runtime local Skills into the workspace as first-class artifacts" (v0.2.15)',
+    ]
+  },
+  {
+    id: 'p4',
+    title: 'Import 9 public skills as workspace skills',
+    note: 'Review SKILL.md and shipped files before importing — ClawHavoc lessons',
+    items: [
+      'Anthropic · skill-creator',
+      'Anthropic · mcp-builder',
+      'Anthropic · doc-coauthoring',
+      'Anthropic · webapp-testing',
+      'obra · superpowers/receiving-code-review',
+      'awesome-skills · code-review-skill',
+      'SpillwaveSolutions · pr-reviewer-skill',
+      'wrsmith108 · linear-claude-skill',
+      'coderabbitai/skills · official',
+    ]
+  },
+  {
+    id: 'p5',
+    title: 'Create implementation-loop agents (bottom-up)',
+    note: 'Implementer → QA Runner → PR Reviewer · highest-value pipeline segment first',
+    items: [
+      'Create `implementer` agent (Claude Code, concurrency 3)',
+      'Attach skills to implementer (12 skills)',
+      'Configure custom_env for implementer (GITHUB_TOKEN, LINEAR_API_KEY, CONTEXT7_API_KEY, CODERABBIT_API_KEY, MYSQL_URL, REDIS_URL)',
+      'Configure custom_args for implementer (--max-turns 80 + branch discipline append)',
+      'Set visibility: workspace',
+      'Create `qa-runner` agent (Claude Code, concurrency 3)',
+      'Attach skills to qa-runner (7 skills)',
+      'Configure custom_env for qa-runner (GITHUB_TOKEN, LINEAR_API_KEY, MYSQL_URL, REDIS_URL, APP_ENV=testing)',
+      'Configure custom_args for qa-runner (--max-turns 40 + test-only append)',
+      'Create `pr-reviewer` agent (Codex, concurrency 3)',
+      'Attach skills to pr-reviewer (10 skills)',
+      'Configure custom_env for pr-reviewer (GITHUB_TOKEN, LINEAR_API_KEY)',
+    ]
+  },
+  {
+    id: 'p6',
+    title: 'Smoke test the implementation loop',
+    note: 'Trivial ticket → Implementer → QA Runner → PR Reviewer → Lee · before adding planning agents',
+    items: [
+      'Create trivial Linear ticket (e.g., update README copy)',
+      'Assign to @implementer',
+      'Verify branch created off master',
+      'Verify pre-PR loop runs (pint + phpstan + coderabbit)',
+      'Verify PR opens against master with Closes <TICKET-ID>',
+      'Verify handoff comment to @qa-runner with PR link',
+      'Verify QA Runner runs full sequence and posts QA report',
+      'Verify handoff to @pr-reviewer on green',
+      'Verify PR Reviewer reviews and posts handoff to @lee',
+      'Verify @lee notification triggers',
+      'Document any handoff template drift in skill files',
+      'Patch skills before adding planning agents',
+    ]
+  },
+  {
+    id: 'p7',
+    title: 'Add planning-tier agents (closest dependency first)',
+    note: 'Ticket Writer → Architect → Project Planner → PRD Shaper',
+    items: [
+      'Create `ticket-writer` agent (Claude Code, concurrency 2)',
+      'Attach skills + configure env/args for ticket-writer',
+      'Create `architect` agent (Claude Code, concurrency 1)',
+      'Attach skills + configure env/args for architect',
+      'Create `project-planner` agent (Claude Code, concurrency 2)',
+      'Attach skills + configure env/args for project-planner',
+      'Create `prd-shaper` agent (Claude Code, concurrency 2)',
+      'Attach skills + configure env/args for prd-shaper',
+    ]
+  },
+  {
+    id: 'p8',
+    title: 'Wire human gates',
+    note: 'Confirm @lee mention semantics — refined across v0.1.15/0.1.17/0.1.24/0.2.0/0.2.5',
+    items: [
+      'Test @lee mention triggers a notification',
+      'Configure inbox subscription rules',
+      'Document gate response patterns for "Blocked on Lee" comments',
+      'Confirm voice-profile preference for @lee notifications (Open Question № 8)',
+    ]
+  },
+  {
+    id: 'p9',
+    title: 'Optional: Triage agent + autopilot',
+    note: 'Skip on day one · revisit when inbound bug volume warrants',
+    items: [
+      'Create `triage` agent (Claude Code, concurrency 1) — only if inbound bugs justify',
+      'Set up cron autopilot for stale issue audit (daily, 9 AM PT)',
+      'Document audit comment template',
+    ]
+  },
+  {
+    id: 'p10',
+    title: 'Open questions to resolve',
+    note: 'These shape v2 of the topology · capture answers in skill updates',
+    items: [
+      '№ 1 · Multica MCP confirmation across runtimes (Claude Code only?)',
+      '№ 2 · Codex resumption sanity check (v0.2.1 fix verified empirically?)',
+      '№ 3 · Skill path for Codex empirically confirmed',
+      '№ 4 · Filament 3 lock duration / migration window',
+      '№ 5 · Ticket prefix domain mapping (CRTX/PRAX/ORYX/PHX) confirmed',
+      '№ 6 · CodeRabbit plan rate limits documented',
+      '№ 7 · Read HANDOFF_ARCHITECTURE_AUDIT.md from Multica repo',
+      '№ 8 · Voice-profile preference for @lee notifications',
+    ]
+  }
+];
+
+/* ---------- RENDERERS ---------- */
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderAgents() {
+  const root = document.getElementById('agent-list');
+  root.innerHTML = AGENTS.map((a, i) => `
+    <article class="agent-card overflow-hidden">
+      <div class="strip" style="background:${a.color}"></div>
+      <div class="p-6 lg:p-8">
+        <div class="grid grid-cols-12 gap-6">
+          <div class="col-span-12 lg:col-span-3 flex lg:flex-col items-start gap-4">
+            <div class="glyph" style="background:${a.color}">
+              <svg viewBox="-13 -13 26 26" width="22" height="22" style="overflow:visible">${a.glyph.replace(/currentColor/g, '#0E0D0B')}</svg>
+            </div>
+            <div class="w-full">
+              <p class="mono text-xs ink-mute mb-1">№ 0${i+1} · agent</p>
+              <h3 class="display text-2xl leading-tight" style="color:${a.color}">${a.name}</h3>
+
+              <div class="mt-4 mb-3">
+                <p class="small-cap mb-1.5">AI Backend</p>
+                <div class="backend-pill" style="color:${a.color}; border-color:${a.color}">
+                  <span class="dot" style="background:${a.color}">${a.runtime === 'Claude Code' ? 'C' : 'X'}</span>
+                  <span>${a.runtime}</span>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-1.5">
+                <span class="chip">×${a.concurrency} concurrency</span>
+                <span class="chip">workspace</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-12 lg:col-span-9 space-y-5">
+            <div>
+              <p class="small-cap mb-1.5">Role</p>
+              <p class="text-[15px] leading-relaxed">${a.role}</p>
+            </div>
+            <div>
+              <p class="small-cap mb-1.5">Why this runtime</p>
+              <p class="text-[15px] ink-dim leading-relaxed">${a.why}</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <p class="small-cap mb-2">Attached skills (${a.skills.length})</p>
+                <div class="flex flex-wrap gap-1.5">
+                  ${a.skills.map(s => `<span class="chip">${s}</span>`).join('')}
+                </div>
+              </div>
+              <div>
+                <p class="small-cap mb-2">Status transitions owned</p>
+                <table class="ttable w-full">
+                  ${a.transitions.map(t => `<tr><td class="mono text-xs" style="color:${a.color}">${t[0]}</td><td class="ink-mute">${t[1]}</td></tr>`).join('')}
+                </table>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+              <div>
+                <p class="small-cap mb-2">custom_env</p>
+                <div class="flex flex-wrap gap-1.5">
+                  ${a.env.map(e => `<code class="chip mono">${e}</code>`).join('')}
+                </div>
+              </div>
+              <div>
+                <p class="small-cap mb-2">custom_args</p>
+                <code class="mono text-xs ink-dim block break-all">${escapeHtml(a.args)}</code>
+              </div>
+            </div>
+
+            <details class="border-t hairline pt-5 mt-2">
+              <summary class="flex items-center gap-3 group">
+                <span class="chev mono text-xs" style="color:${a.color}">▸</span>
+                <span class="small-cap group-hover:text-[color:var(--ink)]">System instructions · paste verbatim into Multica</span>
+                <button class="copy-btn ml-auto" data-copy="prompt-${a.id}">COPY</button>
+              </summary>
+              <pre class="code mt-4" id="prompt-${a.id}">${escapeHtml(a.prompt)}</pre>
+            </details>
+          </div>
+        </div>
+      </div>
+    </article>
+  `).join('');
+
+  // copy button wiring
+  root.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = btn.dataset.copy;
+      const text = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'COPIED';
+        btn.classList.add('ok');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('ok'); }, 1400);
+      });
+    });
+  });
+}
+
+function renderSkills() {
+  const newRoot = document.getElementById('new-skills');
+  newRoot.innerHTML = NEW_SKILLS.map((s, i) => {
+    const body = SKILL_BODIES[s.name];
+    return `
+      <details class="border hairline rounded-lg overflow-hidden">
+        <summary class="p-4 flex items-start gap-4 hover:bg-white/[0.015]">
+          <span class="mono text-xs ink-mute mt-1 min-w-[2rem]">${String(i+1).padStart(2,'0')}</span>
+          <div class="flex-1 min-w-0">
+            <code class="mono text-sm font-semibold" style="color:var(--accent)">${s.name}</code>
+            <p class="text-sm ink-dim mt-1 leading-relaxed">${s.desc}</p>
+          </div>
+          ${body ? '<span class="chev mono text-xs ink-mute mt-1.5">▸</span>' : '<span class="chip" style="color:var(--accent-warm); border-color:var(--accent-warm)">in research doc</span>'}
+        </summary>
+        ${body ? `
+          <div class="p-4 border-t hairline relative">
+            <button class="copy-btn absolute top-3 right-3" data-copy-skill="${s.name}">COPY</button>
+            <pre class="code" id="skill-${s.name}">${escapeHtml(body)}</pre>
+          </div>
+        ` : `
+          <div class="p-4 border-t hairline ink-mute text-sm">
+            Full content available in the upstream research artifact. Author following the same template
+            shown in expanded skills above (frontmatter, hard rules section, banned patterns, examples).
+          </div>
+        `}
+      </details>
+    `;
+  }).join('');
+
+  newRoot.querySelectorAll('[data-copy-skill]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const name = btn.dataset.copySkill;
+      const text = document.getElementById('skill-'+name).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'COPIED';
+        btn.classList.add('ok');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('ok'); }, 1400);
+      });
+    });
+  });
+
+  const pubRoot = document.getElementById('public-skills');
+  pubRoot.innerHTML = PUBLIC_SKILLS.map(s => `
+    <a href="https://${s.url}" target="_blank" rel="noopener" class="border hairline rounded-lg p-4 hover:border-[color:var(--accent)] hover:bg-white/[0.02] transition group">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <code class="mono text-sm font-semibold group-hover:text-[color:var(--accent)]">${s.name}</code>
+        <span class="chip">${s.src}</span>
+      </div>
+      <p class="text-sm ink-dim leading-relaxed">${s.purpose}</p>
+      <p class="mono text-[10px] ink-mute mt-2 break-all">${s.url}</p>
+    </a>
+  `).join('');
+}
+
+/* ---------- CHECKLIST WITH PERSISTENCE ---------- */
+const STORAGE_KEY = 'lumion-multica-checklist-v1';
+let checklistState = {};
+
+async function loadChecklistState() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY);
+    if (result && result.value) {
+      checklistState = typeof result.value === 'string' ? JSON.parse(result.value) : result.value;
+    }
+  } catch (err) {
+    // Key not found or storage unavailable — start fresh.
+    checklistState = {};
+  }
+}
+
+async function saveChecklistState() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(checklistState));
+  } catch (err) {
+    console.warn('Persistence failed:', err);
+  }
+}
+
+function renderChecklist() {
+  const root = document.getElementById('checklist');
+  root.innerHTML = PHASES.map((phase, i) => {
+    const items = phase.items.map((item, j) => {
+      const itemId = `${phase.id}-${j}`;
+      const checked = !!checklistState[itemId];
+      return `
+        <div class="item-row ${checked ? 'done' : ''}" data-row="${itemId}">
+          <input type="checkbox" class="check" id="cb-${itemId}" data-id="${itemId}" ${checked ? 'checked' : ''}>
+          <label for="cb-${itemId}">${escapeHtml(item)}</label>
+        </div>
+      `;
+    }).join('');
+
+    const total = phase.items.length;
+    const done = phase.items.filter((_, j) => checklistState[`${phase.id}-${j}`]).length;
+    const allDone = done === total;
+
+    return `
+      <div class="phase ${allDone ? 'done' : ''}" data-phase="${phase.id}">
+        <div class="phase-h">
+          <span class="num">${String(i+1).padStart(2,'0')}</span>
+          <div>
+            <div class="ttl">${escapeHtml(phase.title)}</div>
+            <div class="ink-mute text-xs mt-0.5">${escapeHtml(phase.note)}</div>
+          </div>
+          <span class="meta mono"><span data-phase-count="${phase.id}">${done}</span> / ${total}</span>
+        </div>
+        <div>${items}</div>
+      </div>
+    `;
+  }).join('');
+
+  root.querySelectorAll('input.check').forEach(cb => {
+    cb.addEventListener('change', async (e) => {
+      const id = cb.dataset.id;
+      checklistState[id] = cb.checked;
+      const row = cb.closest('.item-row');
+      row.classList.toggle('done', cb.checked);
+      updateProgress();
+      await saveChecklistState();
+    });
+  });
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = PHASES.reduce((s, p) => s + p.items.length, 0);
+  const done = Object.values(checklistState).filter(Boolean).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('prog-count').textContent = done;
+  document.getElementById('prog-total').textContent = total;
+  document.getElementById('prog-pct').textContent = pct;
+  document.getElementById('prog-bar').style.width = pct + '%';
+
+  // per-phase counts
+  PHASES.forEach(phase => {
+    const phaseDone = phase.items.filter((_, j) => checklistState[`${phase.id}-${j}`]).length;
+    const el = document.querySelector(`[data-phase-count="${phase.id}"]`);
+    if (el) el.textContent = phaseDone;
+    const phaseEl = document.querySelector(`[data-phase="${phase.id}"]`);
+    if (phaseEl) phaseEl.classList.toggle('done', phaseDone === phase.items.length);
+  });
+}
+
+function bindReset() {
+  document.getElementById('reset-btn').addEventListener('click', async () => {
+    if (!confirm('Reset all checklist progress?')) return;
+    checklistState = {};
+    await saveChecklistState();
+    renderChecklist();
+  });
+}
+
+/* ---------- TABS ---------- */
+function bindTabs() {
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(t => {
+    t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+}
+
+/* ---------- BOOT ---------- */
+(async function init() {
+  bindTabs();
+  renderAgents();
+  renderSkills();
+  await loadChecklistState();
+  renderChecklist();
+  bindReset();
+})();
+</script>
+
+</body>
+</html>
