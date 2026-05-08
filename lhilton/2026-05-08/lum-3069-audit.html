@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="share-summary" content="Field-by-field engineering audit of every operator-configurable surface across the seven CJAI tables (Journey, Stage, Transition, Play, Agent, Knowledge Base, Link Bucket), mapped to the four CJAI prompts with proposed dispositions, a gap list, and a union-set completeness check. Renders five interactive Mermaid data-flow diagrams with pan, zoom, and fullscreen controls.">
+  <meta name="share-hash" content="dc74afd97c60dd7ccbdefe813a6991a25287279d5b28aaf0d629f718720ff8bd">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CJAI Audit — LUM-3069 — Operator-Configurable Data Points</title>
+  <meta name="description" content="Field-by-field audit mapping seven CJAI surfaces to four CJAI prompts, with proposed dispositions and a gap list.">
+
+  <!-- Tailwind CSS (compiled, inlined) -->
+  <style id="tailwind-compiled">*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width:640px){.container{max-width:640px}}@media (min-width:768px){.container{max-width:768px}}@media (min-width:1024px){.container{max-width:1024px}}@media (min-width:1280px){.container{max-width:1280px}}@media (min-width:1536px){.container{max-width:1536px}}.visible{visibility:visible}.static{position:static}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.mx-auto{margin-left:auto;margin-right:auto}.-mt-0\.5{margin-top:-.125rem}.mb-3{margin-bottom:.75rem}.mt-0\.5{margin-top:.125rem}.mt-12{margin-top:3rem}.mt-3{margin-top:.75rem}.mt-5{margin-top:1.25rem}.mt-8{margin-top:2rem}.block{display:block}.inline{display:inline}.flex{display:flex}.inline-flex{display:inline-flex}.table{display:table}.grid{display:grid}.contents{display:contents}.hidden{display:none}.h-8{height:2rem}.h-full{height:100%}.w-8{width:2rem}.min-w-0{min-width:0}.max-w-3xl{max-width:48rem}.max-w-7xl{max-width:80rem}.border-collapse{border-collapse:collapse}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.resize{resize:both}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.rounded{border-radius:.25rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-md{border-radius:.375rem}.border{border-width:1px}.border-t{border-top-width:1px}.border-red-200{--tw-border-opacity:1;border-color:rgb(254 202 202/var(--tw-border-opacity,1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240/var(--tw-border-opacity,1))}.border-white\/20{border-color:hsla(0,0%,100%,.2)}.bg-red-50{--tw-bg-opacity:1;background-color:rgb(254 242 242/var(--tw-bg-opacity,1))}.bg-slate-50{--tw-bg-opacity:1;background-color:rgb(248 250 252/var(--tw-bg-opacity,1))}.bg-white\/10{background-color:hsla(0,0%,100%,.1)}.bg-gradient-to-br{background-image:linear-gradient(to bottom right,var(--tw-gradient-stops))}.from-indigo-500{--tw-gradient-from:#6366f1 var(--tw-gradient-from-position);--tw-gradient-to:rgba(99,102,241,0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}.to-purple-600{--tw-gradient-to:#9333ea var(--tw-gradient-to-position)}.p-4{padding:1rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.font-mono{font-family:ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction)}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-\[0\.15em\]{letter-spacing:.15em}.tracking-\[0\.18em\]{letter-spacing:.18em}.tracking-wider{letter-spacing:.05em}.text-indigo-100{--tw-text-opacity:1;color:rgb(224 231 255/var(--tw-text-opacity,1))}.text-indigo-200{--tw-text-opacity:1;color:rgb(199 210 254/var(--tw-text-opacity,1))}.text-red-600{--tw-text-opacity:1;color:rgb(220 38 38/var(--tw-text-opacity,1))}.text-red-700{--tw-text-opacity:1;color:rgb(185 28 28/var(--tw-text-opacity,1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139/var(--tw-text-opacity,1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105/var(--tw-text-opacity,1))}.text-slate-900{--tw-text-opacity:1;color:rgb(15 23 42/var(--tw-text-opacity,1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.shadow-sm{--tw-shadow:0 1px 2px 0 rgba(0,0,0,.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.blur{--tw-blur:blur(8px)}.blur,.grayscale{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.grayscale{--tw-grayscale:grayscale(100%)}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-filter{backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.hover\:bg-slate-100:hover{--tw-bg-opacity:1;background-color:rgb(241 245 249/var(--tw-bg-opacity,1))}.hover\:text-slate-900:hover{--tw-text-opacity:1;color:rgb(15 23 42/var(--tw-text-opacity,1))}@media (min-width:640px){.sm\:inline-flex{display:inline-flex}}@media (min-width:768px){.md\:inline{display:inline}.md\:grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}.md\:py-10{padding-top:2.5rem;padding-bottom:2.5rem}.md\:py-16{padding-top:4rem;padding-bottom:4rem}.md\:text-5xl{font-size:3rem;line-height:1}.md\:text-lg{font-size:1.125rem;line-height:1.75rem}}@media (min-width:1024px){.lg\:block{display:block}.lg\:grid{display:grid}.lg\:grid-cols-\[15rem_minmax\(0\2c 1fr\)\]{grid-template-columns:15rem minmax(0,1fr)}.lg\:gap-10{gap:2.5rem}}</style>
+
+  <style>
+    :root {
+      --topbar-height: 56px;
+      --content-max: 78rem;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ===== Markdown body ===== */
+    .markdown-content { font-size: 15px; line-height: 1.65; color: #1f2937; }
+    .markdown-content p { margin: 0 0 1rem; }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
+      font-weight: 700; line-height: 1.25; color: #0f172a; scroll-margin-top: calc(var(--topbar-height) + 16px);
+    }
+    .markdown-content h1 { font-size: 2rem; margin: 2.5rem 0 1rem; }
+    .markdown-content h2 {
+      font-size: 1.5rem; margin: 2.5rem 0 1rem; padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .markdown-content h3 { font-size: 1.2rem; margin: 1.75rem 0 0.75rem; }
+    .markdown-content h4 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+    .markdown-content ul, .markdown-content ol { padding-left: 1.5rem; margin: 0 0 1rem; }
+    .markdown-content li { margin-bottom: 0.35rem; }
+    .markdown-content a { color: #2563eb; text-decoration: none; border-bottom: 1px dotted #93c5fd; }
+    .markdown-content a:hover { color: #1d4ed8; border-bottom-color: #2563eb; }
+    .markdown-content hr {
+      border: 0; height: 1px; background: linear-gradient(to right, transparent, #cbd5e1, transparent);
+      margin: 3rem 0;
+    }
+    .markdown-content strong { color: #0f172a; font-weight: 600; }
+
+    /* Inline code */
+    .markdown-content :not(pre) > code {
+      background: #f1f5f9;
+      color: #1e293b;
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      font-size: 0.875em;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      border: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    /* Block code (non-mermaid) */
+    .markdown-content pre {
+      background: #0f172a; color: #e2e8f0; padding: 1rem 1.25rem;
+      border-radius: 8px; overflow-x: auto; font-size: 0.85rem;
+      margin: 1rem 0; line-height: 1.55;
+    }
+    .markdown-content pre code {
+      background: transparent; color: inherit; padding: 0; border: 0;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      white-space: pre;
+    }
+
+    /* ===== Tables ===== */
+    .table-wrap {
+      margin: 1rem 0 1.5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: auto;
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .markdown-content table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      font-size: 0.825rem;
+      line-height: 1.5;
+    }
+    .markdown-content thead th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 600;
+      text-align: left;
+      padding: 0.625rem 0.875rem;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+      z-index: 1;
+    }
+    .markdown-content tbody tr { transition: background 0.12s ease; }
+    .markdown-content tbody tr:nth-child(even) { background: #fbfcfe; }
+    .markdown-content tbody tr:hover { background: #eef4ff; }
+    .markdown-content tbody td {
+      padding: 0.55rem 0.875rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+      color: #1f2937;
+    }
+    .markdown-content tbody tr:last-child td { border-bottom: 0; }
+    .markdown-content tbody td code {
+      white-space: nowrap;
+    }
+
+    /* ===== Disposition cell colors ===== */
+    .markdown-content td.cell-keep   { background: #ecfdf5; color: #065f46; font-weight: 600; }
+    .markdown-content td.cell-drop   { background: #fef2f2; color: #991b1b; font-weight: 600; }
+    .markdown-content td.cell-rework { background: #fefce8; color: #854d0e; font-weight: 600; }
+    .markdown-content td.cell-expand { background: #f5f3ff; color: #5b21b6; font-weight: 600; }
+    .markdown-content td.cell-oos    { background: #f1f5f9; color: #334155; font-weight: 500; }
+    .markdown-content td.cell-dash   { color: #94a3b8; text-align: center; }
+    .markdown-content td.cell-direct { background: #eff6ff; color: #1e40af; font-weight: 500; }
+    .markdown-content td.cell-indirect { background: #f0f9ff; color: #075985; font-weight: 500; }
+    .markdown-content td.cell-no     { color: #6b7280; }
+    .markdown-content td.cell-yes    { color: #047857; font-weight: 500; }
+
+    /* Hover overrides keep readable */
+    .markdown-content tbody tr:hover td.cell-keep   { background: #d1fae5; }
+    .markdown-content tbody tr:hover td.cell-drop   { background: #fee2e2; }
+    .markdown-content tbody tr:hover td.cell-rework { background: #fef3c7; }
+    .markdown-content tbody tr:hover td.cell-expand { background: #ede9fe; }
+    .markdown-content tbody tr:hover td.cell-oos    { background: #e2e8f0; }
+    .markdown-content tbody tr:hover td.cell-direct { background: #dbeafe; }
+    .markdown-content tbody tr:hover td.cell-indirect { background: #e0f2fe; }
+
+    /* ===== Diagram viewer ===== */
+    .diagram-card {
+      margin: 1.5rem 0 2rem;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      overflow: hidden;
+      transition: box-shadow 0.2s ease;
+    }
+    .diagram-card:hover {
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.06);
+    }
+    .diagram-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .diagram-title {
+      font-size: 0.875rem; font-weight: 600; color: #334155;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .diagram-title::before {
+      content: ""; display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+    }
+    .diagram-toolbar { display: flex; gap: 0.25rem; }
+    .diagram-toolbar button {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      background: #ffffff; color: #475569;
+      border: 1px solid #e2e8f0; border-radius: 6px;
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .diagram-toolbar button:hover {
+      background: #f1f5f9; color: #0f172a; border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+    .diagram-toolbar button:active { transform: translateY(0); }
+    .diagram-toolbar button svg { width: 16px; height: 16px; }
+
+    .diagram-body { position: relative; background: #fcfdff; }
+    .diagram-svg-container {
+      width: 100%;
+      height: 540px;
+      cursor: grab;
+      overflow: hidden;
+      background-image:
+        linear-gradient(to right, rgba(15, 23, 42, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.025) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .diagram-svg-container:active { cursor: grabbing; }
+    .diagram-svg-container svg {
+      width: 100%; height: 100%; display: block;
+    }
+    .diagram-hint {
+      position: absolute; bottom: 8px; right: 12px;
+      font-size: 11px; color: #94a3b8;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 2px 8px; border-radius: 4px;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Fullscreen */
+    .diagram-card:fullscreen,
+    .diagram-card.is-fullscreen {
+      width: 100vw; height: 100vh;
+      max-width: none; margin: 0;
+      border-radius: 0; border: 0;
+      display: flex; flex-direction: column;
+      background: #ffffff;
+    }
+    .diagram-card:fullscreen .diagram-body,
+    .diagram-card.is-fullscreen .diagram-body { flex: 1; }
+    .diagram-card:fullscreen .diagram-svg-container,
+    .diagram-card.is-fullscreen .diagram-svg-container { height: 100%; }
+
+    /* ===== TOC ===== */
+    #toc {
+      font-size: 0.825rem; line-height: 1.4;
+      max-height: calc(100vh - var(--topbar-height) - 5rem);
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+    #toc ul { list-style: none; padding: 0; margin: 0; }
+    #toc li { margin: 0; }
+    #toc a {
+      display: block;
+      padding: 0.3rem 0.625rem;
+      color: #475569;
+      border-left: 2px solid transparent;
+      border-radius: 0 4px 4px 0;
+      transition: all 0.12s ease;
+      text-decoration: none;
+    }
+    #toc a:hover { background: #f1f5f9; color: #0f172a; }
+    #toc a.active {
+      background: #eef2ff; color: #4338ca; font-weight: 600;
+      border-left-color: #6366f1;
+    }
+    #toc .toc-item-3 a { padding-left: 1.5rem; font-size: 0.78rem; color: #64748b; }
+    #toc .toc-item-3 a.active { color: #4338ca; }
+
+    /* ===== Topbar ===== */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: saturate(140%) blur(8px);
+      -webkit-backdrop-filter: saturate(140%) blur(8px);
+      border-bottom: 1px solid #e5e7eb;
+      height: var(--topbar-height);
+    }
+
+    /* Hero gradient */
+    .hero {
+      background:
+        radial-gradient(ellipse at top right, rgba(168, 85, 247, 0.18), transparent 60%),
+        radial-gradient(ellipse at bottom left, rgba(59, 130, 246, 0.18), transparent 50%),
+        linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #3730a3 100%);
+      color: #ffffff;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Loading */
+    #loading {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 100;
+      flex-direction: column; gap: 1rem;
+    }
+    #loading .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #e2e8f0; border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Anchor link hover */
+    .markdown-content h2:hover .anchor-link,
+    .markdown-content h3:hover .anchor-link,
+    .markdown-content h4:hover .anchor-link { opacity: 0.5; }
+    .anchor-link {
+      opacity: 0; margin-left: 0.5rem; color: #6366f1;
+      text-decoration: none; transition: opacity 0.15s;
+      font-weight: 400; font-size: 0.85em;
+    }
+    .anchor-link:hover { opacity: 1 !important; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+
+    /* Mermaid theming overrides for cleaner look */
+    .diagram-svg-container svg .nodeLabel,
+    .diagram-svg-container svg .edgeLabel { font-family: ui-sans-serif, system-ui, sans-serif; }
+
+    /* ===== Print ===== */
+    @media print {
+      .topbar, #toc-aside, .diagram-toolbar, .diagram-hint, #print-btn { display: none !important; }
+      .diagram-card { break-inside: avoid; box-shadow: none; border: 1px solid #cbd5e1; }
+      .diagram-svg-container { height: auto; min-height: 400px; }
+      body { background: #ffffff; }
+      .hero { background: #312e81; -webkit-print-color-adjust: exact; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1023px) {
+      #toc-aside { display: none; }
+    }
+    @media (max-width: 640px) {
+      .markdown-content { font-size: 14px; }
+      .markdown-content table { font-size: 0.75rem; }
+      .diagram-svg-container { height: 380px; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+<!-- Loading overlay -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="text-sm text-slate-500 font-medium">Rendering audit…</div>
+</div>
+
+<!-- Top bar -->
+<header class="topbar">
+  <div class="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">L</div>
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">LUM-3069</div>
+        <div class="text-sm font-semibold text-slate-900 -mt-0.5">CJAI Audit</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="#top" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        Top
+      </a>
+      <button id="print-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition" title="Print or save as PDF">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section id="top" class="hero">
+  <div class="max-w-7xl mx-auto px-4 py-12 md:py-16">
+    <div class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-200">Engineering Audit · Internal · LUM-3069</div>
+    <h1 class="text-3xl md:text-5xl font-bold mt-3 leading-tight">
+      CJAI Operator-Configurable<br class="hidden md:inline"> Data Point Audit
+    </h1>
+    <p class="mt-5 text-base md:text-lg text-indigo-100 max-w-3xl leading-relaxed">
+      A field-by-field map of every operator-configurable surface across the seven CJAI tables — Journey, Stage, Transition, Play, Agent, Knowledge Base, Link Bucket — and how each maps to the four CJAI prompts. Includes proposed dispositions, gap list, and a union-set completeness check.
+    </p>
+    <div class="mt-8 grid grid-cols-2 md:grid-cols-5 gap-3 max-w-3xl text-sm">
+      <div class="stat-card">
+        <div class="text-2xl font-bold text-white">7</div>
+        <div class="text-indigo-200 text-xs uppercase tracking-wider mt-0.5">CJAI surfaces</div>
+      </div>
+      <div class="stat-card">
+        <div class="text-2xl font-bold text-white">4</div>
+        <div class="text-indigo-200 text-xs uppercase tracking-wider mt-0.5">Prompts</div>
+      </div>
+      <div class="stat-card">
+        <div class="text-2xl font-bold text-white">5</div>
+        <div class="text-indigo-200 text-xs uppercase tracking-wider mt-0.5">Diagrams</div>
+      </div>
+      <div class="stat-card">
+        <div class="text-2xl font-bold text-white">110+</div>
+        <div class="text-indigo-200 text-xs uppercase tracking-wider mt-0.5">Fields cataloged</div>
+      </div>
+      <div class="stat-card">
+        <div class="text-2xl font-bold text-white">5</div>
+        <div class="text-indigo-200 text-xs uppercase tracking-wider mt-0.5">Sections</div>
+      </div>
+    </div>
+    <div class="mt-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm text-indigo-100">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Diagrams support drag-to-pan, scroll-to-zoom, and fullscreen — click the toolbar on any diagram.</span>
+    </div>
+  </div>
+</section>
+
+<!-- Main layout -->
+<div class="max-w-7xl mx-auto px-4 py-8 md:py-10">
+  <div class="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-10">
+    <!-- TOC sidebar -->
+    <aside id="toc-aside" class="hidden lg:block">
+      <div class="sticky" style="top: calc(var(--topbar-height) + 1.5rem);">
+        <div class="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500 mb-3 px-2.5">Contents</div>
+        <nav id="toc" aria-label="Table of contents"></nav>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="content" class="markdown-content min-w-0"></main>
+  </div>
+</div>
+
+<footer class="border-t border-slate-200 mt-12">
+  <div class="max-w-7xl mx-auto px-4 py-6 text-xs text-slate-500 flex items-center justify-between">
+    <div>LUM-3069 · CJAI Operator-Configurable Data Point Audit</div>
+    <div>Source: <code class="font-mono">.dev/lum-3069-audit.md</code></div>
+  </div>
+</footer>
+
+<!-- Embedded markdown source -->
+<script type="text/markdown" id="audit-source">
+# CJAI Operator-Configurable Data Point Audit
+
+This audit catalogs every operator-configurable field across the seven CJAI surfaces (Journey, Stage, Transition, Play, Agent, Knowledge Base, Link Bucket), maps each field to the four CJAI prompts, proposes a disposition for fields whose role in the prompts is unambiguous, and lists known operator-facing gaps.
+
+## Scope
+
+The four CJAI prompts under audit:
+
+| Prompt identifier | Caller service | Context services it pulls from |
+|---|---|---|
+| `CustomerJourneyTransitionAgent` | `app/Domains/CustomerJourney/Services/TransitionAgentEvaluator.php` | `ContactContextService` + `JourneyContextService` |
+| `CustomerJourneyPlayAutomationGenerator` | `app/Domains/CustomerJourney/Services/PlayAutomationPlanGenerator.php` | `ContactContextService` + `PlayContextService` |
+| `CustomerJourneyInboundReplyAgent` | `app/Domains/CustomerJourney/Services/InboundReplyAgent.php` | `ContactContextService` + `PlayContextService` (ActivePlay branch) + `LeadCaptureAiAgentService` (NewContact branch) |
+| `CustomerJourneyPlayActionReevaluator` | `app/Domains/CustomerJourney/Services/PlayActionReevaluator.php` | `ContactContextService` + `PlayContextService` |
+
+---
+
+## Data flow at a glance
+
+How operator-configurable data reaches each of the four CJAI prompts. Surfaces that don't reach any prompt — `cj_link_bucket_entries`, the `cj_journey_user` ACL pivot, `cj_journey_contact_placements.notes`, `Journey.is_private`, the per-channel `InstitutionSendGridConfig.ai_enabled` gate — are intentionally omitted from these diagrams and live in the field tables in Section 1 onward. The InboundReplyAgent diagram is the only one that splits by branch (ActivePlay vs NewContact). All shapes match the union-set rules in Appendix A.
+
+Subgraph titles are bare table names; metadata about scope or resolution paths is placed in stadium-shaped notes inside each subgraph.
+
+### Macro overview
+
+```mermaid
+flowchart LR
+    subgraph SRC["7 CJAI surface tables"]
+        direction TB
+        J[cj_journeys]
+        S[cj_journey_stages]
+        T[cj_journey_transitions]
+        P[cj_journey_stage_plays]
+        A["agents + agent_versions"]
+        KB["cj_knowledge_bases<br/>cj_knowledge_sources<br/>cj_knowledge_chunks"]
+        LB["cj_link_bucket_entries<br/>(merge tags only —<br/>not in any prompt)"]
+    end
+
+    subgraph ADJ["Adjacent inputs"]
+        direction TB
+        I[institutions]
+        TN["twilio_numbers.ai_enabled"]
+        IAS["InstitutionAiService::getPrompt()"]
+        LCS["LeadCaptureAiAgentService<br/>::getInstitutionContext / ::getFundingContext"]
+    end
+
+    subgraph CTX["Context payload builders"]
+        direction TB
+        CCS["ContactContextService::getContext()"]
+        JCS["JourneyContextService::getContext()"]
+        PCS["PlayContextService::getContext()"]
+        ICP["InboundReplyAgent<br/>::institutionContextPayload()"]
+    end
+
+    subgraph PR["CJAI prompts"]
+        direction TB
+        TA[CustomerJourneyTransitionAgent]
+        PAG[CustomerJourneyPlayAutomationGenerator]
+        IRA[CustomerJourneyInboundReplyAgent]
+        PAR[CustomerJourneyPlayActionReevaluator]
+    end
+
+    J --> JCS
+    S --> JCS
+    T --> JCS
+    P --> JCS
+    A --> JCS
+
+    J --> PCS
+    S --> PCS
+    T --> PCS
+    P --> PCS
+    A --> PCS
+    KB --> PCS
+
+    I --> CCS
+    I --> ICP
+    TN --> ICP
+    IAS --> ICP
+    LCS --> ICP
+
+    CCS --> TA
+    CCS --> PAG
+    CCS --> IRA
+    CCS --> PAR
+
+    JCS --> TA
+
+    PCS --> PAG
+    PCS -.->|ActivePlay branch| IRA
+    PCS --> PAR
+
+    ICP -.->|NewContact branch| IRA
+```
+
+### TransitionAgent inputs
+
+```mermaid
+flowchart LR
+    subgraph JT["cj_journeys"]
+        Jname[name]
+        Jstu[student_name]
+        Jobj[objective]
+        Jact["is_active → status"]
+    end
+
+    subgraph ST["cj_journey_stages"]
+        Smeta(("scope: current<br/>+ desired_next"))
+        Sname[name]
+        Sstu[student_name]
+        Scol[color]
+        Sdes[description]
+        Spos[position]
+        Sse[student_action_enabled]
+        Sst[student_action_type]
+        Ssl[student_action_label]
+    end
+
+    subgraph TT["cj_journey_transitions"]
+        Tmeta(("scope: transition<br/>+ outbound_transitions[]"))
+        Tfrom[from_journey_stage_id]
+        Tto[to_journey_stage_id]
+        Ttype[type]
+        Tagent[agent_id]
+        Tdec[decision_criteria]
+    end
+
+    subgraph PT["cj_journey_stage_plays"]
+        Pmeta(("scope: current_stage.plays[]"))
+        Pname[name only]
+    end
+
+    subgraph AV["agent_versions"]
+        Ameta(("resolved via<br/>transition.agent_id"))
+        Aname["name → transition.agent_name"]
+    end
+
+    subgraph IT["institutions"]
+        Iall["name, legal_name, dba_name,<br/>subdomain, website, phone,<br/>city, state, postal_code, country,<br/>ai_assistant_name"]
+    end
+
+    JCS{{"JourneyContextService::getContext()"}}
+    CCS{{"ContactContextService::getContext()"}}
+    TA[/"CustomerJourneyTransitionAgent prompt<br/>fromStageId · toStageId · transitionType ·<br/>decisionCriteria · journeyContext ·<br/>contactContext · dataDictionary"/]
+
+    JT --> JCS
+    ST --> JCS
+    TT --> JCS
+    PT --> JCS
+    AV --> JCS
+    JCS --> TA
+
+    IT --> CCS
+    CCS --> TA
+```
+
+### PlayAutomationGenerator inputs
+
+```mermaid
+flowchart LR
+    subgraph JT["cj_journeys"]
+        Jname[name]
+        Jstu[student_name]
+        Jobj[objective]
+        Jact["is_active → status"]
+    end
+
+    subgraph ST["cj_journey_stages"]
+        Smeta(("scope: current_stage"))
+        Sname[name]
+        Sstu[student_name]
+        Scol[color]
+        Sdes[description]
+        Spos[position]
+        Sse[student_action_enabled]
+        Sst[student_action_type]
+        Ssl[student_action_label]
+    end
+
+    subgraph TT["cj_journey_transitions"]
+        Tmeta(("scope:<br/>outbound_transitions[]"))
+        Tfrom[from_journey_stage_id]
+        Tto[to_journey_stage_id]
+        Ttype[type]
+        Tagent[agent_id]
+        Tdec[decision_criteria]
+    end
+
+    subgraph PT["cj_journey_stage_plays"]
+        Pmeta(("scope: focal play"))
+        Pname[name]
+        Pobj[objective]
+        Ptype[type]
+        Pchan[channels]
+        Ptrig[trigger]
+        Psched[schedule]
+        Pinst[instructions]
+        Pgua[guardrails]
+        Pint[interaction_limit]
+    end
+
+    subgraph AV["agent_versions"]
+        Ameta(("resolved via<br/>play.agent_id"))
+        Aname[name]
+        Ateam[team]
+        Apers[persona]
+        Atone[tone]
+        Aform[formality]
+        Agua[guardrails]
+        Ainst[instructions]
+    end
+
+    subgraph KBT["cj_knowledge_bases / sources / chunks"]
+        KBmeta(("agent_knowledge[]<br/>enabled=true<br/>capped 6000 tokens"))
+        KBn["cj_knowledge_bases.name"]
+        KSn["cj_knowledge_sources.name"]
+        KCh["cj_knowledge_chunks.heading"]
+        KCc["cj_knowledge_chunks.content"]
+    end
+
+    subgraph IT["institutions"]
+        Iall["name, legal_name, dba_name,<br/>subdomain, website, phone,<br/>city, state, postal_code, country,<br/>ai_assistant_name"]
+    end
+
+    PCS{{"PlayContextService::getContext()"}}
+    CCS{{"ContactContextService::getContext()"}}
+    PAG[/"CustomerJourneyPlayAutomationGenerator prompt<br/>playId · playName · contactId ·<br/>playContext · contactContext ·<br/>dataDictionary · craftGuidelines (static)"/]
+
+    JT --> PCS
+    ST --> PCS
+    TT --> PCS
+    PT --> PCS
+    AV --> PCS
+    KBT --> PCS
+    PCS --> PAG
+
+    IT --> CCS
+    CCS --> PAG
+```
+
+### InboundReplyAgent inputs (branch-aware)
+
+```mermaid
+flowchart LR
+    subgraph RT["Caller-supplied / runtime state"]
+        direction TB
+        RTmeta(("NOT from any DB table"))
+        Rbr["branch enum<br/>'ActivePlay' or 'NewContact'"]
+        Rch[inboundChannel enum]
+        Rbo["inboundBody — the user's message"]
+        Rdt[inboundDelimiterToken — synthetic]
+        Rae[recentAutomationEvents — built from automation history]
+    end
+
+    subgraph SHR["Both branches"]
+        IT["institutions<br/>name, legal_name, dba_name,<br/>subdomain, website, phone,<br/>city, state, postal_code, country,<br/>ai_assistant_name"]
+        CCS{{"ContactContextService::getContext()"}}
+        IT --> CCS
+    end
+
+    subgraph AP["ActivePlay branch only"]
+        JT["cj_journeys<br/>name, student_name,<br/>objective, is_active"]
+        ST["cj_journey_stages (current_stage)"]
+        TT["cj_journey_transitions (outbound_transitions[])"]
+        PT["cj_journey_stage_plays (play)<br/>name, objective, type, channels,<br/>trigger, schedule, instructions,<br/>guardrails, interaction_limit"]
+        AV["agent_versions (agent)<br/>name, team, persona, tone,<br/>formality, guardrails, instructions"]
+        KBT["cj_knowledge_bases / sources / chunks<br/>(agent_knowledge[], capped 6000 tokens)"]
+        PCS{{"PlayContextService::getContext()<br/>→ candidatePlays[]"}}
+        JT --> PCS
+        ST --> PCS
+        TT --> PCS
+        PT --> PCS
+        AV --> PCS
+        KBT --> PCS
+    end
+
+    subgraph NC["NewContact branch only"]
+        IT2["institutions<br/>(name, legal_name, subdomain)"]
+        IAS["InstitutionAiService<br/>::getPrompt()"]
+        LCSq["LeadCaptureAiAgentService<br/>::getInstitutionContext()"]
+        LCSf["LeadCaptureAiAgentService<br/>::getFundingContext()"]
+        TN["twilio_numbers.ai_enabled"]
+        ICP{{"InboundReplyAgent<br/>::institutionContextPayload()"}}
+        IT2 --> ICP
+        IAS --> ICP
+        LCSq --> ICP
+        LCSf --> ICP
+        TN --> ICP
+    end
+
+    IRA[/"CustomerJourneyInboundReplyAgent prompt<br/>branch · inboundChannel · contactId ·<br/>inboundDelimiterToken · inboundBody ·<br/>contactContext · candidatePlays ·<br/>recentAutomationEvents · institutionContext ·<br/>voiceAiEnabled · replyGuidelines (static) ·<br/>dataDictionary"/]
+
+    Rbr --> IRA
+    Rch --> IRA
+    Rbo --> IRA
+    Rdt --> IRA
+    Rae --> IRA
+    CCS --> IRA
+    PCS -.->|ActivePlay| IRA
+    ICP -.->|NewContact| IRA
+```
+
+### PlayActionReevaluator inputs
+
+The context-service shape mirrors PlayAutomationGenerator. The distinguishing feature is the **caller-supplied / runtime state** node — `originalPlan`, `progressSnapshot`, `currentAction`, `remainingActions` are runtime state from the automation lifecycle, NOT from any DB table.
+
+```mermaid
+flowchart LR
+    subgraph RT["Caller-supplied / runtime state"]
+        direction TB
+        RTmeta(("NOT from any DB table"))
+        Rop["originalPlan — the AI's previous plan<br/>from the automation lifecycle"]
+        Rps["progressSnapshot — built from<br/>per-action dispatch outcomes"]
+        Rca[currentAction — the action under review]
+        Rra[remainingActions — pending actions in plan]
+    end
+
+    subgraph JT["cj_journeys"]
+        Jname[name]
+        Jstu[student_name]
+        Jobj[objective]
+        Jact["is_active → status"]
+    end
+
+    subgraph ST["cj_journey_stages"]
+        Smeta(("scope: current_stage"))
+        Sname[name]
+        Sstu[student_name]
+        Scol[color]
+        Sdes[description]
+        Spos[position]
+        Sse[student_action_enabled]
+        Sst[student_action_type]
+        Ssl[student_action_label]
+    end
+
+    subgraph TT["cj_journey_transitions"]
+        Tmeta(("scope:<br/>outbound_transitions[]"))
+        Tfrom[from_journey_stage_id]
+        Tto[to_journey_stage_id]
+        Ttype[type]
+        Tagent[agent_id]
+        Tdec[decision_criteria]
+    end
+
+    subgraph PT["cj_journey_stage_plays"]
+        Pmeta(("scope: focal play"))
+        Pname[name]
+        Pobj[objective]
+        Ptype[type]
+        Pchan[channels]
+        Ptrig[trigger]
+        Psched[schedule]
+        Pinst[instructions]
+        Pgua[guardrails]
+        Pint[interaction_limit]
+    end
+
+    subgraph AV["agent_versions"]
+        Ameta(("resolved via<br/>play.agent_id"))
+        Aname[name]
+        Ateam[team]
+        Apers[persona]
+        Atone[tone]
+        Aform[formality]
+        Agua[guardrails]
+        Ainst[instructions]
+    end
+
+    subgraph KBT["cj_knowledge_bases / sources / chunks"]
+        KBmeta(("agent_knowledge[]<br/>enabled=true<br/>capped 6000 tokens"))
+        KBn["cj_knowledge_bases.name"]
+        KSn["cj_knowledge_sources.name"]
+        KCh["cj_knowledge_chunks.heading"]
+        KCc["cj_knowledge_chunks.content"]
+    end
+
+    subgraph IT["institutions"]
+        Iall["name, legal_name, dba_name,<br/>subdomain, website, phone,<br/>city, state, postal_code, country,<br/>ai_assistant_name"]
+    end
+
+    PCS{{"PlayContextService::getContext()"}}
+    CCS{{"ContactContextService::getContext()"}}
+    PAR[/"CustomerJourneyPlayActionReevaluator prompt<br/>playId · contactId · playContext · contactContext ·<br/>originalPlan · progressSnapshot ·<br/>currentAction · remainingActions ·<br/>dataDictionary · craftGuidelines (static)"/]
+
+    Rop --> PAR
+    Rps --> PAR
+    Rca --> PAR
+    Rra --> PAR
+
+    JT --> PCS
+    ST --> PCS
+    TT --> PCS
+    PT --> PCS
+    AV --> PCS
+    KBT --> PCS
+    PCS --> PAR
+
+    IT --> CCS
+    CCS --> PAR
+```
+
+---
+
+## Section 1 — Inventory
+
+Every operator-configurable field, grouped by surface. Columns:
+
+- **`Model.field`** — fully-qualified column name on the canonical model.
+- **Versioned?** — Yes if the field lives on a `*Version` row (snapshotted at publish time); No if it lives on the un-versioned parent row (operator edits take effect live, bypassing version snapshots). Any No-versioned field next to Yes-versioned siblings on the same surface is a candidate Rework.
+- **UI location** — Filament resource path or Livewire component / page that exposes the field.
+- **Operator-visible label** — literal string the operator sees.
+- **Field type** — Filament/Livewire input control.
+- **One-sentence purpose** — what this field controls.
+
+### 1.1 Journey
+
+| `Model.field` | Versioned? | UI location | Operator-visible label | Field type | Purpose |
+|---|---|---|---|---|---|
+| `Journey.name` | No | `Filament/SchoolDashboard/Pages/CreateCustomerJourney.php` (Livewire `$name`) | "Journey name" | TextInput (required, max 255) | Internal-facing identifier (e.g. "Inquiry to Enrollment"). |
+| `Journey.student_name` | No | `Livewire/SchoolDashboard/JourneyHeaderWidget.php` (`$studentNameDraft` inline edit) | "Student portal category name" | TextInput (inline edit) | Student-facing label rendered in the student portal. |
+| `Journey.objective` | No | `CreateCustomerJourney.php` (Livewire `$objective`) | "Journey objective" | Textarea (nullable) | Strategic goal the agent must use to interpret every stage and transition. |
+| `Journey.is_active` | No | (Header toggle on overview page) | "Active / Inactive" | Toggle | Runtime gate; when false every CJAI execution path is paused for the journey. |
+| `Journey.is_private` | No | `CreateCustomerJourney.php` (Livewire `$isPrivate`) | "Private journey" | Toggle | When true, only operators on the `cj_journey_user` ACL pivot can see/edit. |
+| `Journey ↔ User` (`cj_journey_user` pivot) | No | (Journey privacy operator UI) | (operator membership list) | (multi-select / membership) | Members of the ACL when `Journey.is_private = true`; controls which operators can see/edit the journey. No prompt impact. |
+| `Journey.student_visibility_enabled` | No | `JourneyHeaderWidget.php` | "Show in student portal" | Toggle | Master visibility gate for the student portal (subject to per-stage flag). |
+| `Journey.end_target_journey_id` | No | `Livewire/SchoolDashboard/JourneyEndConfigSlideover.php` (`$mode` + `$targetJourneyId`) | "Continue into another journey" / "Journey ends here" | Radio + Select | Continuation pointer when exit conditions match; null = "ends here". |
+| `Journey.end_target_stage_id` | No | `JourneyEndConfigSlideover.php` (`$targetStageId`) | "Start at" | Select | Optional landing stage on the target journey; null = first stage. |
+| `Journey ↔ AutomationFilter` (exit) | No | `Livewire/SchoolDashboard/JourneyExitFilterSection.php` (embedded in End Config slideover) | "When should the move happen?" | Rule-builder | Structured conditions that trigger continuation; deterministic, NOT free text. |
+| `JourneyVersion.change_summary` | Yes | (Publish modal on overview page) | "Change summary (optional)" | Textarea | Operator-supplied changelog stored on each published version. |
+
+System-managed columns on these tables (excluded from inventory): `Journey.{id, institution_id, is_template, live_version_id, draft_version_id, legacy_workflow_id, created_at, updated_at, deleted_at}`, `JourneyVersion.{id, journey_id, version_number, status, published_at, published_by_user_id, created_at, updated_at, deleted_at}`.
+
+### 1.2 Stage
+
+| `Model.field` | Versioned? | UI location | Operator-visible label | Field type | Purpose |
+|---|---|---|---|---|---|
+| `JourneyStage.name` | Yes (via `journey_version_id`) | `Filament/SchoolDashboard/Pages/EditJourneyStage.php` | "Internal stage name" | TextInput | Operator-facing stage identifier. |
+| `JourneyStage.student_name` | Yes | `EditJourneyStage.php` | "Student portal stage name" | TextInput | Student-facing stage label in the student portal. |
+| `JourneyStage.color` | Yes | `EditJourneyStage.php` | "Stage color" | ColorPicker | Hex color used to render the stage in the pipeline UI. |
+| `JourneyStage.description` | Yes | `EditJourneyStage.php` | "Stage description" | Textarea | Free-text description; agents read this to interpret what the stage means. |
+| `JourneyStage.position` | Yes | (Drag-reorder in pipeline widget) | (no label — drag handle) | Ordinal | Zero-indexed ordinal within the journey; lower = earlier. |
+| `JourneyStage.student_visibility_enabled` | Yes | `EditJourneyStage.php` (Customer Visibility section) | "Show in student portal" | Toggle | Whether this stage's tasks render in the student portal. |
+| `JourneyStage.student_visibility_label` | Yes | `EditJourneyStage.php` | "Task label" | TextInput | Student-facing label for tasks in this stage. |
+| `JourneyStage.student_visibility_cta` | Yes | `EditJourneyStage.php` | "Call-to-action text" | TextInput | Student-facing button/link copy for the stage's task. |
+| `JourneyStage.student_action_enabled` | Yes | `EditJourneyStage.php` (Student Action section) | "Enable self-serve action" | Toggle | Whether students can take a self-serve action from this stage. |
+| `JourneyStage.student_action_type` | Yes | `EditJourneyStage.php` | "Action type" | ViewField (UploadDocument / ScheduleAppointment / PayInvoice) | Which self-serve action is offered. |
+| `JourneyStage.student_action_label` | Yes | `EditJourneyStage.php` | "Action button label" | TextInput | Student-facing CTA copy. |
+| `JourneyStage.student_action_entity_id` | Yes | `EditJourneyStage.php` | "Document request" | Select | FK to `DocumentUploadRequest` for upload actions. |
+| `JourneyStage.student_action_scheduling_event_type_id` | Yes | `EditJourneyStage.php` | "Event type" | Select | FK to `EventType` for scheduling actions (UI proxy; persisted via `student_action_entity_id` polymorphic). |
+| `JourneyStage.student_action_invoice_template_id` | Yes | `EditJourneyStage.php` | "Invoice template" | Select | FK to `InvoiceTemplate` for pay-invoice actions. |
+| `JourneyStage.student_action_transition` | Yes | `EditJourneyStage.php` | "Auto-advance after action" | Toggle | Whether completing the action auto-transitions the contact. |
+| `JourneyStage.offramp_enabled` | Yes | `EditJourneyStage.php` (Off-Ramp section) | "Enable off-ramp" | Toggle | Whether contacts can leave via no-interaction inactivity. |
+| `JourneyStage.offramp_interaction` | Yes | `EditJourneyStage.php` | "Exit condition" | ViewField (NoInteraction) | Type of inactivity trigger (only `NoInteraction` supported today). |
+| `JourneyStage.offramp_remove_duration` | Yes | `EditJourneyStage.php` | "Remove from journey after X days" | ViewField (numeric) | Days of inactivity before removal. |
+| `JourneyStage.offramp_journey_id` | Yes | `EditJourneyStage.php` | "Move to journey" | Select | Continuation journey on offramp; null = end. |
+
+System-managed: `journey_version_id`, `student_action_entity_type` (derived from `student_action_type`), `created_at`, `updated_at`.
+
+### 1.3 Transition
+
+| `Model.field` | Versioned? | UI location | Operator-visible label | Field type | Purpose |
+|---|---|---|---|---|---|
+| `JourneyTransition.from_journey_stage_id` | Yes | `Livewire/SchoolDashboard/JourneyPipelineWidget.php` (drag edges) | (no label — pipeline graph) | Ordinal selection | Source stage (NULL when `is_entry=true`). |
+| `JourneyTransition.to_journey_stage_id` | Yes | `JourneyPipelineWidget.php` | (no label — pipeline graph) | Ordinal selection | Target stage. |
+| `JourneyTransition.type` | Yes | (Pipeline edge edit modal) | "Manual / Auto / AI" | Radio | Who drives the transition: staff (Manual), event (Auto), or agent (AI). |
+| `JourneyTransition.auto_trigger` | Yes | (Entry-transition modal only) | "Trigger event" | Select (`AutoTransitionTrigger` enum) | Domain event that auto-creates a placement on this entry transition. |
+| `JourneyTransition.agent_id` | Yes | (AI transition modal) | "Agent" | Select | Which Agent evaluates an AI transition. |
+| `JourneyTransition.decision_criteria` | Yes | (AI / Manual transition modal) | "Decision criteria" / "When should contacts advance?" | Textarea | For AI: the authoritative rule the agent reads. For Manual: instructions for staff. Unused for Auto. |
+| `JourneyTransition ↔ AutomationFilter` | Yes | `Livewire/SchoolDashboard/JourneyTransitionAutomationFiltersSection.php` | (rule-builder UI) | Rule builder | Structured filter; deterministic, NOT free text. |
+
+System-managed: `journey_version_id`, `is_entry` (set by entry-transition creator).
+
+### 1.4 Play
+
+| `Model.field` | Versioned? | UI location | Operator-visible label | Field type | Purpose |
+|---|---|---|---|---|---|
+| `JourneyStagePlay.name` | Yes (via `journey_stage.journey_version_id`) | `Filament/Concerns/HandlesPlayForm.php` (modal mounted by `EditJourneyStage` + `CustomerJourneyOverview`) | "Playbook name" | TextInput (max 255) | Internal-facing play identifier. |
+| `JourneyStagePlay.objective` | Yes | `HandlesPlayForm.php` | "Objective" | Textarea (3 rows, required) | What the play tries to accomplish; helper text varies by `type`. |
+| `JourneyStagePlay.type` | Yes | `HandlesPlayForm.php` | "Play type" | ViewField (Manual / Auto / Ai) | Who executes the play. |
+| `JourneyStagePlay.category` | Yes | `HandlesPlayForm.php` | "Category" | ViewField (Marketing / Transactional) | Drives opt-in/out behavior at delivery time. |
+| `JourneyStagePlay.trigger` | Yes | `HandlesPlayForm.php` (Auto/Manual sections) | "Trigger" | ViewField (Enter / Schedule) | When the play fires. |
+| `JourneyStagePlay.schedule` | Yes | `HandlesPlayForm.php` (UI: `schedule_config` proxy) | "Recurrence schedule" | ViewField (recurrence picker, persisted as cron string) | Cron expression for `Schedule` trigger plays. |
+| `JourneyStagePlay.channels` | Yes | `HandlesPlayForm.php` | "Channels" | ViewField (multi-select: SMS / Email / Voice / Task) | Action types this play can deliver through. |
+| `JourneyStagePlay.sms_message` | Yes | `HandlesPlayForm.php` | "SMS message" | Textarea | Auto-play SMS body template (supports merge tags). |
+| `JourneyStagePlay.email_subject` | Yes | `HandlesPlayForm.php` | "Email subject" | TextInput | Auto-play email subject template. |
+| `JourneyStagePlay.email_message` | Yes | `HandlesPlayForm.php` | "Email body" | RichEditor | Auto-play email body template. |
+| `JourneyStagePlay.task_title` | Yes | `HandlesPlayForm.php` | "Task title" | TextInput | Auto-play task title template. |
+| `JourneyStagePlay.task_description` | Yes | `HandlesPlayForm.php` | "Task description" | Textarea | Auto-play task description template. |
+| `JourneyStagePlay.instructions` | Yes | `HandlesPlayForm.php` | "Communication instructions" / "Staff procedure" | Textarea | AI: how to execute. Manual: steps for staff. |
+| `JourneyStagePlay.guardrails` | Yes | `HandlesPlayForm.php` | "Guardrails" | Textarea | Hard rules the agent must follow during the play. |
+| `JourneyStagePlay.interaction_limit` | Yes | `HandlesPlayForm.php` | "Per-contact interaction limit" | TextInput (0–365, default 3) | Max times the play fires per contact. |
+| `JourneyStagePlay.agent_id` | Yes | `HandlesPlayForm.php` (AI section) | "Agent" | ViewField (agent picker) | Which Agent executes an AI play (FK; agent payload fields are pulled from this Agent's live version). |
+| `JourneyStagePlay.active_days` | Yes | `HandlesPlayForm.php` (UI: `active_window` proxy) | "Days" | ViewField (day-of-week checkbox grid) | Days of week the AI agent is allowed to reach out. |
+| `JourneyStagePlay.active_hours_restricted` | Yes | `HandlesPlayForm.php` (UI: `active_window` proxy) | "Restrict to hours" | Toggle | Whether to limit AI activity by time-of-day. |
+| `JourneyStagePlay.active_hours_from` | Yes | `HandlesPlayForm.php` (UI: `active_window` proxy) | "Earliest" | TextInput (HH:MM) | Start of allowed activity window. |
+| `JourneyStagePlay.active_hours_to` | Yes | `HandlesPlayForm.php` (UI: `active_window` proxy) | "Latest" | TextInput (HH:MM) | End of allowed activity window. |
+
+System-managed: `journey_stage_id`, `created_at`, `updated_at`.
+
+### 1.5 Agent
+
+`Agent` is a versionless container; all operator-configurable fields live on `AgentVersion`. The current operator-edited row is `agent.draftVersion` (or `liveVersion` for read-only display); publishing snaps the draft into a new live version.
+
+**Voice fields scope note:** `voice_id`, `voice_provider`, `voice_name`, `voice_preview_url` are operator-configurable on the Agent surface but flow into the separate Vapi voice prompt path — **not** any of the four CJAI text prompts under audit here. They are listed in this inventory for completeness so the Agent surface row count is honest, but their disposition decisions belong to a separate Vapi voice-prompt audit and are flagged Out of scope in Section 3.
+
+| `Model.field` | Versioned? | UI location | Operator-visible label | Field type | Purpose |
+|---|---|---|---|---|---|
+| `AgentVersion.name` | Yes | `Filament/SchoolDashboard/Resources/AgentResource.php` (Identity section) | "Agent name" | TextInput (max 120) | Display name. |
+| `AgentVersion.team` | Yes | `AgentResource.php` (Identity section) | "Team" | Select (`AgentTeam`: Marketing / Enrollment / CustomerService) | Drives team-specific defaults and routing. |
+| `AgentVersion.color` | Yes | `AgentResource.php` (Identity section) | "Avatar color" | ColorPicker | Avatar background color for UI. |
+| `AgentVersion.persona` | Yes | `AgentResource.php` (Behavior section) | "Persona" | Textarea (4 rows) | Free-text role + personality + speaking style. |
+| `AgentVersion.tone` | Yes | `AgentResource.php` (Identity / Behavior section) | "Tone" | RadioCard (`AgentTone`: Friendly / Professional / Casual / Formal) | Speaking tone enum. |
+| `AgentVersion.formality` | Yes | (Set by `AgentTone` mapping in code; user-visible) | (derived) | Read-only | Formality enum derived from tone. |
+| `AgentVersion.guardrails` | Yes | `AgentResource.php` (Behavior section) | "Guardrails" | Textarea (4 rows) | Hard rules the agent must always follow. |
+| `AgentVersion.instructions` | Yes | `AgentResource.php` (Behavior section) | "Communication instructions" | Textarea (4 rows) | Scripts and talking points. |
+| `AgentVersion.voice_id` | Yes | `AgentResource.php` (Voice & Tone) | "Voice style" | Select (audio preview) | ElevenLabs voice ID; `voice_provider` / `voice_name` / `voice_preview_url` are derived from the catalog and snapshotted on publish. |
+| `AgentVersion.change_summary` | Yes | (Publish modal) | "Change summary (optional)" | Textarea | Operator-supplied changelog stored on each published version. |
+| `Agent ↔ KnowledgeBase` pivot (`cj_agent_knowledge_base`) | No (live attaches) | `AgentResource.php` (Connected Knowledge Bases section) | "Connected Knowledge Bases" | CheckboxList | Which KBs this agent has access to. |
+
+System-managed: `Agent.{id, institution_id, parent_template_id, is_template, live_version_id, ...}`, `AgentVersion.{id, agent_id, version_number, status, published_at, published_by_user_id, voice_provider, voice_name, voice_preview_url, ...}`.
+
+### 1.6 Knowledge Base
+
+| `Model.field` | Versioned? | UI location | Operator-visible label | Field type | Purpose |
+|---|---|---|---|---|---|
+| `KnowledgeBase.name` | No | `Filament/SchoolDashboard/Resources/KnowledgeBaseResource.php` | "Name" | TextInput (max 255) | KB display name. |
+| `KnowledgeBase.description` | No | `KnowledgeBaseResource.php` | "Description" | Textarea (3 rows, max 65535) | What this KB contains (operator-only — not currently injected into prompts). |
+| `KnowledgeBase.enabled` | No | `KnowledgeBaseResource.php` (and table inline toggle) | "Enabled" | Toggle | Only enabled KBs are searched/dumped at runtime. |
+| `KnowledgeSource.name` | No | `KnowledgeBaseResource.php` SourcesRelationManager (multiple `Add*Action` modals) | "Name" / "Source name" | TextInput | Source display name. |
+| `KnowledgeSource.type` | No | (Set per Action: paste / document / website) | (derived) | Read-only | Source type enum (set at creation). |
+| `KnowledgeSource.source_identifier` | No | `KnowledgeBaseResource.php` (varies per Action) | "URL" / "Upload file" / "Paste Q&A" | TextInput / FileUpload / Textarea | Location reference (URL, uploaded file, raw text). |
+| `KnowledgeSource.metadata` | No | (Per-action modal, type-dependent) | (varies) | Auto-captured | JSON metadata captured during ingestion. |
+| `KnowledgeChunk.heading` | No | (Optional manual annotation post-ingestion) | "Heading" | TextInput | Optional section title operator can add to a chunk. |
+| `KnowledgeChunk.content` | No | (Editable post-ingestion in some surfaces) | (varies) | Read-only by default; operator-editable in chunk-edit slideover | Actual text content of the chunk. |
+
+System-managed: `KnowledgeBase.{id, institution_id, kind, slug, token_count}`, `KnowledgeSource.{id, knowledge_base_id, institution_id, source_identifier_hash, markdown_path, status, embedding_status, byte_size, token_count, last_error}`, `KnowledgeChunk.{id, knowledge_source_id, institution_id, ordinal, token_count, qdrant_point_id, embedding_status}`.
+
+### 1.7 Link Bucket
+
+| `Model.field` | Versioned? | UI location | Operator-visible label | Field type | Purpose |
+|---|---|---|---|---|---|
+| `LinkBucketEntry.name` | No | `app/Filament/SchoolSettings/Resources/LinkBucketEntryResource.php` | "Name" | TextInput (max 255) | Friendly name for the link. |
+| `LinkBucketEntry.url` | No | `LinkBucketEntryResource.php` | "URL" | TextInput (URL validation, max 2048) | Destination URL. |
+| `LinkBucketEntry.tag` | No | (Auto-generated, table column with copy-to-clipboard) | "Tag" | Read-only (auto-slug from `name`) | Slug used in template merge tags (e.g. `{{tuition-policy}}`); **immutable** after creation (enforced at the model layer). |
+
+System-managed: `LinkBucketEntry.{id, institution_id, created_by_user_id}`.
+
+### 1.8 Adjacent surfaces (CJAI prompt inputs that live outside the seven named surfaces)
+
+These rows are operator-configurable inputs that DO flow into one of the four CJAI prompts but live on tables/UIs outside the seven named surfaces. **Disposition decisions on these rows belong to their owning surface — not to this audit.** They are listed here so they don't get dropped on the floor.
+
+| `Model.field` | UI location | Operator-visible label | Why it's here | Owning surface |
+|---|---|---|---|---|
+| `Institution.ai_assistant_name` | `app/Filament/SchoolSettings/Clusters/AI/Pages/AiAssistantSettingsPage.php` | "AI assistant name" | Injected as `contactContext.institution.ai_assistant_name` via `ContactContextService::institutionPayload()` — reaches all four prompts. (Note: it is **not** included in `InboundReplyAgent::institutionContextPayload()`, which uses `Institution.name` for its `institutionContext.name` slot.) | Institution Settings (AI cluster) |
+| `Institution.{name, legal_name, dba_name, subdomain, website, phone, city, state, postal_code, country}` | `AiAssistantSettingsPage.php` and other Institution settings pages | (various standard institution fields) | Injected into the institution payload of every prompt that uses `ContactContextService` (all four). | Institution Settings |
+| `InstitutionAiService::getPrompt()` content | (TBD — find the editor) | "AI persona prompt" | Injected as `institutionContext.ai_persona_prompt` for NewContact branch. | Institution Settings (AI cluster) |
+| Q&A knowledge surfaced by `LeadCaptureAiAgentService::getInstitutionContext()` | (TBD — Lead Capture / Pages config) | (varies) | Injected as `institutionContext.qa_knowledge` for NewContact branch. | Lead Capture / Institutional Q&A |
+| Funding context surfaced by `LeadCaptureAiAgentService::getFundingContext()` | (TBD — Programs + Funding config) | (varies) | Injected as `institutionContext.funding_summary` for NewContact branch. | Funding Options + Programs |
+| `TwilioNumber.ai_enabled` (per voice channel) | (Communications / TwilioNumber admin) | "Voice AI enabled" | Drives `voiceAiEnabled` flag in `InboundReplyAgent`; gates the `commits_to_call` branch. | Communications (Twilio Numbers) |
+| `InstitutionSendGridConfig.ai_enabled` (per email channel) | `app/Filament/SchoolSettings/Clusters/Email/Pages/AiSettings.php` | "Enable AI responses for email" | Drives whether the inbound comms agent replies to email messages on this institution's SendGrid-configured domain. Gates **outside** the four CJAI prompts (it's a channel-availability flag the email-handling pipeline reads); not injected into any prompt template. Parallel to `TwilioNumber.ai_enabled` for the voice channel. | Communications (SendGrid) |
+| `JourneyContactPlacement.{notes, entered_via, exit_reason}` | (Pipeline contact card / placement detail) | "Notes" / "Entered via" / "Exit reason" | Operator-touchable but **NOT** currently in any prompt. Listed for completeness — candidates: Drop (decide it's only audit data) or Expand (surface to the AI). | CJAI internal |
+
+---
+
+## Section 2 — Prompt mapping
+
+For every row in Section 1: does this field flow into any of the four CJAI prompts? If yes, which? Via what context-service path?
+
+The four prompts and their top-level template variables:
+
+- **`CustomerJourneyTransitionAgent`** (`TransitionAgentEvaluator`) — `fromStageId`, `toStageId`, `transitionType`, `decisionCriteria`, `contactContext`, `journeyContext`, `dataDictionary`. The `journeyContext` variable is the JSON-encoded result of `JourneyContextService::getContext()`.
+- **`CustomerJourneyPlayAutomationGenerator`** (`PlayAutomationPlanGenerator`) — `playId`, `playName`, `contactId`, `contactContext`, `playContext`, `dataDictionary`, `craftGuidelines`. `playContext` = `PlayContextService::getContext()`.
+- **`CustomerJourneyInboundReplyAgent`** (`InboundReplyAgent`) — `branch`, `inboundChannel`, `contactId`, `inboundDelimiterToken`, `inboundBody`, `contactContext`, `candidatePlays`, `recentAutomationEvents`, `institutionContext`, `voiceAiEnabled`, `replyGuidelines`, `dataDictionary`. `candidatePlays` is an array of `PlayContextService::getContext()` payloads (ActivePlay branch). `institutionContext` is populated only on the NewContact branch. **Note:** `InboundReplyAgent::buildVariables()` additionally dispatches two reserved variables — `voiceSessionContext` and `voiceDirection` (sourced from `InboundMessageContext` voice-call metadata, default empty string) — that the current prompt template does not reference. They exist for a planned voice-flow extension and can be ignored for disposition purposes.
+- **`CustomerJourneyPlayActionReevaluator`** (`PlayActionReevaluator`) — `playId`, `contactId`, `contactContext`, `playContext`, `originalPlan`, `progressSnapshot`, `currentAction`, `remainingActions`, `dataDictionary`, `craftGuidelines`. `playContext` = `PlayContextService::getContext()`.
+
+**Footnote — `craftGuidelines`:** static channel-craft guidance hard-coded in `PlayAutomationPlanGenerator::craftGuidelines()` (composed from `App\Domains\CustomerJourney\Support\MessageCraftingGuidelines::{smsCorePrinciples, emailCorePrinciples, voiceCorePrinciples, taskCorePrinciples}()`). PlayActionReevaluator reuses the same string via `app(PlayAutomationPlanGenerator::class)->craftGuidelines()`. **Not operator-configurable** — out of scope of every disposition. Listed here so reviewers don't mistake it for an operator surface.
+
+**Footnote — `replyGuidelines`:** built per-message by `InboundReplyAgent::replyGuidelines()` (channel + branch dependent text). Likely also not operator-configurable; verify before disposing.
+
+Legend in the table below:
+
+- `Direct` = field name appears verbatim in a prompt template variable.
+- `Indirect (X)` = field is reachable from the prompt only via X (merge-tag interpolation, agent_id resolution to its live version's fields, etc.).
+- `No` = field is operator-configurable but does **not** flow into any of the four prompts.
+- **InboundReplyAgent branch annotations:** the InboundReplyAgent column uses `(ActivePlay)` to mean "reaches the prompt only when `branch === ActivePlay`" and `(NewContact ...)` to mean "reaches the prompt only when `branch === NewContact`". Cells with no branch annotation reach the prompt on **both** branches. Branch-specific dispositions in Section 3 should mirror these annotations.
+
+### 2.1 Journey
+
+| `Model.field` | TransitionAgent | PlayAutomationGenerator | InboundReplyAgent | PlayActionReevaluator | Injection path |
+|---|---|---|---|---|---|
+| `Journey.name` | Direct | Direct | Direct (ActivePlay branch) | Direct | `{Journey,Play}ContextService::journeyPayload() → journey.name` |
+| `Journey.student_name` | Direct | Direct | Direct (ActivePlay) | Direct | `journey.student_name` |
+| `Journey.objective` | Direct | Direct | Direct (ActivePlay) | Direct | `journey.objective` |
+| `Journey.is_active` | Direct (as `journey.status`) | Direct (as `journey.status`) | Direct (ActivePlay, as `journey.status`) | Direct (as `journey.status`) | `journeyPayload(): is_active ? 'active' : 'inactive'` |
+| `Journey.is_private` | No | No | No | No | Used by `Journey::scopeVisibleTo()` for ACL — does not reach prompts. |
+| `Journey ↔ User` (`cj_journey_user` pivot) | No | No | No | No | ACL membership list paired with `Journey.is_private`; never reaches any prompt. |
+| `Journey.student_visibility_enabled` | No | No | No | No | Student portal flag only. |
+| `Journey.end_target_journey_id` | No | No | No | No | Continuation pointer; deterministic post-eval, not in prompts. |
+| `Journey.end_target_stage_id` | No | No | No | No | Same as above. |
+| `Journey ↔ AutomationFilter` (exit) | No | No | No | No | Evaluated deterministically by `JourneyExitFilterScope` BEFORE the AI is invoked. |
+| `JourneyVersion.change_summary` | No | No | No | No | Audit metadata only. |
+
+### 2.2 Stage
+
+| `Model.field` | TransitionAgent | PlayAutomationGenerator | InboundReplyAgent | PlayActionReevaluator | Injection path |
+|---|---|---|---|---|---|
+| `JourneyStage.name` | Direct (current + next) | Direct (current) | Direct (ActivePlay, current) | Direct (current) | `stagePayload() → current_stage.name` (and `desired_next_stage.name` for TransitionAgent only) |
+| `JourneyStage.student_name` | Direct (current + next) | Direct (current) | Direct (ActivePlay) | Direct (current) | `current_stage.student_name` |
+| `JourneyStage.color` | Direct | Direct | Direct (ActivePlay) | Direct | `current_stage.color` |
+| `JourneyStage.description` | Direct | Direct | Direct (ActivePlay) | Direct | `current_stage.description` |
+| `JourneyStage.position` | Direct | Direct | Direct (ActivePlay) | Direct | `current_stage.position` |
+| `JourneyStage.student_action_enabled` | Direct | Direct | Direct (ActivePlay) | Direct | `current_stage.student_action_enabled` |
+| `JourneyStage.student_action_type` | Direct | Direct | Direct (ActivePlay) | Direct | `current_stage.student_action_type` |
+| `JourneyStage.student_action_label` | Direct | Direct | Direct (ActivePlay) | Direct | `current_stage.student_action_label` |
+| `JourneyStage.student_action_entity_id` | No | No | No | No | UI binding only. |
+| `JourneyStage.student_action_scheduling_event_type_id` | No | No | No | No | UI proxy. |
+| `JourneyStage.student_action_invoice_template_id` | No | No | No | No | UI binding only. |
+| `JourneyStage.student_action_transition` | No | No | No | No | Auto-advance flag; deterministic post-action. |
+| `JourneyStage.student_visibility_enabled` | No | No | No | No | Student portal flag only. |
+| `JourneyStage.student_visibility_label` | No | No | No | No | Student portal label. |
+| `JourneyStage.student_visibility_cta` | No | No | No | No | Student portal CTA. |
+| `JourneyStage.offramp_enabled` | No | No | No | No | Deterministic offramp gate. |
+| `JourneyStage.offramp_interaction` | No | No | No | No | Offramp condition enum. |
+| `JourneyStage.offramp_remove_duration` | No | No | No | No | Inactivity threshold (deterministic). |
+| `JourneyStage.offramp_journey_id` | No | No | No | No | Continuation pointer (deterministic). |
+
+### 2.3 Transition
+
+| `Model.field` | TransitionAgent | PlayAutomationGenerator | InboundReplyAgent | PlayActionReevaluator | Injection path |
+|---|---|---|---|---|---|
+| `JourneyTransition.from_journey_stage_id` | Direct (`fromStageId` top-level + `transition.from_journey_stage_id` + `outbound_transitions[].from_journey_stage_id`) | Direct (`outbound_transitions[].from_journey_stage_id`) | Direct (ActivePlay, via `outbound_transitions`) | Direct (via `outbound_transitions`) | `transitionPayload()` + `outboundTransitionsPayload()` |
+| `JourneyTransition.to_journey_stage_id` | Direct (`toStageId` + `transition` + `outbound_transitions[]`) | Direct (`outbound_transitions[]`) | Direct (ActivePlay) | Direct | Same as above |
+| `JourneyTransition.type` | Direct (`transitionType` + `transition.type` + `outbound_transitions[].type`) | Direct (`outbound_transitions[].type`) | Direct (ActivePlay) | Direct | Same as above |
+| `JourneyTransition.auto_trigger` | No | No | No | No | Used by listener-driven entry creation only. |
+| `JourneyTransition.agent_id` | Direct (`transition.agent_id` + `outbound_transitions[].agent_id`) | Direct (`outbound_transitions[].agent_id`) | Direct (ActivePlay) | Direct | Same as above |
+| `JourneyTransition.decision_criteria` | Direct (top-level `decisionCriteria` + `transition.decision_criteria` + `outbound_transitions[].decision_criteria`) | Direct (`outbound_transitions[].decision_criteria`) | Direct (ActivePlay) | Direct | Same as above |
+| `JourneyTransition ↔ AutomationFilter` | No | No | No | No | Evaluated deterministically by `JourneyTransitionFilterScope` BEFORE the AI is invoked. |
+
+### 2.4 Play
+
+`PlayContextService::playPayload()` injects: `id, name, objective, type, channels, trigger, schedule, instructions, guardrails, interaction_limit`. Fields below NOT in that list are operator-configurable but **not** in any prompt.
+
+| `Model.field` | TransitionAgent | PlayAutomationGenerator | InboundReplyAgent | PlayActionReevaluator | Injection path / notes |
+|---|---|---|---|---|---|
+| `JourneyStagePlay.name` | Direct (via `current_stage.plays[].name`) | Direct (`playName` top-level + `play.name` + sibling `current_stage.plays[].name`) | Direct (ActivePlay, `play.name`) | Direct (`play.name`) | `playPayload() → play.name` |
+| `JourneyStagePlay.objective` | Direct (via `current_stage.plays[]`) | Direct (`play.objective`) | Direct (ActivePlay) | Direct | `playPayload() → play.objective` |
+| `JourneyStagePlay.type` | Direct | Direct | Direct (ActivePlay) | Direct | `playPayload() → play.type` |
+| `JourneyStagePlay.channels` | Direct | Direct | Direct (ActivePlay) | Direct | `playPayload() → play.channels` |
+| `JourneyStagePlay.trigger` | Direct | Direct | Direct (ActivePlay) | Direct | `playPayload() → play.trigger` |
+| `JourneyStagePlay.schedule` | Direct | Direct | Direct (ActivePlay) | Direct | `playPayload() → play.schedule` |
+| `JourneyStagePlay.instructions` | Direct | Direct | Direct (ActivePlay) | Direct | `playPayload() → play.instructions` |
+| `JourneyStagePlay.guardrails` | Direct | Direct | Direct (ActivePlay) | Direct | `playPayload() → play.guardrails` |
+| `JourneyStagePlay.interaction_limit` | Direct | Direct | Direct (ActivePlay) | Direct | `playPayload() → play.interaction_limit` |
+| `JourneyStagePlay.agent_id` | Indirect (resolves AgentVersion fields below; `agent_id` itself only appears in `transition`/`outbound_transitions` payloads) | Indirect (resolves agent payload) | Indirect (ActivePlay) | Indirect | `agent_id` is the FK that drives `agentPayload()`. |
+| `JourneyStagePlay.category` | No | No | No | No | Drives opt-in/out at delivery time; deterministic. |
+| `JourneyStagePlay.sms_message` | Indirect (merge-tag template) | No (rendered after AI plan via `Automation.action.meta_data`) | No | No | Template body, rendered by the dispatch pipeline, not the AI. |
+| `JourneyStagePlay.email_subject` | Indirect (merge-tag) | No | No | No | Same. |
+| `JourneyStagePlay.email_message` | Indirect (merge-tag) | No | No | No | Same. |
+| `JourneyStagePlay.task_title` | Indirect (merge-tag) | No | No | No | Same. |
+| `JourneyStagePlay.task_description` | Indirect (merge-tag) | No | No | No | Same. |
+| `JourneyStagePlay.active_days` | No | No | No | No | Pre-send timing window enforced by `ActiveWindowSnapper`. |
+| `JourneyStagePlay.active_hours_restricted` | No | No | No | No | Same. |
+| `JourneyStagePlay.active_hours_from` | No | No | No | No | Same. |
+| `JourneyStagePlay.active_hours_to` | No | No | No | No | Same. |
+
+### 2.5 Agent
+
+`PlayContextService::agentPayload()` injects: `id, name, team, persona, tone, formality, guardrails, instructions`. Used by PlayAutomationGenerator + InboundReplyAgent (ActivePlay) + PlayActionReevaluator.
+
+`JourneyContextService` does NOT inject the full agent payload — it only injects `transition.agent_id` and `transition.agent_name` (via `agent.liveVersion.name`).
+
+| `Model.field` | TransitionAgent | PlayAutomationGenerator | InboundReplyAgent | PlayActionReevaluator | Injection path |
+|---|---|---|---|---|---|
+| `AgentVersion.name` | Direct (only as `transition.agent_name`) | Direct (`agent.name`) | Direct (ActivePlay, `agent.name`) | Direct (`agent.name`) | `agentPayload() → agent.name` |
+| `AgentVersion.team` | No | Direct | Direct (ActivePlay) | Direct | `agentPayload() → agent.team` |
+| `AgentVersion.persona` | No | Direct | Direct (ActivePlay) | Direct | `agentPayload() → agent.persona` |
+| `AgentVersion.tone` | No | Direct | Direct (ActivePlay) | Direct | `agentPayload() → agent.tone` |
+| `AgentVersion.formality` | No | Direct | Direct (ActivePlay) | Direct | `agentPayload() → agent.formality` |
+| `AgentVersion.guardrails` | No | Direct | Direct (ActivePlay) | Direct | `agentPayload() → agent.guardrails` |
+| `AgentVersion.instructions` | No | Direct | Direct (ActivePlay) | Direct | `agentPayload() → agent.instructions` |
+| `AgentVersion.color` | No | No | No | No | UI badge only. |
+| `AgentVersion.voice_id` | No | No | No | No | Used by Vapi voice handlers, not these four prompts. |
+| `AgentVersion.voice_provider` | No | No | No | No | Same. |
+| `AgentVersion.voice_name` | No | No | No | No | Same. |
+| `AgentVersion.voice_preview_url` | No | No | No | No | Same. |
+| `AgentVersion.change_summary` | No | No | No | No | Audit metadata. |
+| `Agent ↔ KnowledgeBase` pivot | No | Indirect (filters which KB chunks reach `agent_knowledge`) | Indirect (ActivePlay) | Indirect | `agentKnowledgePayload()` walks `agent.knowledgeBases` filtered by `enabled=true`. |
+
+### 2.6 Knowledge Base
+
+`PlayContextService::agentKnowledgePayload()` injects per-chunk rows containing: `knowledge_base_name, knowledge_source_name, heading, content, token_count`. Total payload bounded by `KNOWLEDGE_TOKEN_BUDGET = 6000` tokens.
+
+| `Model.field` | TransitionAgent | PlayAutomationGenerator | InboundReplyAgent | PlayActionReevaluator | Injection path |
+|---|---|---|---|---|---|
+| `KnowledgeBase.name` | No | Direct (as `knowledge_base_name`) | Direct (ActivePlay) | Direct | `agentKnowledgePayload() → agent_knowledge[].knowledge_base_name` |
+| `KnowledgeBase.enabled` | No | Indirect (filter only — disabled KBs are excluded) | Indirect (ActivePlay) | Indirect | `agentKnowledgePayload(): filter(fn (KnowledgeBase $kb) => (bool) $kb->enabled)` |
+| `KnowledgeBase.description` | No | No | No | No | **Operator-edited but not in any prompt.** Candidate to surface. |
+| `KnowledgeSource.name` | No | Direct (as `knowledge_source_name`) | Direct (ActivePlay) | Direct | `agent_knowledge[].knowledge_source_name` |
+| `KnowledgeSource.type` | No | No | No | No | Type label not in chunk payload. |
+| `KnowledgeSource.source_identifier` | No | No | No | No | URL/path not in chunk payload. |
+| `KnowledgeSource.metadata` | No | No | No | No | Per-source metadata not in chunk payload. |
+| `KnowledgeChunk.heading` | No | Direct | Direct (ActivePlay) | Direct | `agent_knowledge[].heading` |
+| `KnowledgeChunk.content` | No | Direct | Direct (ActivePlay) | Direct | `agent_knowledge[].content` |
+
+### 2.7 Link Bucket
+
+| `Model.field` | TransitionAgent | PlayAutomationGenerator | InboundReplyAgent | PlayActionReevaluator | Injection path |
+|---|---|---|---|---|---|
+| `LinkBucketEntry.name` | No | No | No | No | Operator-only label. |
+| `LinkBucketEntry.url` | Indirect (Play merge-tag interpolation) | No (rendered post-AI in `Automation.action.meta_data`) | No | No | URL is interpolated into Play sms/email/task templates by the dispatch pipeline. |
+| `LinkBucketEntry.tag` | Indirect (Play merge-tag interpolation) | No | No | No | Tag is the `{{tag}}` placeholder rendered by the merge-tag pipeline. |
+
+**Net for Link Bucket:** Link Bucket entries do NOT flow into any of the four CJAI prompts directly. They reach prompts only when an operator hand-interpolates a `{{tag}}` into a Play's `sms_message` / `email_message` / `task_*` (which are themselves not in any of the four prompts either — see 2.4). LinkBucketEntry is in this audit because the parent surface list names Link Bucket among the seven CJAI surfaces; review may want to consider whether it belongs in CJAI at all or moves to a separate "merge-tag library" surface.
+
+### 2.8 Adjacent
+
+| `Model.field` | TransitionAgent | PlayAutomationGenerator | InboundReplyAgent | PlayActionReevaluator | Injection path |
+|---|---|---|---|---|---|
+| `Institution.name` | Direct (institution payload) | Direct | Direct (NewContact branch as `institution_context.name`; ActivePlay via `contactContext.institution.name`) | Direct | `ContactContextService::institutionPayload()` |
+| `Institution.legal_name`, `dba_name`, `subdomain`, `website`, `phone`, `city`, `state`, `postal_code`, `country` | Direct | Direct | Direct | Direct | Same |
+| `Institution.ai_assistant_name` | Direct | Direct | Direct | Direct | `ContactContextService::institutionPayload()` → `contactContext.institution.ai_assistant_name` (all four). NOT in InboundReplyAgent's NewContact `institutionContext` payload. |
+| `InstitutionAiService::getPrompt()` content | No | No | Direct (NewContact only, as `institutionContext.ai_persona_prompt`) | No | `InboundReplyAgent::institutionContextPayload()` |
+| `LeadCaptureAiAgentService::getInstitutionContext()` Q&A | No | No | Direct (NewContact only, as `institutionContext.qa_knowledge`) | No | Same |
+| `LeadCaptureAiAgentService::getFundingContext()` programs/funding | No | No | Direct (NewContact only, as `institutionContext.funding_summary`) | No | Same |
+| `TwilioNumber.ai_enabled` | No | No | Direct (`voiceAiEnabled`) | No | `InboundReplyAgent::voiceAiEnabledForInstitution()` |
+| `InstitutionSendGridConfig.ai_enabled` (per email channel) | No | No | No | No | Verified: gate read by the email-handling pipeline upstream of the four prompts; not injected into any prompt template. (No `Institution.ai_enabled` column exists; the actual column is on `InstitutionSendGridConfig`, edited via `app/Filament/SchoolSettings/Clusters/Email/Pages/AiSettings.php`.) |
+| `JourneyContactPlacement.notes`, `entered_via`, `exit_reason` | No | No | No | No | Operator-touchable but **not** in any prompt today. |
+
+---
+
+## Section 3 — Disposition
+
+For every row in Section 1, propose a Disposition: Keep / Drop / Rework / Expand / Out of scope / —.
+
+A **Keep** is proposed for every row that **directly** flows into one of the four prompts via a context service. Rationale cites the exact context-service method + prompt template path.
+
+Rows whose role is unambiguous as channel-availability gates owned by another surface are marked **Out of scope** with the owning surface noted.
+
+A dash (**—**) means the field reaches a prompt only Indirectly (filter-only / FK-only / merge-tag-only) or not at all, and the disposition decision turns on whether the gate itself should remain — that decision is left for joint product+engineering review rather than pre-seeded.
+
+### 3.1 Journey
+
+| `Model.field` | Disposition | Rationale |
+|---|---|---|
+| `Journey.name` | Keep | `JourneyContextService::journeyPayload() → journey.name` injected into TransitionAgent + PlayContextService journeyPayload injected into PlayAutomationGenerator/InboundReplyAgent/PlayActionReevaluator. Used by all four agents to identify the journey by name. |
+| `Journey.student_name` | Keep | `journey.student_name` in all four prompts. Documents the student-facing name so agents avoid using internal names with students. |
+| `Journey.objective` | Keep | `journey.objective` in all four prompts. Critical free-text strategic intent — agents lean on this to interpret stage/transition meaning. |
+| `Journey.is_active` | — | Emitted as `journey.status` ('active'/'inactive') in all four prompts via `journeyPayload()`. Grep of the four prompt seeders found **zero references** to `journey.status` or any "inactive/paused" handling — the value flows in but no prompt instruction tells agents to behave differently for an inactive journey. Decision needed: Drop from payload (deadweight context), or Expand the prompt body to actually use the signal. |
+| `Journey.is_private` | — | Used only for ACL (`Journey::scopeVisibleTo`); not in prompts. |
+| `Journey ↔ User` (`cj_journey_user` pivot) | — | ACL pivot; never reaches any of the four prompts. Candidate Drop (out of CJAI scope) or Keep (still operator-edited surface). |
+| `Journey.student_visibility_enabled` | — | Not in prompts. |
+| `Journey.end_target_journey_id` | — | Continuation pointer; deterministic, not in prompts. |
+| `Journey.end_target_stage_id` | — | Same. |
+| `Journey ↔ AutomationFilter` (exit) | — | Deterministic filter; evaluated before AI is invoked. |
+| `JourneyVersion.change_summary` | — | Audit metadata; not in prompts. |
+
+### 3.2 Stage
+
+| `Model.field` | Disposition | Rationale |
+|---|---|---|
+| `JourneyStage.name` | Keep | `current_stage.name`/`desired_next_stage.name` in all four prompts. |
+| `JourneyStage.student_name` | Keep | `current_stage.student_name` in all four prompts. |
+| `JourneyStage.color` | Keep | `current_stage.color` in all four prompts. (Open question: is hex color actually useful to the agent? Possible Drop.) |
+| `JourneyStage.description` | Keep | `current_stage.description` in all four prompts. Critical free-text — agents read this to interpret what the stage means. |
+| `JourneyStage.position` | Keep | `current_stage.position` in all four prompts. Lets agent reason about journey progress. |
+| `JourneyStage.student_action_enabled` | Keep | `current_stage.student_action_enabled` in all four prompts. |
+| `JourneyStage.student_action_type` | Keep | `current_stage.student_action_type` in all four prompts. |
+| `JourneyStage.student_action_label` | Keep | `current_stage.student_action_label` in all four prompts. |
+| `JourneyStage.student_action_entity_id` | — | UI binding only; FK to action target. |
+| `JourneyStage.student_action_scheduling_event_type_id` | — | UI proxy. |
+| `JourneyStage.student_action_invoice_template_id` | — | FK only. |
+| `JourneyStage.student_action_transition` | — | Auto-advance flag; deterministic. |
+| `JourneyStage.student_visibility_enabled` | — | Portal flag; not in prompts. |
+| `JourneyStage.student_visibility_label` | — | Portal label; not in prompts. |
+| `JourneyStage.student_visibility_cta` | — | Portal CTA; not in prompts. |
+| `JourneyStage.offramp_enabled` | — | Deterministic gate. |
+| `JourneyStage.offramp_interaction` | — | Offramp condition enum. |
+| `JourneyStage.offramp_remove_duration` | — | Inactivity threshold. |
+| `JourneyStage.offramp_journey_id` | — | Continuation pointer. |
+
+### 3.3 Transition
+
+| `Model.field` | Disposition | Rationale |
+|---|---|---|
+| `JourneyTransition.from_journey_stage_id` | Keep | Top-level `fromStageId` + `transition.from_journey_stage_id` + `outbound_transitions[].from_journey_stage_id` across all four prompts. |
+| `JourneyTransition.to_journey_stage_id` | Keep | Top-level `toStageId` (TransitionAgent) + `transition.to_journey_stage_id` across all four prompts. |
+| `JourneyTransition.type` | Keep | Top-level `transitionType` + `transition.type` + `outbound_transitions[].type` across all four. |
+| `JourneyTransition.auto_trigger` | — | Listener-driven entry creation only; not in any prompt. |
+| `JourneyTransition.agent_id` | Keep | `transition.agent_id` + `outbound_transitions[].agent_id` in all four. Resolves to agent payload (`agent.name` etc.). |
+| `JourneyTransition.decision_criteria` | Keep | Top-level `decisionCriteria` (TransitionAgent) + `transition.decision_criteria` + `outbound_transitions[].decision_criteria` across all four. **Authoritative rule for AI transitions** per the system prompt. |
+| `JourneyTransition ↔ AutomationFilter` | — | Deterministic; not in prompts. |
+
+### 3.4 Play
+
+| `Model.field` | Disposition | Rationale |
+|---|---|---|
+| `JourneyStagePlay.name` | Keep | `play.name` (PlayAutomation/InboundReply/PlayActionReevaluator) + `current_stage.plays[].name` (TransitionAgent). |
+| `JourneyStagePlay.objective` | Keep | `play.objective` in three of four; `current_stage.plays[]` rendering in TransitionAgent. |
+| `JourneyStagePlay.type` | Keep | `play.type` in all four. |
+| `JourneyStagePlay.channels` | Keep | `play.channels` in all four. **Hard constraint on action types in PlayAutomationGenerator's plan output.** |
+| `JourneyStagePlay.trigger` | Keep | `play.trigger` in all four. |
+| `JourneyStagePlay.schedule` | Keep | `play.schedule` in all four. Affects timing of generated plans. |
+| `JourneyStagePlay.instructions` | Keep | `play.instructions` in all four. **Critical free-text — how the agent should execute the play.** |
+| `JourneyStagePlay.guardrails` | Keep | `play.guardrails` in all four. **Hard stops for the agent.** |
+| `JourneyStagePlay.interaction_limit` | Keep | `play.interaction_limit` in all four. Caps actions per contact. |
+| `JourneyStagePlay.agent_id` | Keep | FK that drives `agentPayload()` resolution. Without it, the agent payload is null and the play has no voice. |
+| `JourneyStagePlay.category` | — | Drives opt-in/out at delivery; not in prompts. |
+| `JourneyStagePlay.sms_message` | — | Auto-play template; rendered post-AI by dispatch pipeline. (Candidate Expand: should AI plans reference the operator-authored template as a stylistic guide?) |
+| `JourneyStagePlay.email_subject` | — | Same. |
+| `JourneyStagePlay.email_message` | — | Same. |
+| `JourneyStagePlay.task_title` | — | Same. |
+| `JourneyStagePlay.task_description` | — | Same. |
+| `JourneyStagePlay.active_days` | — | Pre-send timing window enforced by `ActiveWindowSnapper`. (Candidate Expand: should AI plans see the window so they don't propose Sunday actions?) |
+| `JourneyStagePlay.active_hours_restricted` | — | Same. |
+| `JourneyStagePlay.active_hours_from` | — | Same. |
+| `JourneyStagePlay.active_hours_to` | — | Same. |
+
+### 3.5 Agent
+
+| `Model.field` | Disposition | Rationale |
+|---|---|---|
+| `AgentVersion.name` | Keep | `agent.name` in three of four; `transition.agent_name` in TransitionAgent. |
+| `AgentVersion.team` | Keep | `agent.team` in three of four (PlayAutomationGenerator, InboundReplyAgent ActivePlay, PlayActionReevaluator). Drives team-specific reply guidelines. |
+| `AgentVersion.persona` | Keep | `agent.persona` in three of four. **Critical free-text — agent voice/style.** |
+| `AgentVersion.tone` | Keep | `agent.tone` in three of four. |
+| `AgentVersion.formality` | Keep | `agent.formality` in three of four. |
+| `AgentVersion.guardrails` | Keep | `agent.guardrails` in three of four. **Hard stops at the agent level.** |
+| `AgentVersion.instructions` | Keep | `agent.instructions` in three of four. **How the agent should communicate generally.** |
+| `AgentVersion.color` | — | UI badge only. (Candidate Drop from CJAI scope.) |
+| `AgentVersion.voice_id` | Out of scope (Vapi voice-prompt audit) | Flows into Vapi voice handlers; not in any of the four CJAI text prompts. See §1.5 voice scope note. |
+| `AgentVersion.voice_provider` | Out of scope (Vapi) | Same. |
+| `AgentVersion.voice_name` | Out of scope (Vapi) | Same. |
+| `AgentVersion.voice_preview_url` | Out of scope (Vapi) | Same. |
+| `AgentVersion.change_summary` | — | Audit metadata. |
+| `Agent ↔ KnowledgeBase` pivot | — | Operator's KB attach decision filters which chunks reach `agent_knowledge`. (Candidate Keep with rationale.) |
+
+### 3.6 Knowledge Base
+
+| `Model.field` | Disposition | Rationale |
+|---|---|---|
+| `KnowledgeBase.name` | Keep | `agent_knowledge[].knowledge_base_name` in three of four. |
+| `KnowledgeBase.enabled` | — | Filter only — disabled KBs are skipped. (Candidate Keep, but candidate Drop if KB-attach already implies enabled.) |
+| `KnowledgeBase.description` | — | **Operator-edited but not in any prompt.** Candidate Expand. |
+| `KnowledgeSource.name` | Keep | `agent_knowledge[].knowledge_source_name` in three of four. |
+| `KnowledgeSource.type` | — | Not in chunk payload. |
+| `KnowledgeSource.source_identifier` | — | Not in chunk payload. |
+| `KnowledgeSource.metadata` | — | Not in chunk payload. |
+| `KnowledgeChunk.heading` | Keep | `agent_knowledge[].heading` in three of four. |
+| `KnowledgeChunk.content` | Keep | `agent_knowledge[].content` in three of four. **The actual KB body the agent reads.** |
+
+### 3.7 Link Bucket
+
+| `Model.field` | Disposition | Rationale |
+|---|---|---|
+| `LinkBucketEntry.name` | — | Operator label only; not in prompts. |
+| `LinkBucketEntry.url` | — | Indirect via Play merge-tag interpolation only; not in any of the four prompts. |
+| `LinkBucketEntry.tag` | — | Indirect via Play merge-tag interpolation only. |
+
+### 3.8 Adjacent
+
+Adjacent rows are recorded but their disposition decisions are out of scope of this audit — they belong to their owning surface.
+
+| `Model.field` | Disposition | Rationale |
+|---|---|---|
+| `Institution.ai_assistant_name` | Out of scope (owning surface: Institution Settings) | Direct via `contactContext.institution.ai_assistant_name` in all four prompts. (Not in InboundReplyAgent's NewContact `institutionContext` payload — that slot uses `Institution.name`.) |
+| `Institution.{name, legal_name, dba_name, subdomain, website, phone, address fields}` | Out of scope (owning surface: Institution Settings) | Direct via `contactContext.institution.*` in all four prompts. |
+| `InstitutionAiService::getPrompt()` | Out of scope (owning surface: Institution Settings AI cluster) | Direct in InboundReplyAgent NewContact branch only. |
+| `LeadCaptureAiAgentService::getInstitutionContext()` Q&A | Out of scope (owning surface: Lead Capture) | Direct in InboundReplyAgent NewContact branch only. |
+| `LeadCaptureAiAgentService::getFundingContext()` | Out of scope (owning surface: Funding Options + Programs) | Direct in InboundReplyAgent NewContact branch only. |
+| `TwilioNumber.ai_enabled` | Out of scope (owning surface: Communications/Twilio) | Direct in InboundReplyAgent (`voiceAiEnabled`). |
+| `InstitutionSendGridConfig.ai_enabled` (per email channel) | Out of scope (owning surface: Communications/SendGrid) | Verified gate on email AI replies; not in any of the four CJAI prompts. Parallel to `TwilioNumber.ai_enabled` (voice channel). |
+| `JourneyContactPlacement.notes`, `entered_via`, `exit_reason` | — | Operator-touchable but not in any prompt. Candidates: Drop or Expand. |
+
+---
+
+## Section 4 — Gap list
+
+Operator-requested fields not currently exposed, inferable from code shape or surfaced from the team. Each entry includes explicit code evidence so reviewers can spot mistaken candidates.
+
+### 4.1 Journey
+
+- _(none identified)_
+
+### 4.2 Stage
+
+- **Per-stage agent override.** Today the agent is fixed at the AI transition (`JourneyTransition.agent_id`) and the AI play (`JourneyStagePlay.agent_id`) level — there is no stage-level default that propagates to all child plays/transitions. Operator pain-point candidate: "I want all plays in this stage to default to Agent X." _Evidence: no `agent_id` on `JourneyStage`._
+
+### 4.3 Transition
+
+- **Per-transition guardrails.** Today guardrails live on the agent and on the play, not on the transition. AI transitions evaluate using the agent's general guardrails plus `decision_criteria`, but there's no way to add "even if criteria match, never advance contacts who are X" at the transition level. _Evidence: no `guardrails` column on `JourneyTransition`._
+
+### 4.4 Play
+
+- **Per-channel guardrails on Plays.** Today `JourneyStagePlay.guardrails` is a single textarea applied to every channel the play uses. Operator pain-point candidate: "I want different guardrails for SMS vs voice vs email." _Evidence: `JourneyStagePlay::$fillable` has one `guardrails` column; no `*_guardrails` per channel._
+- **Per-play tone/formality override.** Today `tone` and `formality` are agent-level (`AgentVersion.tone`, `.formality`). A given agent uses the same tone across every play they execute. Operator pain-point candidate: "Same agent, but be more formal in this enrollment-confirmation play." _Evidence: no `tone`/`formality` columns on `JourneyStagePlay`._
+- **Inject `JourneyStagePlay.active_*` window into the AI plan prompt.** Today the active-window columns exist (`active_days`, `active_hours_restricted`, `active_hours_from`, `active_hours_to`) and are enforced **after** the AI plans actions, by `ActiveWindowSnapper` quietly snapping action times into the window. The AI doesn't know about the window, so it can plan a Sunday 8pm action that gets shifted to Monday 9am — sometimes producing weird side effects (back-to-back snapped actions). _Evidence: `PlayContextService::playPayload()` does NOT include `active_days`/`active_hours_*`._
+- **Show the AI what the operator's hand-authored Auto-play templates look like, as a stylistic anchor.** The operator-authored `sms_message`, `email_message`, `task_*` columns on the same play row are not visible to the AI today, so AI-generated content drifts from the operator's voice on the same play. Candidate Expand: inject the operator's templates as stylistic reference (NOT: have the AI generate the templates — they remain operator-authored, dispatched at send time). _Evidence: `PlayContextService::playPayload()` does NOT include the message-template columns._
+
+### 4.5 Agent
+
+- **Knowledge-base scoping by stage.** Today knowledge bases attach to an agent globally — every play that uses agent X gets every chunk from agent X's KBs (token-bounded). Operator pain-point candidate: "Use only the financial-aid KB during the enrollment stage; full KB during nurturing." _Evidence: `cj_agent_knowledge_base` is a flat pivot; no stage-scoped variant._
+
+### 4.6 Knowledge Base
+
+- **`KnowledgeBase.description` is operator-edited but never reaches an agent.** Either inject it (Expand) or stop asking operators for it (Drop). Section 3.6 already flags this. _Evidence: `agentKnowledgePayload()` references `$kb->name` but never `$kb->description`._
+- **Per-source priority weighting.** Today every chunk is treated equally up to the 6000-token cap; the cap is filled in source/chunk ordinal order, so a less-important KB attached early can crowd out a more-important KB attached later. Operator pain-point candidate: "Pin this Q&A above all others." _Evidence: `agentKnowledgePayload()` walks KBs in pivot order, sources in `ordinal` order, chunks in `ordinal` order — no priority field._
+
+### 4.7 Link Bucket
+
+- **Surface link bucket entries to the AI as a referenceable list.** Today operators can hand-interpolate `{{tag}}` into Play templates, but the AI planner has no awareness that link buckets exist. Operator pain-point candidate: "I want the AI to choose the right link from the bucket per contact." _Evidence: `PlayContextService::getContext()` does not include link-bucket entries._
+
+### 4.8 Cross-cutting
+
+- **Verifying that operator-edited fields actually reach the prompt.** No QA tooling today asserts that a given operator field shows up in the rendered system prompt. A regression that drops a field from `playPayload()` would silently degrade agent behavior. Candidate gap: "smoke test that asserts every Section-3 Keep row appears in the rendered prompt for a known journey/play/transition." _Evidence: no test in `tests/Feature/CustomerJourney` named `*PromptIntegrity*` or similar; spot-check via grep recommended._
+
+---
+
+## Appendix A — Verification (union-set completeness check)
+
+Verification rule: every operator-configurable field must be reachable from at least one of three independent reference sets, and every Section 1 row must trace back to at least one of those sets.
+
+### Set A — model `$fillable` (operator-writable columns on CJAI models)
+
+Built by reading `$fillable` on each of the 12 CJAI models. Excluded columns (FK-only, system-managed, soft-delete columns) are not in the set.
+
+- **`Journey`**: `name`, `student_name`, `objective`, `is_active`, `is_private`, `student_visibility_enabled`, `end_target_journey_id`, `end_target_stage_id`. _(`institution_id`, `is_template`, `live_version_id`, `draft_version_id`, `legacy_workflow_id` excluded as system-managed.)_
+- **`JourneyVersion`**: `change_summary`. _(`journey_id`, `version_number`, `status`, `published_at`, `published_by_user_id` system-managed.)_
+- **`JourneyStage`**: `name`, `student_name`, `color`, `description`, `position`, `student_action_enabled`, `student_action_type`, `student_action_label`, `student_action_entity_id`, `student_action_invoice_template_id`, `student_action_transition`, `student_visibility_enabled`, `student_visibility_label`, `student_visibility_cta`, `offramp_enabled`, `offramp_interaction`, `offramp_remove_duration`, `offramp_journey_id`. _(`journey_version_id`, `student_action_entity_type` system-managed/derived.)_
+- **`JourneyTransition`**: `from_journey_stage_id`, `to_journey_stage_id`, `type`, `auto_trigger`, `agent_id`, `decision_criteria`. _(`journey_version_id`, `is_entry` system-managed.)_
+- **`JourneyStagePlay`**: `name`, `objective`, `type`, `channels`, `trigger`, `schedule`, `instructions`, `guardrails`, `sms_message`, `email_subject`, `email_message`, `task_title`, `task_description`, `interaction_limit`, `agent_id`, `category`, `active_days`, `active_hours_restricted`, `active_hours_from`, `active_hours_to`. _(`journey_stage_id` system-managed.)_
+- **`Agent`**: _(none — all operator config on `AgentVersion`)_. _(`institution_id`, `parent_template_id`, `is_template`, `live_version_id` system-managed.)_
+- **`AgentVersion`**: `name`, `team`, `color`, `persona`, `tone`, `formality`, `voice_id`, `guardrails`, `instructions`, `change_summary`. _(`agent_id`, `version_number`, `status`, `voice_provider`, `voice_name`, `voice_preview_url`, `published_at`, `published_by_user_id` system-managed.)_
+- **`KnowledgeBase`**: `name`, `description`, `enabled`. _(`institution_id`, `kind`, `slug`, `token_count` system-managed.)_
+- **`KnowledgeSource`**: `name`, `source_identifier`, `type`, `metadata`. _(`knowledge_base_id`, `institution_id`, `source_identifier_hash`, `markdown_path`, `status`, `embedding_status`, `byte_size`, `token_count`, `last_error` system-managed.)_
+- **`KnowledgeChunk`**: `heading`, `content`. _(`knowledge_source_id`, `institution_id`, `ordinal`, `token_count`, `qdrant_point_id`, `embedding_status` system-managed.)_
+- **`LinkBucketEntry`**: `name`, `url`. _(`institution_id`, `tag` (auto-generated, immutable post-create), `created_by_user_id` system-managed.)_
+- **`JourneyContactPlacement`**: `notes`, `entered_via`, `exit_reason`. _(rest are system-managed.)_
+
+Plus the **non-`$fillable` operator-touchable joins**:
+
+- `Journey ↔ AutomationFilter` (exit, polymorphic)
+- `JourneyTransition ↔ AutomationFilter`
+- `Agent ↔ KnowledgeBase` (`cj_agent_knowledge_base` pivot)
+- `Journey ↔ User` (`cj_journey_user` pivot — privacy ACL membership; gates who can see/edit a private journey via `Journey::scopeVisibleTo()`. No extra columns beyond the pair. Operator-managed via the journey privacy UI.)
+
+### Set B — UI form-schema fields
+
+Built by grepping `*::make('field')` calls in the relevant Filament resources, pages, and Livewire `public $field` declarations. Field names below are the schema/property keys; the Section 1 columns map them to `Model.field`.
+
+- **`AgentResource`** (`app/Domains/CustomerJourney/Filament/SchoolDashboard/Resources/AgentResource.php`): `name`, `color`, `team`, `tone`, `persona`, `guardrails`, `instructions`, `voice_id`, `knowledgeBases`.
+- **`KnowledgeBaseResource`** (`app/Domains/CustomerJourney/Filament/SchoolDashboard/Resources/KnowledgeBaseResource.php`): `name`, `description`, `enabled`. SourcesRelationManager actions add `name`, `source_identifier` (per type).
+- **`HandlesPlayForm`** trait (`app/Domains/CustomerJourney/Filament/Concerns/HandlesPlayForm.php`): `name`, `objective`, `type`, `category`, `instructions`, `trigger`, `schedule_config` (UI proxy → `schedule`), `channels`, `active_window` (UI proxy → `active_days`/`active_hours_*`), `sms_message`, `email_subject`, `email_message`, `task_title`, `task_description`, `interaction_limit`, `agent_id`, `guardrails`. Used by `EditJourneyStage` and `CustomerJourneyOverview` modals.
+- **`EditJourneyStage`** page (`app/Domains/CustomerJourney/Filament/SchoolDashboard/Pages/EditJourneyStage.php`): `name`, `student_name`, `color`, `description`, `student_visibility_enabled`, `student_visibility_label`, `student_visibility_cta`, `student_action_enabled`, `student_action_type`, `student_action_label`, `student_action_entity_id`, `student_action_scheduling_event_type_id`, `student_action_invoice_template_id`, `student_action_transition`, `offramp_enabled`, `offramp_interaction`, `offramp_remove_duration`, `offramp_journey_id`.
+- **`CreateCustomerJourney`** page (`app/Domains/CustomerJourney/Filament/SchoolDashboard/Pages/CreateCustomerJourney.php`): Livewire `$name`, `$studentName`, `$objective`, `$isPrivate`, `$stages` (initial seeded stages).
+- **`JourneyHeaderWidget`** Livewire (`app/Domains/CustomerJourney/Livewire/SchoolDashboard/JourneyHeaderWidget.php`): `$studentNameDraft` (→ `Journey.student_name`), `$selectedVersionId`, `$publishReleaseState`, `$publishMigrationPlan`, `$manualStageMap` (publish-flow state). Surface controls also include the `is_active` and `student_visibility_enabled` toggles per the rendered Blade.
+- **`JourneyEndConfigSlideover`** Livewire: `$mode` (ends/continue), `$targetJourneyId`, `$targetStageId`, embedded `JourneyExitFilterSection` (AutomationFilter rule builder).
+- **`JourneyTransitionAutomationFiltersSection`** Livewire: AutomationFilter rule builder for transition decisions.
+- **`JourneyPipelineWidget`** Livewire: drag-edge editor for transitions (`from_journey_stage_id`, `to_journey_stage_id`); transition-create modals expose `type`, `auto_trigger`, `agent_id`, `decision_criteria`.
+- **`LinkBucketEntryResource`** (`app/Filament/SchoolSettings/Resources/LinkBucketEntryResource.php`): `name`, `url`.
+- **Adjacent**: `AiAssistantSettingsPage` exposes `ai_assistant_name`. `AiSettings` (Email cluster) exposes the `ai_enabled` toggle on `InstitutionSendGridConfig`.
+
+### Set C — prompt-template variables (across the four CJAI prompts)
+
+Built by grepping `{{varName}}` in the four prompt seeder files:
+
+- `app-packages/prompts/database/seeders/CustomerJourneyTransitionAgentPromptSeeder.php`
+- `app-packages/prompts/database/seeders/CustomerJourneyPlayAutomationGeneratorPromptSeeder.php`
+- `app-packages/prompts/database/seeders/CustomerJourneyInboundReplyAgentPromptSeeder.php`
+- `app-packages/prompts/database/seeders/CustomerJourneyPlayActionReevaluatorPromptSeeder.php`
+
+Plus expanding the structured context-service payloads.
+
+**Top-level template variables:**
+
+- `CustomerJourneyTransitionAgent`: `fromStageId`, `toStageId`, `transitionType`, `decisionCriteria`, `contactContext`, `journeyContext`, `dataDictionary`.
+- `CustomerJourneyPlayAutomationGenerator`: `playId`, `playName`, `contactId`, `contactContext`, `playContext`, `dataDictionary`, `craftGuidelines`.
+- `CustomerJourneyInboundReplyAgent`: `branch`, `inboundChannel`, `contactId`, `inboundDelimiterToken`, `inboundBody`, `contactContext`, `candidatePlays`, `recentAutomationEvents`, `institutionContext`, `voiceAiEnabled`, `replyGuidelines`, `dataDictionary`.
+- `CustomerJourneyPlayActionReevaluator`: `playId`, `contactId`, `contactContext`, `playContext`, `originalPlan`, `progressSnapshot`, `currentAction`, `remainingActions`, `dataDictionary`, `craftGuidelines`.
+
+**Structured payload keys** (the operator-configurable fields they expose; system-only fields like ids/uuids/timestamps are omitted from this set since they are not in scope):
+
+- `JourneyContextService::getContext()` → `journey.{name, student_name, objective, status (← is_active), is_template}`, `current_stage.{name, student_name, color, description, position, student_action_enabled, student_action_type, student_action_label, plays[].{name, objective, type, channels, trigger, schedule, instructions, guardrails, interaction_limit}}`, `desired_next_stage.{...same as current_stage}`, `transition.{type, from_journey_stage_id, to_journey_stage_id, decision_criteria, agent_id, agent_name (← AgentVersion.name)}`.
+- `PlayContextService::getContext()` → `journey.{...same as Journey}`, `current_stage.{...same as Journey, but plays[] are simplified to {name} only}`, `outbound_transitions[].{type, from_journey_stage_id, to_journey_stage_id, decision_criteria, agent_id, agent_name}`, `play.{name, objective, type, channels, trigger, schedule, instructions, guardrails, interaction_limit}`, `agent.{name, team, persona, tone, formality, guardrails, instructions}`, `agent_knowledge[].{knowledge_base_name (← KnowledgeBase.name), knowledge_source_name (← KnowledgeSource.name), heading, content}`, `previous_automation`, `sibling_play_automations[]` (history; not operator-configurable).
+- `ContactContextService::getContext()` → `institution.{name, legal_name, dba_name, subdomain, ai_assistant_name, website, phone, city, state, postal_code, country, ...}` and contact/application/enrollment/message data (out of scope of CJAI surfaces, included for adjacent rows only).
+- `InboundReplyAgent::institutionContextPayload()` (NewContact branch) → `{name, legal_name, subdomain, ai_persona_prompt (← InstitutionAiService::getPrompt()), qa_knowledge (← LeadCaptureAiAgentService::getInstitutionContext()), funding_summary (← LeadCaptureAiAgentService::getFundingContext()), voice_ai_enabled (← TwilioNumber.ai_enabled)}`.
+
+### Completeness assertion
+
+`(A ∪ B ∪ C) \ Inventory` — fields in any reference set NOT covered by Section 1: **none.** Every operator-configurable field from `$fillable` (Set A) appears in Section 1; every UI form schema field (Set B) appears in Section 1 (including the proxy fields `schedule_config` and `active_window` are mapped to their persisted columns); every prompt template variable (Set C) is either an operator-configurable field already in Section 1 or a system-generated key explicitly excluded from scope.
+
+`Inventory \ (A ∪ B ∪ C)` — fabricated rows not traceable to any reference set: **none.** Every Section 1 row cites either a `$fillable` column, a UI form binding, or a prompt-template path.
+
+**Therefore Section 1 is complete by the union-set definition.**
+
+### Known caveats
+
+- **`InstitutionSendGridConfig.ai_enabled`** is in Set B (operator-toggleable via `app/Filament/SchoolSettings/Clusters/Email/Pages/AiSettings.php`) but is **not** in Set C — verified: the toggle is read by the email-handling pipeline upstream of the four CJAI prompts, parallel to `TwilioNumber.ai_enabled` for the voice channel. No `Institution.ai_enabled` column exists.
+- **Voice prompts (Vapi handlers)** are out of scope of this audit but `AgentVersion.voice_id`, `voice_provider`, `voice_name`, `voice_preview_url` are operator-configurable and feed Vapi directly. They appear in Set A and Set B but not Set C (because Set C is the four CJAI text prompts). They are recorded in Section 1.5 with explicit notes.
+- **Auto-play templates** (`sms_message`, `email_subject`, `email_message`, `task_title`, `task_description`) live on `JourneyStagePlay` and ARE in Set A and Set B but NOT in Set C. They are post-AI rendering targets — the AI plan refers to action types, and the dispatch pipeline interpolates these templates at send time. Recorded in Section 1.4 with the indirect-via-merge-tag note.
+- **`AutomationFilter`** (Journey-exit + Transition-decision rule builder) is operator-configurable structured data but is **not** in any prompt — evaluated deterministically by `JourneyExitFilterScope` / `JourneyTransitionFilterScope` before the AI is invoked. Recorded in Section 1.1, 1.3 with the explicit "not in prompts" annotation.
+
+</script>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+<!-- App -->
+<script>
+  /* ===========================
+     Initialization
+     =========================== */
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const source = document.getElementById('audit-source').textContent;
+
+      // Configure marked with a custom renderer that intercepts mermaid blocks.
+      const renderer = new marked.Renderer();
+      const originalCodeRenderer = renderer.code.bind(renderer);
+      renderer.code = function (code, lang) {
+        if (lang === 'mermaid') {
+          // Hold the source as a base64-encoded data attribute to
+          // avoid HTML / quoting issues.
+          const encoded = btoa(unescape(encodeURIComponent(code)));
+          return `<div class="mermaid-source" data-mermaid-b64="${encoded}"></div>`;
+        }
+        return originalCodeRenderer(code, lang);
+      };
+
+      marked.setOptions({
+        renderer,
+        gfm: true,
+        breaks: false,
+        headerIds: false,
+        mangle: false
+      });
+
+      const html = marked.parse(source);
+      document.getElementById('content').innerHTML = html;
+
+      // Post-render passes (order matters — table wrap before cell colors so
+      // the wrapper exists, mermaid render last so we can give each diagram
+      // a dynamic title from the heading immediately preceding it).
+      assignHeadingIds();
+      addAnchorLinks();
+      wrapTables();
+      applyCellColors();
+      buildToc();
+      await renderAllDiagrams();
+
+      // Wire up topbar
+      document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+      // Hide loading
+      document.getElementById('loading').style.display = 'none';
+
+      // Handle in-page anchor on initial load
+      if (window.location.hash) {
+        const target = document.getElementById(window.location.hash.slice(1));
+        if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+      }
+    } catch (err) {
+      document.getElementById('loading').innerHTML =
+        '<div class="text-red-600 font-medium">Render failed: ' + escapeHtml(err.message) + '</div>';
+      console.error(err);
+    }
+  });
+
+  /* ===========================
+     Heading ids + anchors
+     =========================== */
+
+  const usedIds = new Set();
+  function slugify(text) {
+    let base = text.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+    if (!base) base = 'section';
+    let id = base, n = 1;
+    while (usedIds.has(id)) { id = base + '-' + (++n); }
+    usedIds.add(id);
+    return id;
+  }
+
+  function assignHeadingIds() {
+    document.querySelectorAll('.markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4').forEach(h => {
+      if (!h.id) h.id = slugify(h.textContent);
+    });
+  }
+
+  function addAnchorLinks() {
+    document.querySelectorAll('.markdown-content h2, .markdown-content h3, .markdown-content h4').forEach(h => {
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.className = 'anchor-link';
+      a.setAttribute('aria-label', 'Link to ' + h.textContent);
+      a.textContent = '#';
+      h.appendChild(a);
+    });
+  }
+
+  /* ===========================
+     Tables: wrap + style cells
+     =========================== */
+
+  function wrapTables() {
+    document.querySelectorAll('.markdown-content table').forEach(table => {
+      if (table.parentElement.classList.contains('table-wrap')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+      table.parentElement.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+  }
+
+  function applyCellColors() {
+    document.querySelectorAll('.markdown-content table td').forEach(td => {
+      const text = td.textContent.trim();
+
+      // Disposition exact matches
+      if (text === 'Keep') td.classList.add('cell-keep');
+      else if (text === 'Drop') td.classList.add('cell-drop');
+      else if (text === 'Rework') td.classList.add('cell-rework');
+      else if (text === 'Expand') td.classList.add('cell-expand');
+      else if (text === '—') td.classList.add('cell-dash');
+      else if (text === 'No') td.classList.add('cell-no');
+      else if (text === 'Yes' || /^Yes\b/.test(text)) td.classList.add('cell-yes');
+      // Out of scope (matches "Out of scope" or "Out of scope (...)")
+      else if (/^Out of scope/.test(text)) td.classList.add('cell-oos');
+      // Direct / Indirect (with or without parenthetical)
+      else if (text === 'Direct' || /^Direct[\s(]/.test(text)) td.classList.add('cell-direct');
+      else if (text === 'Indirect' || /^Indirect[\s(]/.test(text)) td.classList.add('cell-indirect');
+    });
+  }
+
+  /* ===========================
+     TOC + scroll spy
+     =========================== */
+
+  function buildToc() {
+    const toc = document.getElementById('toc');
+    const headings = document.querySelectorAll('.markdown-content h2, .markdown-content h3');
+    if (!headings.length) return;
+
+    const ul = document.createElement('ul');
+    headings.forEach(h => {
+      const li = document.createElement('li');
+      li.className = h.tagName === 'H3' ? 'toc-item-3' : 'toc-item-2';
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      // Heading text without the appended # anchor
+      const label = h.cloneNode(true);
+      label.querySelectorAll('.anchor-link').forEach(n => n.remove());
+      a.textContent = label.textContent;
+      a.dataset.targetId = h.id;
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    toc.appendChild(ul);
+
+    // Scroll spy
+    const links = toc.querySelectorAll('a[data-target-id]');
+    const linkByHash = new Map();
+    links.forEach(l => linkByHash.set(l.dataset.targetId, l));
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          links.forEach(l => l.classList.remove('active'));
+          const link = linkByHash.get(entry.target.id);
+          if (link) {
+            link.classList.add('active');
+            // Bring active link into view in the TOC if not visible
+            const rect = link.getBoundingClientRect();
+            if (rect.top < 0 || rect.bottom > window.innerHeight) {
+              link.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+          }
+        }
+      });
+    }, { rootMargin: '-100px 0px -65% 0px', threshold: 0 });
+
+    headings.forEach(h => observer.observe(h));
+  }
+
+  /* ===========================
+     Mermaid diagrams + pan/zoom
+     =========================== */
+
+  async function renderAllDiagrams() {
+    if (typeof mermaid === 'undefined') {
+      console.warn('mermaid library failed to load');
+      return;
+    }
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+      flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: false },
+      themeVariables: {
+        fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+        primaryColor: '#eef2ff',
+        primaryBorderColor: '#6366f1',
+        primaryTextColor: '#0f172a',
+        clusterBkg: '#f8fafc',
+        clusterBorder: '#cbd5e1',
+        edgeLabelBackground: '#ffffff',
+        lineColor: '#64748b'
+      }
+    });
+
+    const placeholders = document.querySelectorAll('.mermaid-source');
+    let i = 0;
+    for (const placeholder of placeholders) {
+      const encoded = placeholder.dataset.mermaidB64;
+      const source = decodeURIComponent(escape(atob(encoded)));
+      const id = 'diagram-' + i;
+
+      // Find the heading immediately preceding the diagram for a title.
+      const title = findPrecedingHeading(placeholder);
+
+      const card = createDiagramCard(id, title);
+      card.dataset.mermaidSource = source;
+      placeholder.replaceWith(card);
+
+      try {
+        const renderResult = await mermaid.render(id + '-svg', source);
+        const svgMarkup = renderResult.svg || renderResult; // older versions return string
+        const svgContainer = card.querySelector('.diagram-svg-container');
+        svgContainer.innerHTML = svgMarkup;
+
+        const svgEl = svgContainer.querySelector('svg');
+        if (!svgEl) throw new Error('mermaid did not produce an svg');
+
+        // Strip mermaid's automatic max-width / inline width / height
+        // so the SVG fills the container, then attach pan-zoom.
+        svgEl.style.maxWidth = 'none';
+        svgEl.style.width = '100%';
+        svgEl.style.height = '100%';
+        svgEl.removeAttribute('width');
+        svgEl.removeAttribute('height');
+
+        const panZoom = svgPanZoom(svgEl, {
+          zoomEnabled: true,
+          panEnabled: true,
+          controlIconsEnabled: false,
+          fit: true,
+          center: true,
+          minZoom: 0.3,
+          maxZoom: 12,
+          zoomScaleSensitivity: 0.35,
+          dblClickZoomEnabled: false
+        });
+
+        card._panZoom = panZoom;
+        wireToolbar(card, panZoom);
+
+        // Re-fit on container resize so the diagram stays usable when the
+        // sidebar layout reflows.
+        if (typeof ResizeObserver !== 'undefined') {
+          const ro = new ResizeObserver(() => {
+            try {
+              panZoom.resize();
+              panZoom.fit();
+              panZoom.center();
+            } catch (_) { /* noop */ }
+          });
+          ro.observe(card.querySelector('.diagram-svg-container'));
+        }
+      } catch (e) {
+        console.error('Mermaid render error for ' + id + ':', e);
+        card.querySelector('.diagram-svg-container').innerHTML =
+          '<div class="p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded">' +
+          'Failed to render diagram: ' + escapeHtml(e.message) +
+          '</div>';
+      }
+      i++;
+    }
+  }
+
+  function findPrecedingHeading(node) {
+    let prev = node.previousElementSibling;
+    while (prev) {
+      if (/^H[1-6]$/.test(prev.tagName)) {
+        const clone = prev.cloneNode(true);
+        clone.querySelectorAll('.anchor-link').forEach(n => n.remove());
+        return clone.textContent.trim();
+      }
+      prev = prev.previousElementSibling;
+    }
+    return 'Diagram';
+  }
+
+  function createDiagramCard(id, title) {
+    const card = document.createElement('section');
+    card.className = 'diagram-card';
+    card.id = id;
+    card.setAttribute('aria-label', 'Diagram: ' + title);
+    card.innerHTML = `
+      <div class="diagram-header">
+        <div class="diagram-title">${escapeHtml(title)}</div>
+        <div class="diagram-toolbar" role="toolbar" aria-label="Diagram controls">
+          <button data-action="zoom-out" title="Zoom out" aria-label="Zoom out">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button data-action="reset" title="Reset view" aria-label="Reset view">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+          <button data-action="zoom-in" title="Zoom in" aria-label="Zoom in">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button data-action="fit" title="Fit to screen" aria-label="Fit to screen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+          <button data-action="fullscreen" title="Fullscreen" aria-label="Toggle fullscreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="diagram-body">
+        <div class="diagram-svg-container" role="img" aria-label="${escapeHtml(title)} diagram"></div>
+        <div class="diagram-hint">Drag to pan · Scroll to zoom</div>
+      </div>
+    `;
+    return card;
+  }
+
+  function wireToolbar(card, panZoom) {
+    card.querySelector('[data-action="zoom-in"]').addEventListener('click', () => panZoom.zoomIn());
+    card.querySelector('[data-action="zoom-out"]').addEventListener('click', () => panZoom.zoomOut());
+    card.querySelector('[data-action="reset"]').addEventListener('click', () => {
+      panZoom.resetZoom();
+      panZoom.resetPan();
+    });
+    card.querySelector('[data-action="fit"]').addEventListener('click', () => {
+      panZoom.resize();
+      panZoom.fit();
+      panZoom.center();
+    });
+    card.querySelector('[data-action="fullscreen"]').addEventListener('click', () => toggleFullscreen(card));
+  }
+
+  async function toggleFullscreen(card) {
+    try {
+      if (!document.fullscreenElement) {
+        if (card.requestFullscreen) {
+          await card.requestFullscreen();
+        } else if (card.webkitRequestFullscreen) {
+          card.webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+    } catch (e) {
+      console.error('fullscreen toggle failed', e);
+    }
+  }
+
+  // Refit any panZoom whose card just entered or left fullscreen.
+  function handleFullscreenChange() {
+    setTimeout(() => {
+      document.querySelectorAll('.diagram-card').forEach(card => {
+        if (card._panZoom) {
+          try {
+            card._panZoom.resize();
+            card._panZoom.fit();
+            card._panZoom.center();
+          } catch (_) { /* noop */ }
+        }
+      });
+    }, 80);
+  }
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+  // Keyboard shortcuts when a diagram is fullscreen
+  document.addEventListener('keydown', e => {
+    const fs = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!fs || !fs.classList || !fs.classList.contains('diagram-card')) return;
+    const panZoom = fs._panZoom;
+    if (!panZoom) return;
+
+    switch (e.key) {
+      case '+': case '=':
+        e.preventDefault(); panZoom.zoomIn(); break;
+      case '-': case '_':
+        e.preventDefault(); panZoom.zoomOut(); break;
+      case '0':
+        e.preventDefault(); panZoom.resetZoom(); panZoom.resetPan(); break;
+      case 'ArrowLeft':
+        e.preventDefault(); panZoom.panBy({ x: 60, y: 0 }); break;
+      case 'ArrowRight':
+        e.preventDefault(); panZoom.panBy({ x: -60, y: 0 }); break;
+      case 'ArrowUp':
+        e.preventDefault(); panZoom.panBy({ x: 0, y: 60 }); break;
+      case 'ArrowDown':
+        e.preventDefault(); panZoom.panBy({ x: 0, y: -60 }); break;
+    }
+  });
+
+  /* ===========================
+     Utilities
+     =========================== */
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+</script>
+
+</body>
+</html>
