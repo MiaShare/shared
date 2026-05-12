@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twilio local-dev setup — Lumion</title>
-    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice (with Vapi AI agent), SMS, and Verify calls firing from a local dev box against the lumion-cj-scenarios institution — covers Twilio + Vapi Console setup, Herd Share tunnel with a stable subdomain, .env wiring, the new CRTX-905 recipient whitelist gate, scenario-driven auto-binding of the Twilio number to the institution, and smoke tests for SMS / Verify / Voice. Interactive 20-step checkbox checklist persists progress in localStorage.">
-    <meta name="share-hash" content="9dc474dee47709d1fdc445ce523c53f74293c5f5a177a6185f2113769d571b04">
+    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice (with Vapi AI agent), SMS, and Verify calls firing from a local dev box against the lumion-cj-scenarios institution — covers Twilio + Vapi Console setup (Private API key with transient assistants enabled), Herd Share tunnel with a stable subdomain, .env wiring, the new CRTX-905 recipient whitelist gate, scenario-driven auto-binding of the Twilio number to the institution, and smoke tests for SMS / Verify / Voice. Interactive 20-step checkbox checklist persists progress in localStorage.">
+    <meta name="share-hash" content="18cabf6c5bbebfcc21ff006b5f98e5e41a1fb698223bfa8585ebd26050f22f9b">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -297,7 +297,15 @@ herd share --subdomain=&lt;your-subdomain&gt;</pre>
                             </p>
                             <ol class="mt-3 list-decimal pl-5 text-sm text-gray-700 space-y-2">
                                 <li><strong>Sign up / log in</strong> at <a href="https://dashboard.vapi.ai" class="text-lumion-teal-dark underline">https://dashboard.vapi.ai</a>. Switch to your DEV org.</li>
-                                <li><strong>API Key</strong> &mdash; Dashboard &rarr; API Keys &rarr; create a new key. Capture as <code>VAPI_API_KEY</code>.</li>
+                                <li>
+                                    <strong>API Key (Private)</strong> &mdash; Dashboard &rarr; API Keys &rarr; <strong>Create Private Key</strong>. Capture as <code>VAPI_API_KEY</code>.
+                                    <ul class="mt-1 list-disc pl-5 space-y-0.5 text-xs text-gray-600">
+                                        <li><strong>Type:</strong> <strong>Private</strong>, not Public. Lumion's <code>VapiClient</code> does server-to-server REST calls (<code>POST /call</code>, <code>POST /phone-number</code>, <code>PATCH /phone-number/{id}</code>, <code>POST /credential</code>, control-URL POSTs) using this key as a Bearer token. Public keys only work in browser SDK contexts where Vapi enforces an allowlist of pre-created assistants &mdash; we don't use the browser SDK and we use transient (inline) assistants, so a Public key would 401 on every call.</li>
+                                        <li><strong>Allowed Origins:</strong> N/A &mdash; only applies to Public keys (CORS guard for browser SDK). Leave empty / ignore.</li>
+                                        <li><strong>Allowed Assistants:</strong> N/A &mdash; only applies to Public keys. Lumion never references pre-saved assistant IDs (we build transient configs in <code>BuildVapiAssistantConfig</code> and pass them inline to <code>POST /call</code>), so even if the Private-key UI exposes this field, leave it unrestricted.</li>
+                                        <li><strong>Transient Assistants:</strong> <strong>Enable.</strong> Every Lumion voice call constructs an assistant config at request time and passes it inline (per-call MCP token, per-institution prompt, per-call Vapi voice). With transient assistants disabled, <code>POST /call</code> rejects the inline <code>assistant</code> payload and you get <code>"assistant must be a saved assistant ID"</code> errors at call start.</li>
+                                    </ul>
+                                </li>
                                 <li><strong>BYO SIP Trunk credential</strong> &mdash; Dashboard &rarr; Custom Credentials &rarr; create a <code>byo-sip-trunk</code> credential (or <code>POST https://api.vapi.ai/credential</code> if you prefer the REST API). Capture the returned id as <code>VAPI_SIP_CREDENTIAL_ID</code>.
                                     <div class="mt-1 text-xs text-gray-600"><strong>Why required even though SIP isn't used:</strong> Vapi's <code>byo-phone-number</code> schema (used by <code>RegisterTwilioNumberWithVapi</code> to mint the <code>phoneNumberId</code> we pass to bypass calls) requires a <code>credentialId</code> pointing at a BYO trunk credential, even when no SIP traffic flows. Without it, registration fails. See <code>config/vapi.php</code> lines 46&ndash;64 for the full rationale.</div>
                                 </li>
