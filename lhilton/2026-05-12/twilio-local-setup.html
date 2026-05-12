@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twilio local-dev setup — Lumion</title>
+    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice, SMS, and Verify calls firing from a local dev box against the lumion-cj-scenarios institution — covers Twilio Console setup, Herd Share tunnel with a stable subdomain, .env wiring, the new CRTX-905 recipient whitelist gate, and smoke tests for SMS / Verify / Voice. Interactive 19-step checkbox checklist persists progress in localStorage.">
+    <meta name="share-hash" content="813047867b9cc1623e16a1afbadb4a8561c1edebe6a3df499ff5ac1080db266b">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'lumion-teal': '#6CB8BA',
+                        'lumion-teal-dark': '#4f9b9d',
+                        'lumion-teal-light': '#dff0f1',
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        html { scroll-behavior: smooth; }
+        body { -webkit-font-smoothing: antialiased; }
+
+        /* Custom checkbox accent */
+        .lumion-check {
+            accent-color: #6CB8BA;
+        }
+
+        /* Section card highlight when checked */
+        .section-card[data-checked="true"] {
+            background: #f5fcfc;
+            border-color: #b6dedf;
+        }
+
+        /* TOC link active state via :target */
+        section:target h2 {
+            color: #4f9b9d;
+        }
+
+        /* Code block styling */
+        pre {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 0.875rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.8125rem;
+            line-height: 1.55;
+            overflow-x: auto;
+        }
+        code:not(pre code) {
+            background: #f3f4f6;
+            color: #111827;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.85em;
+        }
+
+        /* TOC scrolling */
+        @media (min-width: 1024px) {
+            .toc-sidebar {
+                position: sticky;
+                top: 1rem;
+                max-height: calc(100vh - 2rem);
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-6 py-6">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="inline-block bg-lumion-teal-light text-lumion-teal-dark text-xs font-semibold px-2 py-0.5 rounded">CRTX-905</span>
+                        <span class="text-xs text-gray-500">lhilton/twilio-phone-whitelist</span>
+                    </div>
+                    <h1 class="text-2xl font-semibold text-gray-900">Twilio local-dev setup</h1>
+                    <p class="mt-1 text-sm text-gray-600 max-w-2xl">
+                        End-to-end checklist that takes a fresh dev machine to: "I can place a real call,
+                        send a real SMS, and pass a real Verify OTP from local code, targeting the seeded
+                        <code>lumion-cj-scenarios</code> institution."
+                    </p>
+                </div>
+                <button id="reset-btn" type="button"
+                    class="text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors">
+                    Reset checklist
+                </button>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="mt-4">
+                <div class="flex items-center justify-between text-xs font-medium text-gray-600 mb-1.5">
+                    <span id="progress-text">0 of 19 complete</span>
+                    <span id="progress-pct">0%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="progress-fill"
+                        class="h-full bg-lumion-teal transition-all duration-200 ease-out"
+                        style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Layout -->
+    <div class="max-w-6xl mx-auto px-6 py-8">
+        <div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8">
+
+            <!-- TOC -->
+            <aside class="toc-sidebar mb-6 lg:mb-0">
+                <nav class="bg-white border border-gray-200 rounded-xl p-3">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 mb-1">Steps</p>
+                    <ol class="text-sm">
+                        <!-- Generated by JS to keep this section short. Falls back to plain section anchors if JS off. -->
+                    </ol>
+                    <p class="mt-3 px-2 text-[11px] text-gray-400">
+                        State persists in <code class="text-[11px]">localStorage</code> on this domain.
+                    </p>
+                </nav>
+            </aside>
+
+            <!-- Content -->
+            <main class="space-y-5 min-w-0">
+
+                <!-- Whitelist preamble (not a checklist step) -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+                    <strong>Why this guide exists.</strong> The branch
+                    <code class="bg-amber-100 text-amber-900">lhilton/twilio-phone-whitelist</code> adds a
+                    recipient whitelist gate. In any non-production env, SMS / Voice / Verify calls to
+                    numbers that aren't on <code class="bg-amber-100 text-amber-900">twilio_allowed_recipients</code>
+                    (or the magic test number <code class="bg-amber-100 text-amber-900">+15005550006</code>)
+                    are blocked by the <code class="bg-amber-100 text-amber-900">WhitelistGated*</code> decorators.
+                    So step 13 — adding your own number — is non-optional.
+                </div>
+
+                <!-- 1. Prereqs -->
+                <section id="prereqs" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="prereqs" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">1. Prereqs</h2>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li>Herd is serving <code>*.tallahassee.test</code> (run <code>herd open</code> to confirm).</li>
+                                <li>Branch checked out: <code>git checkout lhilton/twilio-phone-whitelist</code>.</li>
+                                <li>DB up to date: <code>php -d memory_limit=512M artisan migrate</code>.</li>
+                                <li>Horizon running in a separate terminal: <code>php -d memory_limit=512M artisan horizon</code>. Required for async voice jobs (transcription, Vapi cleanup) and any job-dispatched SMS path.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Twilio account -->
+                <section id="twilio-account" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="twilio-account" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">2. Twilio project</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Pick a sandbox / dev Twilio project &mdash; <strong>not</strong> the production account. From the Console:
+                            </p>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Account &rarr; API keys &amp; tokens</strong> &mdash; capture <strong>Account SID</strong> + <strong>Auth Token</strong>.</li>
+                            </ul>
+                            <p class="mt-2 text-sm text-gray-600">Stash both in your password manager; you'll paste them into <code>.env</code> in step 9.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Phone number -->
+                <section id="twilio-phone-number" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="twilio-phone-number" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">3. Twilio phone number</h2>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Phone Numbers &rarr; Manage &rarr; Buy a number</strong> &mdash; pick a US number with both <strong>Voice</strong> and <strong>SMS</strong> capability. A trial-account number is fine.</li>
+                                <li>Capture the number's <strong>E.164</strong> (e.g. <code>+15558675309</code>) and its <strong>Phone Number SID</strong> (<code>PNxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>).</li>
+                            </ul>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                <strong>Trial-account caveat.</strong> Trial accounts can only send real SMS to numbers verified as caller-IDs. Fine for self-testing; to hit a teammate's phone, verify their number in the Console or upgrade. Twilio Verify works to any number &mdash; only raw outbound SMS has this restriction.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. API key -->
+                <section id="twilio-api-key" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="twilio-api-key" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">4. Twilio API key (for browser voice)</h2>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Account &rarr; API keys &rarr; Create API Key</strong> &mdash; type <strong>Standard</strong>.</li>
+                                <li>Capture <strong>API Key SID</strong> (<code>SKxxxx</code>) and the one-time <strong>Secret</strong>. Lose the secret = create a new key.</li>
+                            </ul>
+                            <p class="mt-2 text-sm text-gray-600">
+                                Feeds <code>TWILIO_API_KEY_SID</code> / <code>TWILIO_API_KEY_SECRET</code>. Used by the browser-voice access-token endpoint (<code>POST /voice/token</code>). Skip if you only care about SMS / Verify.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. Verify services -->
+                <section id="twilio-verify-services" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="twilio-verify-services" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">5. Twilio Verify Services</h2>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Verify &rarr; Services &rarr; Create</strong> &mdash; make <strong>two</strong> services. Friendly names like "Lumion Local &mdash; SMS" and "Lumion Local &mdash; Email".</li>
+                                <li>Capture each <strong>Verify Service SID</strong> (<code>VAxxxx</code>). One feeds <code>TWILIO_SMS_VERIFICATION_SERVICE_SID</code>, the other <code>TWILIO_EMAIL_VERIFICATION_SERVICE_SID</code>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. TwiML app -->
+                <section id="twilio-twiml-app" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="twilio-twiml-app" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">6. Twilio TwiML App</h2>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Voice &rarr; TwiML &rarr; TwiML Apps &rarr; Create</strong>. Voice URL + status callback can stay as placeholders for now &mdash; <code>voice:dev-sync</code> (step 18) overwrites them with your tunnel URL.</li>
+                                <li>Capture the <strong>TwiML App SID</strong> (<code>APxxxx</code>). Required only if you intend to test browser-initiated voice.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. Messaging service -->
+                <section id="twilio-messaging-service" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="twilio-messaging-service" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">7. Twilio Messaging Service</h2>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Messaging &rarr; Services &rarr; Create &rarr; "Notify my users"</strong>.</li>
+                                <li>In <strong>Sender Pool</strong>, add the phone number from step 3.</li>
+                                <li>Capture the <strong>Messaging Service SID</strong> (<code>MGxxxx</code>).</li>
+                            </ul>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                <strong>A2P 10DLC.</strong> Brand + campaign registration is <strong>out of scope</strong> for local dev. Twilio Verify works without it. Raw outbound SMS to non-verified US numbers may filter at the carrier &mdash; to your own verified caller-ID it works on a trial account.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 8. Tunnel -->
+                <section id="tunnel" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="tunnel" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">8. Tunnel (Herd Share with stable subdomain)</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Herd Share wraps Expose &mdash; it spins up an HTTPS tunnel to your local Herd site and handles Host-header rewriting automatically, so Twilio's webhooks reach Laravel without bouncing off the local HTTP&rarr;HTTPS 301 that breaks naive <code>ngrok http</code> setups.
+                            </p>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Pick a stable subdomain you'll reuse forever (e.g. <code>lumion-&lt;your-handle&gt;</code>) and pass it to <code>herd share</code> so Twilio Console webhooks + the <code>TWILIO_*_URL</code> env vars stay valid across tunnel restarts. The <code>--subdomain=</code> flag requires a paid Expose plan; a free Herd Share session will hand you a random <code>*.sharedwithexpose.com</code> URL instead and you'll have to re-patch every restart.
+                            </p>
+                            <p class="mt-2 text-sm text-gray-700">Run from the project root so Herd shares the matching <code>.test</code> site:</p>
+                            <pre>cd /Users/leezilla/conductor/workspaces/miashare-app/tallahassee
+herd share --subdomain=&lt;your-subdomain&gt;</pre>
+                            <p class="mt-3 text-sm text-gray-700">
+                                Your forwarding URL is <code>https://&lt;your-subdomain&gt;.sharedwithexpose.com</code>. Herd opens a browser tab to the Expose dashboard so you can watch incoming webhook traffic. The tunnel stays up until you <code>Ctrl+C</code> (or close the dashboard tab); restarting it later with the same <code>--subdomain=</code> reattaches the same URL &mdash; no env-var or Twilio-Console re-patching needed.
+                            </p>
+                            <p class="mt-2 text-sm text-gray-700">
+                                <code>cloudflared</code> and bare <code>ngrok</code> are unsupported in our docs.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 9. .env credentials -->
+                <section id="env-credentials" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="env-credentials" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">9. <code>.env</code> &mdash; Twilio credentials</h2>
+                            <pre>TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_API_KEY_SID=SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_API_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_TWIML_APP_SID=APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_EMAIL_VERIFICATION_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_SMS_VERIFICATION_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                <strong>There is no <code>TWILIO_FROM</code> in this app.</strong> Outbound From comes from the per-institution <code>TwilioNumber.sms_number</code> row you'll bind in step 15. <code>TWILIO_TWIML_APP_SID</code> is only required if you intend to test browser-initiated voice &mdash; leave it blank for SMS / Verify only.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 10. .env webhooks -->
+                <section id="env-webhooks" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="env-webhooks" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">10. <code>.env</code> &mdash; webhook URLs</h2>
+                            <p class="mt-2 text-sm text-gray-700">Replace <code>&lt;tunnel&gt;</code> with your Herd Share forwarding URL from step 8 (e.g. <code>https://&lt;your-subdomain&gt;.sharedwithexpose.com</code>). Because the subdomain is stable, you set this <strong>once</strong> &mdash; it'll keep working across machine reboots and tunnel restarts.</p>
+                            <pre>TWILIO_VOICE_URL=&lt;tunnel&gt;
+TWILIO_SMS_URL=&lt;tunnel&gt;
+TWILIO_STATUS_CALLBACK_URL=&lt;tunnel&gt;/twilio/status-callback
+TWILIO_INBOUND_REQUEST_URL=&lt;tunnel&gt;/incoming-sms-messages/twilio</pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 11. mocks off -->
+                <section id="env-mocks-off" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="env-mocks-off" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">11. <code>.env</code> &mdash; turn off the fakes</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Both <code>.env</code> and <code>.env.example</code> ship with <code>AUTH_FAKE_VERIFICATION=true</code>, and <code>SMS_MOCK</code> defaults to <code>true</code> for many local setups (it's how <code>FakeSmsService</code> gets bound). Flip both to <code>false</code> so real Twilio traffic leaves the box:
+                            </p>
+                            <pre>AUTH_FAKE_VERIFICATION=false
+SMS_MOCK=false</pre>
+                            <p class="mt-2 text-sm text-gray-700">Then:</p>
+                            <pre>php -d memory_limit=512M artisan config:clear</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                If <code>APP_CONFIG_CACHE_PATH</code> is set or you previously ran <code>config:cache</code>, also re-run <code>php -d memory_limit=512M artisan config:cache</code>.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 12. Console webhooks -->
+                <section id="twilio-console-webhooks" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="twilio-console-webhooks" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">12. Twilio Console webhooks</h2>
+                            <p class="mt-2 text-sm text-gray-700">Two paths &mdash; pick whichever you prefer.</p>
+                            <h3 class="mt-3 text-sm font-semibold text-gray-900">Easy: <code>voice:dev-sync</code> (recommended)</h3>
+                            <pre>php -d memory_limit=512M artisan voice:dev-sync \
+    --tunnel=https://&lt;your-subdomain&gt;.sharedwithexpose.com \
+    --institution=lumion-cj-scenarios \
+    --i-confirm-dev-vapi</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Omit <code>--tunnel</code> to auto-detect &mdash; the command probes Expose at <code>localhost:9191</code> (and ngrok at <code>localhost:4040</code>), and Herd Share runs Expose under the hood, so when <code>herd share</code> is active <code>voice:dev-sync</code> finds it on its own. Patches Voice URL + status callbacks on the phone number record and on the <code>TwilioNumber</code> row in the DB. See its docs at <code>app/Console/Commands/Communications/VoiceDevSyncCommand.md</code>.
+                            </p>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                Without <code>--i-confirm-dev-vapi</code>, the command pauses with an interactive "Are you using the Vapi DEV org?" prompt. Answer <code>yes</code> if so, abort if not. (Vapi org setup itself is a separate concern; this guide treats <code>voice:dev-sync</code> as the orchestrator and does not document Vapi onboarding.)
+                            </div>
+                            <h3 class="mt-4 text-sm font-semibold text-gray-900">Manual</h3>
+                            <p class="mt-2 text-sm text-gray-700">If you'd rather click through the Console:</p>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="w-full text-sm border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600">
+                                            <th class="px-3 py-2 border border-gray-200">Console field</th>
+                                            <th class="px-3 py-2 border border-gray-200">Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700">
+                                        <tr><td class="px-3 py-2 border border-gray-200">Phone Numbers &rarr; your number &rarr; Voice URL (POST)</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/voice/twiml</code></td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">Phone Numbers &rarr; your number &rarr; Voice Status Callback (POST)</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/voice/status-callback</code></td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">Phone Numbers &rarr; your number &rarr; Recording Status Callback (POST)</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/voice/recording-status</code></td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">Phone Numbers &rarr; your number &rarr; Messaging URL (POST)</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/incoming-sms-messages/twilio</code></td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">Messaging &rarr; Service &rarr; Integration &rarr; Inbound webhook (POST)</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/incoming-sms-messages/twilio</code></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 13. Whitelist -->
+                <section id="whitelist-self" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="whitelist-self" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">13. Whitelist your phone (the new gate)</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Without this step, every real SMS / Verify / Voice call from your local box will throw <code>Twilio sms blocked: recipient ending in &hellip;</code> (or the voice equivalent). The magic Twilio test number <code>+15005550006</code> is auto-allowed by the boot whitelist; everything else needs a row.
+                            </p>
+                            <ol class="mt-3 list-decimal pl-5 text-sm text-gray-700 space-y-1">
+                                <li>Open <a href="https://admin.tallahassee.test/admin" class="text-lumion-teal-dark underline">https://admin.tallahassee.test/admin</a> and log in as a Lumion admin.</li>
+                                <li>Sidebar &rarr; <strong>Developers &rarr; Twilio Allowed Recipients</strong>.</li>
+                                <li>Click <strong>Quick-add my phone</strong>. This action uses the <code>phone</code> column on your user record &mdash; if that column is null the action errors / no-ops; in that case use <strong>New twilio allowed recipient</strong> and enter <code>(415) 555-0123</code> free-form. The model normalizes to <code>+14155550123</code> on save.</li>
+                            </ol>
+                            <p class="mt-2 text-sm text-gray-600">
+                                Cache (<code>twilio.allowed_recipients</code>, 24h TTL) refreshes write-through on save &mdash; no manual purge needed.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 14. Activate scenario -->
+                <section id="activate-cj-scenarios" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="activate-cj-scenarios" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">14. Activate <code>lumion-cj-scenarios</code></h2>
+                            <pre>php -d memory_limit=512M artisan scenario:run customer_journey:magic_link_stage_actions</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                The scenario is idempotent &mdash; reuses the institution by subdomain. The console prints the seeded admin email (looks like <code>cj-admin-&lt;timestamp&gt;@test.com</code>) and confirms the password is <code>password</code>. The institution's subdomain is hard-coded <code>lumion-cj-scenarios</code>, defined in <code>app/Scenarios/CustomerJourney/Concerns/CreatesJourneyBase.php</code>.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 15. Bind number -->
+                <section id="bind-twilio-number" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="bind-twilio-number" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">15. Bind your Twilio number to the institution</h2>
+                            <ol class="mt-2 list-decimal pl-5 text-sm text-gray-700 space-y-2">
+                                <li>
+                                    Open <a href="https://lumion-cj-scenarios.tallahassee.test/settings/phone-numbers" class="text-lumion-teal-dark underline">https://lumion-cj-scenarios.tallahassee.test/settings/phone-numbers</a> and log in as the school admin from step 14.
+                                    <div class="mt-1 bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs text-gray-700">
+                                        Path is <code>/settings/&hellip;</code>, not <code>/admin/&hellip;</code> &mdash; the SchoolSettings panel is mounted at <code>path('settings')</code> per <code>SchoolSettingsPanelProvider</code>.
+                                    </div>
+                                </li>
+                                <li>Add a row with:
+                                    <ul class="mt-1 list-disc pl-5 space-y-0.5">
+                                        <li><strong>SMS number</strong> = your E.164 from step 3.</li>
+                                        <li><strong>Messaging Service SID</strong> = <code>MGxxxx</code> from step 7.</li>
+                                        <li><strong>Phone Number SID</strong> = <code>PNxxxx</code> from step 3.</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                            <p class="mt-2 text-sm text-gray-600">
+                                The row attaches via a <code>Channel</code> whose <code>institution_id</code> is the seeded institution. Required for outbound SMS to use this institution as sender + for inbound webhook lookups to route here.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 16. Smoke SMS -->
+                <section id="smoke-sms" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="smoke-sms" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">16. Smoke test SMS</h2>
+                            <p class="mt-2 text-sm text-gray-700">Two paths &mdash; pick one.</p>
+                            <h3 class="mt-3 text-sm font-semibold text-gray-900">Preferred: full pipeline via the app UI</h3>
+                            <p class="mt-1 text-sm text-gray-700">
+                                In <code>lumion-cj-scenarios</code>, open a Contact whose phone is your whitelisted E.164, click the Send-SMS action on that contact, type a message, send. Real SMS arrives on your phone; no <code>Twilio sms blocked: recipient ending in &hellip;</code> exception in <code>storage/logs/laravel.log</code>.
+                            </p>
+                            <h3 class="mt-4 text-sm font-semibold text-gray-900">Service-level: tinker hitting the gate directly</h3>
+                            <p class="mt-1 text-sm text-gray-700">
+                                The dispatch path resolves the SMS service via the tagged container so the <code>WhitelistGatedSmsService</code> decorator is in the chain. Mirror that pattern (don't <code>app(TwilioSms::class)</code> directly &mdash; that bypasses the gate):
+                            </p>
+                            <pre>php -d memory_limit=512M artisan tinker</pre>
+                            <pre>$service = collect(iterator_to_array(app()-&gt;tagged(\Lumion\Shared\Contracts\SmsServiceInterface::class)))
+    -&gt;sole(fn ($s) =&gt; $s-&gt;supports(\Lumion\Shared\Enums\SmsProvider::TWILIO));
+
+$result = $service-&gt;send(new \Lumion\Shared\DTOs\SendSmsDto(
+    to: \Brick\PhoneNumber\PhoneNumber::parse('+1YOURNUMBER'),
+    source: 'MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  // Messaging Service SID from step 7
+    text: 'hello from local',
+));
+
+dump($result);</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Pass criterion: real SMS arrives, <code>$result</code> is a <code>SmsMessageDto</code> with a Twilio <code>SMxxxx</code> id, no exception. Failure modes: <code>Twilio sms blocked: &hellip;</code> &rarr; recheck step 13; HTTP auth failure &rarr; recheck steps 9 + 11.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 17. Smoke Verify -->
+                <section id="smoke-verify" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="smoke-verify" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">17. Smoke test Verify</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Trigger an OTP via any flow that uses <code>TwilioSmsVerification</code> (e.g. portal magic-link login, or any feature gated by SMS verification).
+                            </p>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li>Use <code>+15005550006</code> to hit Twilio Verify with the magic test number &mdash; Twilio always returns <code>approved</code>, no real SMS sent, no cost. Useful for E2E tests.</li>
+                                <li>Use your real whitelisted number from step 13 to receive a real OTP on your phone.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 18. Smoke Voice -->
+                <section id="smoke-voice" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="smoke-voice" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">18. Smoke test Voice</h2>
+                            <p class="mt-2 text-sm text-gray-700">Re-run the orchestrator if anything changed since step 12:</p>
+                            <pre>php -d memory_limit=512M artisan voice:dev-sync \
+    --tunnel=https://&lt;your-subdomain&gt;.sharedwithexpose.com \
+    --institution=lumion-cj-scenarios \
+    --i-confirm-dev-vapi</pre>
+                            <p class="mt-2 text-sm text-gray-700">Then either:</p>
+                            <ul class="mt-1 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li>Place an outbound from the in-app voice client (an institution user with the right role can dial from a Contact).</li>
+                                <li>Dial your purchased Twilio number from any phone &mdash; should hit your TwiML app or the configured AI agent.</li>
+                            </ul>
+                            <p class="mt-2 text-sm text-gray-600">
+                                If <code>/voice/twiml</code> returns 502 or 301 in the Expose dashboard (the tab Herd Share opened), see <code>VoiceDevSyncCommand.md</code> "Common failure modes".
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 19. Re-runs -->
+                <section id="re-runs-and-cleanup" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="re-runs-and-cleanup" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">19. Re-runs and cleanup</h2>
+                            <p class="mt-2 text-sm font-semibold text-gray-900">Tunnel restart (with the same <code>--subdomain</code>):</p>
+                            <p class="mt-1 text-sm text-gray-700">
+                                Nothing to change in <code>.env</code> or Twilio Console &mdash; the URL is the same. Just bring the tunnel back up:
+                            </p>
+                            <pre>cd /Users/leezilla/conductor/workspaces/miashare-app/tallahassee
+herd share --subdomain=&lt;your-subdomain&gt;</pre>
+                            <p class="mt-3 text-sm font-semibold text-gray-900">You changed the subdomain (or migrated to/from a free tunnel):</p>
+                            <pre># 1. Edit .env: update every TWILIO_*_URL to the new Herd Share host
+php -d memory_limit=512M artisan config:clear
+php -d memory_limit=512M artisan voice:dev-sync --tunnel=https://&lt;new-subdomain&gt;.sharedwithexpose.com --i-confirm-dev-vapi</pre>
+                            <p class="mt-3 text-sm font-semibold text-gray-900">You removed a number from the whitelist UI but the cache feels stale:</p>
+                            <pre>php -d memory_limit=512M artisan tinker --execute 'Cache::forget("twilio.allowed_recipients");'</pre>
+                            <p class="mt-3 text-sm font-semibold text-gray-900">Inspect the live whitelist cache:</p>
+                            <pre>php -d memory_limit=512M artisan tinker --execute 'dump(Cache::get("twilio.allowed_recipients"));'</pre>
+                            <p class="mt-3 text-sm text-gray-600">
+                                The boot whitelist (magic numbers + DB rows merged) sits in a singleton &mdash; if the in-process state seems wrong, restart the worker / dev server in addition to clearing the cache.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'lumion.twilio-local-setup.v1';
+
+        const STEPS = [
+            ['prereqs',                   'Prereqs'],
+            ['twilio-account',            'Twilio project'],
+            ['twilio-phone-number',       'Phone number'],
+            ['twilio-api-key',            'API key (voice)'],
+            ['twilio-verify-services',    'Verify services'],
+            ['twilio-twiml-app',          'TwiML app'],
+            ['twilio-messaging-service',  'Messaging service'],
+            ['tunnel',                    'Tunnel (stable subdomain)'],
+            ['env-credentials',           '.env credentials'],
+            ['env-webhooks',              '.env webhooks'],
+            ['env-mocks-off',             '.env mocks off'],
+            ['twilio-console-webhooks',   'Console webhooks'],
+            ['whitelist-self',            'Whitelist phone'],
+            ['activate-cj-scenarios',     'Activate cj-scenarios'],
+            ['bind-twilio-number',        'Bind Twilio number'],
+            ['smoke-sms',                 'Smoke SMS'],
+            ['smoke-verify',              'Smoke Verify'],
+            ['smoke-voice',               'Smoke Voice'],
+            ['re-runs-and-cleanup',       'Re-runs & cleanup'],
+        ];
+
+        function loadChecked() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return new Set();
+                const parsed = JSON.parse(raw);
+                return new Set(Array.isArray(parsed.checked) ? parsed.checked : []);
+            } catch (e) {
+                return new Set();
+            }
+        }
+
+        function saveChecked(set) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    checked: [...set],
+                    updatedAt: new Date().toISOString(),
+                }));
+            } catch (e) {
+                console.warn('localStorage write failed', e);
+            }
+        }
+
+        function renderToc(checked) {
+            const ol = document.querySelector('.toc-sidebar ol');
+            ol.innerHTML = '';
+            STEPS.forEach(([id, label], idx) => {
+                const isChecked = checked.has(id);
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="#${id}" data-step-id="${id}"
+                        class="toc-link group flex items-center gap-2 px-2 py-1.5 rounded-md text-gray-700 hover:bg-gray-50 hover:text-lumion-teal-dark transition-colors">
+                        <span class="toc-check w-4 h-4 flex-none rounded-full border border-lumion-teal flex items-center justify-center transition-opacity ${isChecked ? 'opacity-100' : 'opacity-30'}">
+                            ${isChecked ? '<span class="block w-2 h-2 rounded-full bg-lumion-teal"></span>' : ''}
+                        </span>
+                        <span class="text-xs font-medium text-gray-400 tabular-nums">${idx + 1}.</span>
+                        <span class="truncate">${label}</span>
+                    </a>
+                `;
+                ol.appendChild(li);
+            });
+        }
+
+        function updateProgress(checked) {
+            const total = STEPS.length;
+            const done = checked.size;
+            const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+            document.getElementById('progress-text').textContent = `${done} of ${total} complete`;
+            document.getElementById('progress-pct').textContent = `${pct}%`;
+            document.getElementById('progress-fill').style.width = `${pct}%`;
+        }
+
+        function updateSectionCard(id, isChecked) {
+            const section = document.getElementById(id);
+            if (section) section.dataset.checked = isChecked ? 'true' : 'false';
+        }
+
+        function init() {
+            const checked = loadChecked();
+
+            document.querySelectorAll('input[type=checkbox][data-step-id]').forEach(cb => {
+                const id = cb.dataset.stepId;
+                cb.checked = checked.has(id);
+                updateSectionCard(id, cb.checked);
+                cb.addEventListener('change', () => {
+                    if (cb.checked) checked.add(id); else checked.delete(id);
+                    saveChecked(checked);
+                    updateSectionCard(id, cb.checked);
+                    renderToc(checked);
+                    updateProgress(checked);
+                });
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                if (!confirm('Clear all checkboxes?')) return;
+                checked.clear();
+                try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+                document.querySelectorAll('input[type=checkbox][data-step-id]').forEach(cb => {
+                    cb.checked = false;
+                    updateSectionCard(cb.dataset.stepId, false);
+                });
+                renderToc(checked);
+                updateProgress(checked);
+            });
+
+            renderToc(checked);
+            updateProgress(checked);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+</html>
