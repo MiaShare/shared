@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twilio staging setup — Lumion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'lumion-teal': '#6CB8BA',
+                        'lumion-teal-dark': '#4f9b9d',
+                        'lumion-teal-light': '#dff0f1',
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        html { scroll-behavior: smooth; }
+        body { -webkit-font-smoothing: antialiased; }
+
+        /* Custom checkbox accent */
+        .lumion-check {
+            accent-color: #6CB8BA;
+        }
+
+        /* Section card highlight when checked */
+        .section-card[data-checked="true"] {
+            background: #f5fcfc;
+            border-color: #b6dedf;
+        }
+
+        /* TOC link active state via :target */
+        section:target h2 {
+            color: #4f9b9d;
+        }
+
+        /* Code block styling */
+        pre {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 0.875rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.8125rem;
+            line-height: 1.55;
+            overflow-x: auto;
+        }
+        code:not(pre code) {
+            background: #f3f4f6;
+            color: #111827;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.85em;
+        }
+
+        /* TOC scrolling */
+        @media (min-width: 1024px) {
+            .toc-sidebar {
+                position: sticky;
+                top: 1rem;
+                max-height: calc(100vh - 2rem);
+                overflow-y: auto;
+            }
+        }
+    </style>
+<meta name="share-summary" content="End-to-end checklist for taking Lumion&#x27;s Envoyer-deployed staging environment (DigitalOcean droplet, no tunnel) to a working Twilio voice + SMS + Verify setup against the lumion-cj-scenarios institution, layered on top of an already-completed local-setup guide. Covers reusing Twilio + Vapi resources from local, wiring credentials/webhook URLs and turning off mocks via the Envoyer Environment tab, applying changes through SSH-driven artisan (`config:clear`, `horizon:terminate`) or a no-op deploy, re-pointing webhooks with `voice:dev-sync` from the droplet (with manual additions for Messaging URL, Messaging Service inbound, and Vapi org-level Server URL), the staging-applies-too whitelist gate, scenario-driven auto-binding of TwilioNumber + VoiceSetting, SSH-tinker SMS / Verify / Voice smoke tests, and a coordination-focused &quot;switching back to local&quot; step explaining the one-webhook-destination-at-a-time resource ownership split. Interactive 14-step checkbox checklist persists progress in localStorage under a separate key from the local guide.">
+    <meta name="share-hash" content="4e875ea5cabed39cd773908fbf9e0641b259a58941675824dd0bf79b69c77dfd">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-6 py-6">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="inline-block bg-lumion-teal-light text-lumion-teal-dark text-xs font-semibold px-2 py-0.5 rounded">CRTX-905</span>
+                        <span class="text-xs text-gray-500">staging &mdash; admin.cortex.staging.lumion.ai</span>
+                    </div>
+                    <h1 class="text-2xl font-semibold text-gray-900">Twilio staging setup</h1>
+                    <p class="mt-1 text-sm text-gray-600 max-w-2xl">
+                        End-to-end checklist that takes Lumion's staging environment (DigitalOcean Ubuntu droplet, Envoyer-deployed) to: "I can place a real call, send a real SMS, and pass a real Verify OTP from staging code, targeting <code>https://lumion-cj-scenarios.cortex.staging.lumion.ai</code>."
+                    </p>
+                </div>
+                <button id="reset-btn" type="button"
+                    class="text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors">
+                    Reset checklist
+                </button>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="mt-4">
+                <div class="flex items-center justify-between text-xs font-medium text-gray-600 mb-1.5">
+                    <span id="progress-text">0 of 14 complete</span>
+                    <span id="progress-pct">0%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="progress-fill"
+                        class="h-full bg-lumion-teal transition-all duration-200 ease-out"
+                        style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Layout -->
+    <div class="max-w-6xl mx-auto px-6 py-8">
+        <div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8">
+
+            <!-- TOC -->
+            <aside class="toc-sidebar mb-6 lg:mb-0">
+                <nav class="bg-white border border-gray-200 rounded-xl p-3">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 mb-1">Steps</p>
+                    <ol class="text-sm">
+                        <!-- Generated by JS to keep this section short. Falls back to plain section anchors if JS off. -->
+                    </ol>
+                    <p class="mt-3 px-2 text-[11px] text-gray-400">
+                        State persists in <code class="text-[11px]">localStorage</code> on this domain. Separate from the local-setup checklist.
+                    </p>
+                </nav>
+            </aside>
+
+            <!-- Content -->
+            <main class="space-y-5 min-w-0">
+
+                <!-- Preamble -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900 space-y-2">
+                    <p>
+                        <strong>Prerequisite:</strong> you've completed the
+                        <a href="./twilio-local-setup.html" class="underline font-semibold">local-setup guide</a>.
+                        Staging reuses the same Twilio sub-account, the same Vapi org, and the same purchased phone number. Staging just <strong>takes over</strong> the webhook URLs from local. Step 14 covers switching back.
+                    </p>
+                    <p>
+                        The whitelist gate from <code class="bg-amber-100 text-amber-900">lhilton/twilio-phone-whitelist</code> applies to staging too (any non-production env), so step 8 &mdash; adding your phone &mdash; is non-optional.
+                    </p>
+                </div>
+
+                <!-- 1. Prereqs -->
+                <section id="prereqs" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="prereqs" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">1. Prereqs</h2>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Envoyer access</strong> to the staging project for <code>cortex.staging.lumion.ai</code>. You'll edit env vars through the <strong>Environment</strong> tab.</li>
+                                <li><strong>SSH access</strong> to the staging droplet for <code>php artisan</code> commands. Confirm: <code>ssh &lt;user&gt;@&lt;host&gt; 'echo ok'</code>.</li>
+                                <li><strong>Branch deployed.</strong> Staging must be running a branch that includes the scenario auto-bind helper (<code>ensureLocalTwilioNumberForInstitution</code> in <code>CreatesJourneyBase</code>) added by <code>lhilton/twilio-phone-whitelist</code>. Without it, step 10 falls back to manual UI binding.</li>
+                                <li><strong>Horizon supervised</strong> on staging. Most setups run Horizon under Supervisor or systemd, restarted on deploy via Envoyer's hooks. Confirm with <code>sudo supervisorctl status horizon</code> (or equivalent).</li>
+                                <li><strong>Local guide complete.</strong> You need every SID + secret from <a href="./twilio-local-setup.html" class="text-lumion-teal-dark underline">twilio-local-setup</a> steps 2&ndash;9.</li>
+                            </ul>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                <strong>Substitute throughout this guide:</strong> <code>&lt;user&gt;@&lt;host&gt;</code> = your droplet SSH credentials, <code>&lt;deploy-path&gt;</code> = the Envoyer project root on the droplet (typically <code>/home/envoyer/&lt;project&gt;</code> &mdash; check Envoyer &rarr; Project &rarr; Settings &rarr; Project Path).
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Twilio reuse -->
+                <section id="twilio-resources" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="twilio-resources" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">2. Twilio resources (reuse from local)</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                You already have these from the local guide. If anything is missing, complete the matching local step and come back.
+                            </p>
+                            <div class="mt-3 overflow-x-auto">
+                                <table class="w-full text-xs border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-left uppercase tracking-wide text-gray-600">
+                                            <th class="px-2 py-1 border border-gray-200">What</th>
+                                            <th class="px-2 py-1 border border-gray-200">Local guide step</th>
+                                            <th class="px-2 py-1 border border-gray-200">Envoyer key (set in step 4)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700">
+                                        <tr><td class="px-2 py-1 border border-gray-200">Account SID</td><td class="px-2 py-1 border border-gray-200">2</td><td class="px-2 py-1 border border-gray-200"><code>TWILIO_ACCOUNT_SID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Auth Token</td><td class="px-2 py-1 border border-gray-200">2</td><td class="px-2 py-1 border border-gray-200"><code>TWILIO_AUTH_TOKEN</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">API Key SID</td><td class="px-2 py-1 border border-gray-200">4</td><td class="px-2 py-1 border border-gray-200"><code>TWILIO_API_KEY_SID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">API Key Secret</td><td class="px-2 py-1 border border-gray-200">4</td><td class="px-2 py-1 border border-gray-200"><code>TWILIO_API_KEY_SECRET</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">TwiML App SID</td><td class="px-2 py-1 border border-gray-200">6</td><td class="px-2 py-1 border border-gray-200"><code>TWILIO_TWIML_APP_SID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Verify SMS Service SID</td><td class="px-2 py-1 border border-gray-200">5</td><td class="px-2 py-1 border border-gray-200"><code>TWILIO_SMS_VERIFICATION_SERVICE_SID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Verify Email Service SID</td><td class="px-2 py-1 border border-gray-200">5</td><td class="px-2 py-1 border border-gray-200"><code>TWILIO_EMAIL_VERIFICATION_SERVICE_SID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Messaging Service SID</td><td class="px-2 py-1 border border-gray-200">7</td><td class="px-2 py-1 border border-gray-200"><code>LOCAL_TWILIO_MESSAGING_SERVICE_SID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Phone Number SID</td><td class="px-2 py-1 border border-gray-200">3</td><td class="px-2 py-1 border border-gray-200"><code>LOCAL_TWILIO_PHONE_NUMBER_SID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">E.164 phone number</td><td class="px-2 py-1 border border-gray-200">3</td><td class="px-2 py-1 border border-gray-200"><code>LOCAL_TWILIO_NUMBER</code></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                                <strong>Same account, same number, one webhook destination at a time.</strong> Whichever environment last patched the number's webhook URLs (step 7 below) receives inbound traffic. Step 14 covers reclaiming for local.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Vapi reuse -->
+                <section id="vapi-resources" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="vapi-resources" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">3. Vapi resources (reuse from local)</h2>
+                            <p class="mt-2 text-sm text-gray-700">Skip this section if you're only testing SMS / Verify on staging.</p>
+                            <div class="mt-3 overflow-x-auto">
+                                <table class="w-full text-xs border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-left uppercase tracking-wide text-gray-600">
+                                            <th class="px-2 py-1 border border-gray-200">What</th>
+                                            <th class="px-2 py-1 border border-gray-200">Local guide step</th>
+                                            <th class="px-2 py-1 border border-gray-200">Envoyer key</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700">
+                                        <tr><td class="px-2 py-1 border border-gray-200">API Key (Private)</td><td class="px-2 py-1 border border-gray-200">9.2</td><td class="px-2 py-1 border border-gray-200"><code>VAPI_API_KEY</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">BYO SIP Trunk credential ID</td><td class="px-2 py-1 border border-gray-200">9.3</td><td class="px-2 py-1 border border-gray-200"><code>VAPI_SIP_CREDENTIAL_ID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">HMAC webhook credential ID</td><td class="px-2 py-1 border border-gray-200">9.4</td><td class="px-2 py-1 border border-gray-200"><code>VAPI_WEBHOOK_CREDENTIAL_ID</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">HMAC webhook secret</td><td class="px-2 py-1 border border-gray-200">9.4</td><td class="px-2 py-1 border border-gray-200"><code>VAPI_WEBHOOK_SECRET</code></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                <strong>Lost the HMAC secret?</strong> Vapi's <code>secretKey</code> is write-only &mdash; the dashboard has no reveal affordance. Run the <code>PATCH /credential/{id}</code> recipe in local guide step 9.4 to rotate to a fresh value. Same credential ID, same per-phone-number attachments &mdash; just update both local <code>.env</code> and staging Envoyer to the new secret.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Envoyer credentials -->
+                <section id="envoyer-credentials" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="envoyer-credentials" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">4. Envoyer &mdash; credentials</h2>
+                            <p class="mt-2 text-sm text-gray-700">Open Envoyer &rarr; your staging project &rarr; <strong>Environment</strong>. Add or update with the same values you have in local <code>.env</code>:</p>
+                            <pre>TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_API_KEY_SID=SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_API_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_TWIML_APP_SID=APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_EMAIL_VERIFICATION_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_SMS_VERIFICATION_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Vapi (skip if SMS / Verify only on staging)
+VAPI_API_KEY=&lt;from local&gt;
+VAPI_SIP_CREDENTIAL_ID=&lt;from local&gt;
+VAPI_WEBHOOK_CREDENTIAL_ID=&lt;from local&gt;
+VAPI_WEBHOOK_SECRET=&lt;from local&gt;
+
+# Read by the CJ scenario to auto-create the SMS Channel + TwilioNumber + VoiceSetting in step 9
+LOCAL_TWILIO_NUMBER=&lt;E.164 from local&gt;
+LOCAL_TWILIO_MESSAGING_SERVICE_SID=&lt;MGxxxx from local&gt;
+LOCAL_TWILIO_PHONE_NUMBER_SID=&lt;PNxxxx from local&gt;</pre>
+                            <p class="mt-2 text-sm text-gray-700">Click <strong>Update</strong> so Envoyer writes the values to the shared <code>.env</code> file. Verify on the droplet:</p>
+                            <pre>ssh &lt;user&gt;@&lt;host&gt;
+cd &lt;deploy-path&gt;/current
+grep -E '^(TWILIO_|VAPI_|LOCAL_TWILIO_)' .env</pre>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700 space-y-2">
+                                <p><strong><code>TWILIO_TWIML_APP_SID</code> is only required for browser-initiated voice.</strong> Leave it blank if you only care about inbound voice from a phone + SMS + Verify.</p>
+                                <p><strong>There is no <code>TWILIO_FROM</code>.</strong> Outbound From comes from the per-institution <code>TwilioNumber.sms_number</code> row that step 9's scenario will create from <code>LOCAL_TWILIO_NUMBER</code>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. Envoyer webhooks -->
+                <section id="envoyer-webhooks" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="envoyer-webhooks" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">5. Envoyer &mdash; webhook URLs</h2>
+                            <p class="mt-2 text-sm text-gray-700">Same Envoyer Environment tab. The staging admin host is your apex; webhooks land here regardless of which institution they belong to (route handlers look up the <code>To</code> number to resolve tenant).</p>
+                            <pre>TWILIO_VOICE_URL=https://admin.cortex.staging.lumion.ai
+TWILIO_SMS_URL=https://admin.cortex.staging.lumion.ai
+TWILIO_STATUS_CALLBACK_URL=https://admin.cortex.staging.lumion.ai/twilio/status-callback
+TWILIO_INBOUND_REQUEST_URL=https://admin.cortex.staging.lumion.ai/incoming-sms-messages/twilio
+
+# Vapi MCP server (only required for voice agent)
+VAPI_MCP_SERVER_URL=https://admin.cortex.staging.lumion.ai/mcp/voice-agent</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                <code>VAPI_MCP_SERVER_URL</code> defaults to <code>APP_URL + /mcp/voice-agent</code> when unset. Setting it explicitly makes the configuration self-documenting and survives any future <code>APP_URL</code> change.
+                            </p>
+                            <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                                <strong>If Twilio webhooks 404 in the Console debugger</strong> (Console &rarr; Monitor &rarr; Logs &rarr; Errors), the apex Host context isn't accepting these routes on staging. Fall back to the institution subdomain &mdash; replace <code>admin.cortex.staging.lumion.ai</code> with <code>lumion-cj-scenarios.cortex.staging.lumion.ai</code> in every value above and re-Update. Tenant resolution under that Host is unambiguous.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. Mocks off -->
+                <section id="envoyer-mocks-off" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="envoyer-mocks-off" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">6. Envoyer &mdash; turn off the fakes (and apply changes)</h2>
+                            <p class="mt-2 text-sm text-gray-700">Same Envoyer Environment tab. Confirm:</p>
+                            <pre>AUTH_FAKE_VERIFICATION=false
+SMS_MOCK=false</pre>
+                            <p class="mt-2 text-sm text-gray-700">Click <strong>Update</strong>, then apply on the droplet:</p>
+                            <pre>ssh &lt;user&gt;@&lt;host&gt;
+cd &lt;deploy-path&gt;/current
+php artisan config:clear
+php artisan horizon:terminate    # supervisor restarts; new workers boot with fresh env</pre>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                <strong>Envoyer deployment hooks</strong> typically run <code>php artisan config:cache</code> + <code>php artisan horizon:terminate</code> on every deploy. If yours does, triggering a deploy from Envoyer (no code change needed &mdash; just hit <strong>Deploy</strong>) achieves the same thing as the SSH commands above. Check <strong>Project &rarr; Deployment Hooks</strong> to confirm.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. Webhook re-pointing -->
+                <section id="webhooks-repointing" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="webhooks-repointing" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">7. Re-point Twilio + Vapi webhooks at staging</h2>
+                            <div class="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                                This step <strong>disconnects local.</strong> After it, every inbound SMS, every inbound voice call, every Vapi webhook lands on staging. Local devs who want to test will need to reclaim &mdash; see step 14.
+                            </div>
+
+                            <h3 class="mt-4 text-sm font-semibold text-gray-900">Easy: <code>voice:dev-sync</code> from staging SSH</h3>
+                            <pre>ssh &lt;user&gt;@&lt;host&gt;
+cd &lt;deploy-path&gt;/current
+php artisan voice:dev-sync \
+    --tunnel=https://admin.cortex.staging.lumion.ai \
+    --institution=lumion-cj-scenarios \
+    --i-confirm-dev-vapi</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Despite the command name, <code>voice:dev-sync</code> isn't tunnel-specific &mdash; <code>--tunnel=</code> is just "the public URL where webhooks should be sent." Pointing it at staging patches:
+                            </p>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li>Twilio Phone Number &rarr; Voice URL + Voice Status Callback + Recording Status Callback</li>
+                                <li>Vapi per-phone-number <code>server</code> config (URL + HMAC credential attachment)</li>
+                                <li>The institution's <code>TwilioNumber</code> row in the DB</li>
+                            </ul>
+                            <p class="mt-2 text-sm text-gray-700">
+                                It does <strong>not</strong> patch Twilio's Messaging URL on the phone number, the Messaging Service inbound webhook, or the Vapi org-level Server URL &mdash; those are manual additions below.
+                            </p>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                                Without <code>--i-confirm-dev-vapi</code>, the command pauses with an interactive "Are you using the Vapi DEV org?" prompt. Same as local &mdash; answer <code>yes</code> if so.
+                            </div>
+
+                            <h3 class="mt-5 text-sm font-semibold text-gray-900">Manual additions (apply once after <code>voice:dev-sync</code>)</h3>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="w-full text-xs border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-left uppercase tracking-wide text-gray-600">
+                                            <th class="px-2 py-1 border border-gray-200">Console field</th>
+                                            <th class="px-2 py-1 border border-gray-200">Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700">
+                                        <tr><td class="px-2 py-1 border border-gray-200">Twilio &rarr; Phone Numbers &rarr; your number &rarr; Messaging URL (POST)</td><td class="px-2 py-1 border border-gray-200"><code>https://admin.cortex.staging.lumion.ai/incoming-sms-messages/twilio</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Twilio &rarr; Messaging &rarr; your service &rarr; Integration &rarr; Inbound webhook (POST)</td><td class="px-2 py-1 border border-gray-200"><code>https://admin.cortex.staging.lumion.ai/incoming-sms-messages/twilio</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Vapi &rarr; Org Settings &rarr; Server URL (<code>dashboard.vapi.ai/settings/organization</code>)</td><td class="px-2 py-1 border border-gray-200"><code>https://admin.cortex.staging.lumion.ai/webhooks/vapi</code> (HMAC credential attached)</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-700">
+                                <code>voice:dev-sync</code> does not touch Vapi org-level settings. The org-level Server URL needs the same HMAC credential attached as the per-phone-number config; without it, org-level webhooks (assistant-request fallbacks) come in unsigned and the middleware 401s them.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 8. Whitelist -->
+                <section id="whitelist-self" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="whitelist-self" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">8. Whitelist your phone (the staging gate)</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Without this, every real SMS / Verify / Voice call from staging code throws <code>Twilio sms blocked: recipient ending in &hellip;</code>. The magic Twilio test number <code>+15005550006</code> is auto-allowed by the boot whitelist; everything else needs a row.
+                            </p>
+                            <ol class="mt-3 list-decimal pl-5 text-sm text-gray-700 space-y-1">
+                                <li>Open <code>https://admin.cortex.staging.lumion.ai/admin</code> and log in as a Lumion staff user.</li>
+                                <li>Sidebar &rarr; <strong>Developers &rarr; Twilio Allowed Recipients</strong>.</li>
+                                <li>Click <strong>Quick-add my phone</strong> (uses the <code>phone</code> column on your user record). If that column is null, fall back to <strong>New twilio allowed recipient</strong> with the free-form input &mdash; <code>(415) 555-0123</code> normalizes to <code>+14155550123</code> on save.</li>
+                            </ol>
+                            <p class="mt-3 text-sm text-gray-700">Cache (<code>twilio.allowed_recipients</code>, 24h TTL) refreshes write-through on save &mdash; no manual purge.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 9. Activate scenario -->
+                <section id="activate-cj-scenarios" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="activate-cj-scenarios" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">9. Activate <code>lumion-cj-scenarios</code> on staging</h2>
+                            <pre>ssh &lt;user&gt;@&lt;host&gt;
+cd &lt;deploy-path&gt;/current
+php artisan scenario:run customer_journey:magic_link_stage_actions</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                The scenario is idempotent &mdash; reuses the institution by its hard-coded <code>lumion-cj-scenarios</code> subdomain. Console output prints the seeded admin email (<code>cj-admin-&lt;timestamp&gt;@test.com</code>, password <code>password</code>). Because you set <code>LOCAL_TWILIO_*</code> in step 4, you'll also see:
+                            </p>
+                            <pre>&#10003; Bound TwilioNumber +1xxxxxxxxxx to lumion-cj-scenarios (channel id: N)</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                That line confirms <code>ensureLocalTwilioNumberForInstitution</code> (in <code>app/Scenarios/CustomerJourney/Concerns/CreatesJourneyBase.php</code>) created or updated the SMS Channel + <code>TwilioNumber</code> row + paired <code>VoiceSetting</code> to point at your real number. Without the paired <code>VoiceSetting</code>, inbound voice routing short-circuits with "this number is not yet configured for voice routing" &mdash; the helper creates both.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 10. Verify bind -->
+                <section id="verify-bind" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="verify-bind" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">10. Verify the bind</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Visit <code>https://lumion-cj-scenarios.cortex.staging.lumion.ai/settings/phone-numbers</code> and log in as the staging school admin from step 9. You should see a row with:
+                            </p>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>SMS number</strong> = <code>LOCAL_TWILIO_NUMBER</code></li>
+                                <li><strong>Messaging Service SID</strong> = <code>LOCAL_TWILIO_MESSAGING_SERVICE_SID</code></li>
+                                <li><strong>Phone Number SID</strong> = <code>LOCAL_TWILIO_PHONE_NUMBER_SID</code></li>
+                            </ul>
+                            <p class="mt-3 text-sm text-gray-700">If the row is missing or the SIDs are wrong:</p>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Branch on staging may not include the scenario helper</strong> &mdash; check that the deployed branch matches <code>lhilton/twilio-phone-whitelist</code>. Without the helper, you'll need to add the row manually here: SMS number = your E.164, Messaging Service SID = <code>MGxxxx</code>, Phone Number SID = <code>PNxxxx</code>.</li>
+                                <li><strong><code>LOCAL_TWILIO_*</code> may not have made it into staging <code>.env</code></strong> &mdash; re-check Envoyer + the SSH <code>grep</code> from step 4, then re-run the scenario.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 11. Smoke SMS -->
+                <section id="smoke-sms" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="smoke-sms" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">11. Smoke test SMS</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                This step verifies the <strong>whitelist gate end-to-end</strong>, not real carrier delivery. The <code>WhitelistGatedSmsService</code> decorator sits in front of <code>TwilioSms::send()</code> via tagged container binding; we want to confirm the chain is wired and the whitelist passes.
+                            </p>
+
+                            <h3 class="mt-4 text-sm font-semibold text-gray-900">Service-level: tinker via SSH</h3>
+                            <pre>ssh &lt;user&gt;@&lt;host&gt;
+cd &lt;deploy-path&gt;/current
+php artisan tinker</pre>
+                            <pre>$service = collect(iterator_to_array(app()-&gt;tagged(\Lumion\Shared\Contracts\SmsServiceInterface::class)))
+    -&gt;sole(fn ($s) =&gt; $s-&gt;supports(\Lumion\Shared\Enums\SmsProvider::TWILIO));
+
+$result = $service-&gt;send(new \Lumion\Shared\DTOs\SendSmsDto(
+    to: \Brick\PhoneNumber\PhoneNumber::parse('+1YOURNUMBER'),
+    source: 'MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  // LOCAL_TWILIO_MESSAGING_SERVICE_SID
+    text: 'hello from staging',
+));
+
+dump($result);</pre>
+
+                            <p class="mt-3 text-sm font-semibold text-gray-900">Pass criteria &mdash; same shape as local guide step 17:</p>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="w-full text-xs border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-left uppercase tracking-wide text-gray-600">
+                                            <th class="px-2 py-1 border border-gray-200">Check</th>
+                                            <th class="px-2 py-1 border border-gray-200">Look for</th>
+                                            <th class="px-2 py-1 border border-gray-200">If not</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700">
+                                        <tr><td class="px-2 py-1 border border-gray-200">Gate is in the chain</td><td class="px-2 py-1 border border-gray-200"><code>get_class($service)</code> &rarr; <code>Lumion\TwilioIntegration\Services\Decorators\WhitelistGatedSmsService</code></td><td class="px-2 py-1 border border-gray-200">Tagged binding broken &mdash; recheck steps 4 + 6.</td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Whitelisted number passes the gate</td><td class="px-2 py-1 border border-gray-200">NO <code>Twilio sms blocked: recipient ending in &hellip;</code> exception</td><td class="px-2 py-1 border border-gray-200">Recheck step 8 (the destination must have a row in <code>twilio_allowed_recipients</code>).</td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Twilio accepted the request</td><td class="px-2 py-1 border border-gray-200"><code>$result</code> is a <code>SmsMessageDto</code> with a real <code>SMxxxx</code> <code>id</code></td><td class="px-2 py-1 border border-gray-200">HTTP 401/403 &rarr; recheck <code>TWILIO_ACCOUNT_SID</code> / <code>TWILIO_AUTH_TOKEN</code> in Envoyer + <code>php artisan config:clear</code>.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3 class="mt-5 text-sm font-semibold text-gray-900">Optional: full pipeline via the staging UI</h3>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Open a Contact in <code>lumion-cj-scenarios</code> (staging) whose phone is your whitelisted E.164, click <strong>Send SMS</strong>, send. Same gate decorator regardless of caller.
+                            </p>
+
+                            <h3 class="mt-5 text-sm font-semibold text-gray-900">Carrier delivery caveat</h3>
+                            <p class="mt-2 text-sm text-gray-700">
+                                US carriers (T-Mobile, Verizon, AT&amp;T) drop A2P SMS from long-code numbers without A2P 10DLC registration. Twilio still mints an SID and reports <code>status: pending</code>, then flips to <code>undelivered</code> with <code>error_code: 30034</code> shortly after. This is <strong>org-level</strong> and not specific to staging vs local &mdash; same number, same carrier rules. See local guide step 17 ("Carrier delivery caveat") for the curl recipe to inspect message status by SID and the three resolution paths (Verify magic number / toll-free / A2P 10DLC). For dev smoke testing, use Verify (step 12) instead &mdash; <code>+15005550006</code> always returns <code>approved</code>.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 12. Smoke Verify -->
+                <section id="smoke-verify" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="smoke-verify" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">12. Smoke test Verify</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Trigger an OTP via any flow that uses <code>TwilioSmsVerification</code> (portal magic-link login, etc).
+                            </p>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+                                <li><strong>Magic test number</strong> <code>+15005550006</code> &mdash; Twilio Verify always returns <code>approved</code>. No real SMS, no cost. Useful for E2E.</li>
+                                <li><strong>Real whitelisted number</strong> from step 8 &mdash; receive a real OTP on your phone.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 13. Smoke Voice -->
+                <section id="smoke-voice" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="smoke-voice" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">13. Smoke test Voice (Twilio + Vapi end-to-end)</h2>
+                            <p class="mt-2 text-sm text-gray-700">Re-run if anything has drifted since step 7:</p>
+                            <pre>ssh &lt;user&gt;@&lt;host&gt;
+cd &lt;deploy-path&gt;/current
+php artisan voice:dev-sync \
+    --tunnel=https://admin.cortex.staging.lumion.ai \
+    --institution=lumion-cj-scenarios \
+    --i-confirm-dev-vapi</pre>
+                            <p class="mt-2 text-sm text-gray-700">Then either:</p>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-2">
+                                <li>
+                                    <strong>Inbound</strong> &mdash; dial your purchased Twilio number from any phone. Twilio bridges to Vapi, Vapi POSTs <code>assistant-request</code> to <code>https://admin.cortex.staging.lumion.ai/webhooks/vapi</code>, staging mints a per-call MCP token and replies with the assistant config, the conversational LLM uses MCP tools at <code>https://admin.cortex.staging.lumion.ai/mcp/voice-agent</code>. Watch the <code>assistant-request</code> handler:
+                                    <pre>tail -f &lt;deploy-path&gt;/current/storage/logs/laravel.log</pre>
+                                </li>
+                                <li><strong>Outbound</strong> &mdash; place a call from the staging in-app voice client (institution user with the right role can dial from a Contact). Same MCP wiring; this path uses <code>POST https://api.vapi.ai/call</code> directly.</li>
+                            </ul>
+                            <p class="mt-2 text-sm text-gray-700">
+                                If the call connects but goes silent after the greeting, check that <code>VAPI_MCP_SERVER_URL</code> in Envoyer matches <code>https://admin.cortex.staging.lumion.ai</code>. If <code>/voice/twiml</code> returns 502 in Twilio's debugger, see <code>app/Console/Commands/Communications/VoiceDevSyncCommand.md</code> "Common failure modes". If Vapi end-of-call webhooks 401, the HMAC credential isn't attached to the per-phone-number <code>server</code> config &mdash; re-run <code>voice:dev-sync</code>.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 14. Switching back -->
+                <section id="switching-back" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="switching-back" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">14. Switching back to local</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Twilio + Vapi resources have <strong>one</strong> webhook destination at a time. While staging owns the webhooks, your local tunnel won't receive any inbound traffic. To reclaim for local development:
+                            </p>
+                            <pre># On your local machine, with the tunnel running
+herd share --subdomain=&lt;your-local-subdomain&gt;
+
+# In another terminal
+cd /Users/leezilla/conductor/workspaces/miashare-app/tallahassee
+php -d memory_limit=512M artisan voice:dev-sync \
+    --tunnel=https://&lt;your-local-subdomain&gt;.sharedwithexpose.com \
+    --institution=lumion-cj-scenarios \
+    --i-confirm-dev-vapi</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                This re-points the same Twilio Phone Number + Vapi per-phone-number config back at your local tunnel. Staging stops receiving webhooks until someone re-runs the staging <code>voice:dev-sync</code> from step 7.
+                            </p>
+
+                            <p class="mt-3 text-sm font-semibold text-gray-900">Manual fields not touched by <code>voice:dev-sync</code> (re-point when switching either direction):</p>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="w-full text-xs border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-left uppercase tracking-wide text-gray-600">
+                                            <th class="px-2 py-1 border border-gray-200">Field</th>
+                                            <th class="px-2 py-1 border border-gray-200">When local owns it</th>
+                                            <th class="px-2 py-1 border border-gray-200">When staging owns it</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700">
+                                        <tr><td class="px-2 py-1 border border-gray-200">Twilio &rarr; Phone Number &rarr; Messaging URL</td><td class="px-2 py-1 border border-gray-200"><code>&lt;local tunnel&gt;/incoming-sms-messages/twilio</code></td><td class="px-2 py-1 border border-gray-200"><code>https://admin.cortex.staging.lumion.ai/incoming-sms-messages/twilio</code></td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Twilio &rarr; Messaging Service &rarr; Inbound webhook</td><td class="px-2 py-1 border border-gray-200">same as above</td><td class="px-2 py-1 border border-gray-200">same as above</td></tr>
+                                        <tr><td class="px-2 py-1 border border-gray-200">Vapi &rarr; Org Settings &rarr; Server URL</td><td class="px-2 py-1 border border-gray-200"><code>&lt;local tunnel&gt;/webhooks/vapi</code></td><td class="px-2 py-1 border border-gray-200"><code>https://admin.cortex.staging.lumion.ai/webhooks/vapi</code></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                                <strong>Outbound from local still partially works while staging owns the webhooks.</strong> A local tinker <code>TwilioSms::send()</code> will succeed as far as Twilio is concerned &mdash; Twilio's REST API is hit directly from your laptop, no webhooks involved. But any <strong>reply</strong> SMS, any <strong>delivery status</strong> callback, any <strong>inbound call</strong> routes to staging until you reclaim. Don't be confused by "outbound says success, inbound never arrives" &mdash; that's the resource-ownership split.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'lumion.twilio-staging-setup.v1';
+
+        const STEPS = [
+            ['prereqs',                'Prereqs'],
+            ['twilio-resources',       'Twilio resources (reuse)'],
+            ['vapi-resources',         'Vapi resources (reuse)'],
+            ['envoyer-credentials',    'Envoyer — credentials'],
+            ['envoyer-webhooks',       'Envoyer — webhook URLs'],
+            ['envoyer-mocks-off',      'Envoyer — mocks off'],
+            ['webhooks-repointing',    'Re-point webhooks'],
+            ['whitelist-self',         'Whitelist phone'],
+            ['activate-cj-scenarios',  'Activate cj-scenarios'],
+            ['verify-bind',            'Verify bind'],
+            ['smoke-sms',              'Smoke SMS'],
+            ['smoke-verify',           'Smoke Verify'],
+            ['smoke-voice',            'Smoke Voice'],
+            ['switching-back',         'Switching back to local'],
+        ];
+
+        function loadChecked() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return new Set();
+                const parsed = JSON.parse(raw);
+                return new Set(Array.isArray(parsed.checked) ? parsed.checked : []);
+            } catch (e) {
+                return new Set();
+            }
+        }
+
+        function saveChecked(set) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    checked: [...set],
+                    updatedAt: new Date().toISOString(),
+                }));
+            } catch (e) {
+                console.warn('localStorage write failed', e);
+            }
+        }
+
+        function renderToc(checked) {
+            const ol = document.querySelector('.toc-sidebar ol');
+            ol.innerHTML = '';
+            STEPS.forEach(([id, label], idx) => {
+                const isChecked = checked.has(id);
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="#${id}" data-step-id="${id}"
+                        class="toc-link group flex items-center gap-2 px-2 py-1.5 rounded-md text-gray-700 hover:bg-gray-50 hover:text-lumion-teal-dark transition-colors">
+                        <span class="toc-check w-4 h-4 flex-none rounded-full border border-lumion-teal flex items-center justify-center transition-opacity ${isChecked ? 'opacity-100' : 'opacity-30'}">
+                            ${isChecked ? '<span class="block w-2 h-2 rounded-full bg-lumion-teal"></span>' : ''}
+                        </span>
+                        <span class="text-xs font-medium text-gray-400 tabular-nums">${idx + 1}.</span>
+                        <span class="truncate">${label}</span>
+                    </a>
+                `;
+                ol.appendChild(li);
+            });
+        }
+
+        function updateProgress(checked) {
+            const total = STEPS.length;
+            const done = checked.size;
+            const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+            document.getElementById('progress-text').textContent = `${done} of ${total} complete`;
+            document.getElementById('progress-pct').textContent = `${pct}%`;
+            document.getElementById('progress-fill').style.width = `${pct}%`;
+        }
+
+        function updateSectionCard(id, isChecked) {
+            const section = document.getElementById(id);
+            if (section) section.dataset.checked = isChecked ? 'true' : 'false';
+        }
+
+        function init() {
+            const checked = loadChecked();
+
+            document.querySelectorAll('input[type=checkbox][data-step-id]').forEach(cb => {
+                const id = cb.dataset.stepId;
+                cb.checked = checked.has(id);
+                updateSectionCard(id, cb.checked);
+                cb.addEventListener('change', () => {
+                    if (cb.checked) checked.add(id); else checked.delete(id);
+                    saveChecked(checked);
+                    updateSectionCard(id, cb.checked);
+                    renderToc(checked);
+                    updateProgress(checked);
+                });
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                if (!confirm('Clear all checkboxes?')) return;
+                checked.clear();
+                try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+                document.querySelectorAll('input[type=checkbox][data-step-id]').forEach(cb => {
+                    cb.checked = false;
+                    updateSectionCard(cb.dataset.stepId, false);
+                });
+                renderToc(checked);
+                updateProgress(checked);
+            });
+
+            renderToc(checked);
+            updateProgress(checked);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+</html>
