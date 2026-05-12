@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twilio local-dev setup — Lumion</title>
-    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice (with Vapi AI agent), SMS, and Verify calls firing from a local dev box against the lumion-cj-scenarios institution — covers Twilio + Vapi Console setup (Private API key with transient assistants, BYO SIP credential with field-by-field form values, HMAC webhook credential matched to VapiWebhookSignatureMiddleware), Herd Share tunnel with a stable subdomain, .env wiring, the new CRTX-905 recipient whitelist gate, scenario-driven auto-binding of the Twilio number to the institution, and smoke tests for SMS / Verify / Voice. Interactive 20-step checkbox checklist persists progress in localStorage.">
-    <meta name="share-hash" content="9cec99e2c13952ef25fb6de085b9cbf69b12bab5ad3bfb8ebee29a016a2bdb71">
+    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice (with Vapi AI agent), SMS, and Verify calls firing from a local dev box against the lumion-cj-scenarios institution — covers Twilio + Vapi Console setup (Private API key, BYO SIP credential with field-by-field form values, HMAC webhook credential matched to VapiWebhookSignatureMiddleware), Herd Share tunnel with stable subdomain, .env wiring, the new CRTX-905 recipient whitelist gate, scenario-driven auto-binding of the Twilio number to the institution, gate-focused SMS smoke test with A2P 10DLC carrier-delivery caveat, and Verify / Voice smoke tests. Interactive 20-step checkbox checklist persists progress in localStorage.">
+    <meta name="share-hash" content="88b3fd312c58b5d300172df906e5ebca8e07ee91f6e1aeb7addcbf31713c1808">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -568,12 +568,10 @@ SMS_MOCK=false</pre>
                         <input type="checkbox" data-step-id="smoke-sms" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
                             <h2 class="text-lg font-semibold text-gray-900">17. Smoke test SMS</h2>
-                            <p class="mt-2 text-sm text-gray-700">Two paths &mdash; pick one.</p>
-                            <h3 class="mt-3 text-sm font-semibold text-gray-900">Preferred: full pipeline via the app UI</h3>
-                            <p class="mt-1 text-sm text-gray-700">
-                                In <code>lumion-cj-scenarios</code>, open a Contact whose phone is your whitelisted E.164, click the Send-SMS action on that contact, type a message, send. Real SMS arrives on your phone; no <code>Twilio sms blocked: recipient ending in &hellip;</code> exception in <code>storage/logs/laravel.log</code>.
+                            <p class="mt-2 text-sm text-gray-700">
+                                This step verifies the <strong>whitelist gate behavior end-to-end</strong>, not real carrier delivery. Carrier delivery on this account is a separate concern (see "Carrier delivery caveat" below) and isn't required for the gate verification to pass.
                             </p>
-                            <h3 class="mt-4 text-sm font-semibold text-gray-900">Service-level: tinker hitting the gate directly</h3>
+                            <h3 class="mt-3 text-sm font-semibold text-gray-900">Service-level: tinker hitting the gate directly</h3>
                             <p class="mt-1 text-sm text-gray-700">
                                 The dispatch path resolves the SMS service via the tagged container so the <code>WhitelistGatedSmsService</code> decorator is in the chain. Mirror that pattern (don't <code>app(TwilioSms::class)</code> directly &mdash; that bypasses the gate):
                             </p>
@@ -588,8 +586,61 @@ $result = $service-&gt;send(new \Lumion\Shared\DTOs\SendSmsDto(
 ));
 
 dump($result);</pre>
+                            <p class="mt-3 text-sm font-semibold text-gray-900">Pass criteria &mdash; all checked locally, no carrier dependency:</p>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="w-full text-sm border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600">
+                                            <th class="px-3 py-2 border border-gray-200">Check</th>
+                                            <th class="px-3 py-2 border border-gray-200">Look for</th>
+                                            <th class="px-3 py-2 border border-gray-200">If not</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700">
+                                        <tr><td class="px-3 py-2 border border-gray-200">Gate is in the chain</td><td class="px-3 py-2 border border-gray-200"><code>get_class($service)</code> &rarr; <code>Lumion\TwilioIntegration\Services\Decorators\WhitelistGatedSmsService</code></td><td class="px-3 py-2 border border-gray-200">Tagged binding broken &mdash; recheck steps 10 + 12.</td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">Whitelisted number passes the gate</td><td class="px-3 py-2 border border-gray-200">NO <code>Twilio sms blocked: recipient ending in &hellip;</code> exception</td><td class="px-3 py-2 border border-gray-200">Recheck step 14 (the destination must have a row in <code>twilio_allowed_recipients</code>).</td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">Twilio accepted the request</td><td class="px-3 py-2 border border-gray-200"><code>$result</code> is a <code>SmsMessageDto</code> with a real <code>SMxxxx</code> <code>id</code></td><td class="px-3 py-2 border border-gray-200">HTTP 401/403 &rarr; recheck <code>TWILIO_ACCOUNT_SID</code> / <code>TWILIO_AUTH_TOKEN</code> (step 10) and <code>php artisan config:clear</code>.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-700">That's the gate verification. If all three check out, the whitelist branch is doing its job.</p>
+
+                            <h3 class="mt-4 text-sm font-semibold text-gray-900">Optional: full pipeline via the app UI</h3>
+                            <p class="mt-1 text-sm text-gray-700">
+                                If you want to exercise the whole UI dispatch path (Contact &rarr; Send-SMS action &rarr; Conversation &rarr; <code>TwilioNumber::dispatch</code>), open a Contact in <code>lumion-cj-scenarios</code> whose phone is your whitelisted E.164, click Send-SMS, send. Same pass criteria as above; the <code>WhitelistGatedSmsService</code> decorator is the same regardless of who calls it.
+                            </p>
+
+                            <h3 class="mt-4 text-sm font-semibold text-gray-900">Carrier delivery caveat (why your phone may not actually buzz)</h3>
+                            <p class="mt-1 text-sm text-gray-700">
+                                A successful tinker run with <code>status: pending</code> from Twilio doesn't mean the SMS reached your phone. US carriers (T-Mobile, Verizon, AT&amp;T) drop A2P (application-to-person) SMS from long-code numbers (<code>+1NXX-NXX-XXXX</code>) that aren't registered with <strong>A2P 10DLC</strong> at The Campaign Registry. Twilio still accepts your <code>POST /Messages</code> request and mints an SID, but the message status flips to <code>undelivered</code> shortly after with <code>error_code: 30034</code>.
+                            </p>
+                            <p class="mt-2 text-sm text-gray-700">Check live status by SID:</p>
+                            <pre>ACCT=$(grep -E '^TWILIO_ACCOUNT_SID=' .env | cut -d= -f2-)
+TOKEN=$(grep -E '^TWILIO_AUTH_TOKEN=' .env | cut -d= -f2-)
+curl -s -u "$ACCT:$TOKEN" \
+    "https://api.twilio.com/2010-04-01/Accounts/$ACCT/Messages/SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.json" \
+    | python3 -m json.tool | grep -E '"(status|error_code|error_message)":'</pre>
                             <p class="mt-2 text-sm text-gray-700">
-                                Pass criterion: real SMS arrives, <code>$result</code> is a <code>SmsMessageDto</code> with a Twilio <code>SMxxxx</code> id, no exception. Failure modes: <code>Twilio sms blocked: &hellip;</code> &rarr; recheck step 14; HTTP auth failure &rarr; recheck steps 10 + 12.
+                                If you see <code>error_code: 30034</code>, that's A2P 10DLC. Three resolutions, in increasing fidelity:
+                            </p>
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="w-full text-sm border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600">
+                                            <th class="px-3 py-2 border border-gray-200">Path</th>
+                                            <th class="px-3 py-2 border border-gray-200">What</th>
+                                            <th class="px-3 py-2 border border-gray-200">Effort</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-700">
+                                        <tr><td class="px-3 py-2 border border-gray-200"><strong>Smoke-test via Verify (recommended for dev)</strong></td><td class="px-3 py-2 border border-gray-200">Step 18 below. <code>+15005550006</code> magic number &rarr; Twilio Verify always returns <code>approved</code>, no carrier path needed. Exercises the same <code>WhitelistGatedPhoneVerification</code> decorator.</td><td class="px-3 py-2 border border-gray-200">Zero.</td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">Toll-free number</td><td class="px-3 py-2 border border-gray-200">Buy a <code>+1-8XX</code> number; toll-free verification (Console form, ~1&ndash;2 days). Bypasses 10DLC.</td><td class="px-3 py-2 border border-gray-200">Console + wait.</td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">A2P 10DLC</td><td class="px-3 py-2 border border-gray-200">Console &rarr; Messaging &rarr; Regulatory Compliance &rarr; register a Brand + Campaign. Approval typically multi-day. Right call for prod, overkill for dev.</td><td class="px-3 py-2 border border-gray-200">Multi-day.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-600">
+                                For dev-machine smoke testing, treat carrier delivery as a separate Lumion org-level concern &mdash; not a per-dev setup step. The gate behavior (above) is what this step is actually verifying.
                             </p>
                         </div>
                     </div>
