@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twilio local-dev setup — Lumion</title>
-    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice, SMS, and Verify calls firing from a local dev box against the lumion-cj-scenarios institution — covers Twilio Console setup, Herd Share tunnel with a stable subdomain, .env wiring, the new CRTX-905 recipient whitelist gate, and smoke tests for SMS / Verify / Voice. Interactive 19-step checkbox checklist persists progress in localStorage.">
-    <meta name="share-hash" content="813047867b9cc1623e16a1afbadb4a8561c1edebe6a3df499ff5ac1080db266b">
+    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice (with Vapi AI agent), SMS, and Verify calls firing from a local dev box against the lumion-cj-scenarios institution — covers Twilio + Vapi Console setup, Herd Share tunnel with a stable subdomain, .env wiring, the new CRTX-905 recipient whitelist gate, scenario-driven auto-binding of the Twilio number to the institution, and smoke tests for SMS / Verify / Voice. Interactive 20-step checkbox checklist persists progress in localStorage.">
+    <meta name="share-hash" content="9dc474dee47709d1fdc445ce523c53f74293c5f5a177a6185f2113769d571b04">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -99,7 +99,7 @@
             <!-- Progress bar -->
             <div class="mt-4">
                 <div class="flex items-center justify-between text-xs font-medium text-gray-600 mb-1.5">
-                    <span id="progress-text">0 of 19 complete</span>
+                    <span id="progress-text">0 of 20 complete</span>
                     <span id="progress-pct">0%</span>
                 </div>
                 <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -139,7 +139,7 @@
                     numbers that aren't on <code class="bg-amber-100 text-amber-900">twilio_allowed_recipients</code>
                     (or the magic test number <code class="bg-amber-100 text-amber-900">+15005550006</code>)
                     are blocked by the <code class="bg-amber-100 text-amber-900">WhitelistGated*</code> decorators.
-                    So step 13 — adding your own number — is non-optional.
+                    So step 14 — adding your own number — is non-optional.
                 </div>
 
                 <!-- 1. Prereqs -->
@@ -170,7 +170,7 @@
                             <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
                                 <li><strong>Account &rarr; API keys &amp; tokens</strong> &mdash; capture <strong>Account SID</strong> + <strong>Auth Token</strong>.</li>
                             </ul>
-                            <p class="mt-2 text-sm text-gray-600">Stash both in your password manager; you'll paste them into <code>.env</code> in step 9.</p>
+                            <p class="mt-2 text-sm text-gray-600">Stash both in your password manager; you'll paste them into <code>.env</code> in step 10.</p>
                         </div>
                     </div>
                 </section>
@@ -230,7 +230,7 @@
                         <div class="min-w-0 flex-1">
                             <h2 class="text-lg font-semibold text-gray-900">6. Twilio TwiML App</h2>
                             <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
-                                <li><strong>Voice &rarr; TwiML &rarr; TwiML Apps &rarr; Create</strong>. Voice URL + status callback can stay as placeholders for now &mdash; <code>voice:dev-sync</code> (step 18) overwrites them with your tunnel URL.</li>
+                                <li><strong>Voice &rarr; TwiML &rarr; TwiML Apps &rarr; Create</strong>. Voice URL + status callback can stay as placeholders for now &mdash; <code>voice:dev-sync</code> (step 19) overwrites them with your tunnel URL.</li>
                                 <li>Capture the <strong>TwiML App SID</strong> (<code>APxxxx</code>). Required only if you intend to test browser-initiated voice.</li>
                             </ul>
                         </div>
@@ -280,21 +280,62 @@ herd share --subdomain=&lt;your-subdomain&gt;</pre>
                     </div>
                 </section>
 
-                <!-- 9. .env credentials -->
+                <!-- 9. Vapi Console setup -->
+                <section id="vapi-console" class="section-card bg-white border border-gray-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" data-step-id="vapi-console" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold text-gray-900">9. Vapi Console setup (skip if SMS / Verify only)</h2>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Vapi (<a href="https://vapi.ai" class="text-lumion-teal-dark underline">vapi.ai</a>) is the voice-AI orchestrator that sits between Twilio (carrier) and the conversational LLM (gpt-5.4-mini, Claude, etc). For inbound, Twilio bridges the call leg to Vapi via Media Streams; Vapi POSTs an <code>assistant-request</code> webhook to this app, we mint a per-call MCP bearer token, and reply with a transient assistant config that points the LLM at our <code>/mcp/voice-agent</code> server. For outbound, this app calls Vapi's REST <code>POST /call</code> directly.
+                            </p>
+                            <p class="mt-2 text-sm text-gray-700">
+                                You need the <strong>DEV</strong> Vapi org &mdash; never production. If your team has a shared DEV org, accept the invite to it (don't create a new personal org &mdash; billing).
+                            </p>
+                            <p class="mt-2 text-sm text-gray-700">
+                                Skip this entire step if you're only testing SMS or Verify. The whitelist gate, scenario, and env steps below still apply.
+                            </p>
+                            <ol class="mt-3 list-decimal pl-5 text-sm text-gray-700 space-y-2">
+                                <li><strong>Sign up / log in</strong> at <a href="https://dashboard.vapi.ai" class="text-lumion-teal-dark underline">https://dashboard.vapi.ai</a>. Switch to your DEV org.</li>
+                                <li><strong>API Key</strong> &mdash; Dashboard &rarr; API Keys &rarr; create a new key. Capture as <code>VAPI_API_KEY</code>.</li>
+                                <li><strong>BYO SIP Trunk credential</strong> &mdash; Dashboard &rarr; Custom Credentials &rarr; create a <code>byo-sip-trunk</code> credential (or <code>POST https://api.vapi.ai/credential</code> if you prefer the REST API). Capture the returned id as <code>VAPI_SIP_CREDENTIAL_ID</code>.
+                                    <div class="mt-1 text-xs text-gray-600"><strong>Why required even though SIP isn't used:</strong> Vapi's <code>byo-phone-number</code> schema (used by <code>RegisterTwilioNumberWithVapi</code> to mint the <code>phoneNumberId</code> we pass to bypass calls) requires a <code>credentialId</code> pointing at a BYO trunk credential, even when no SIP traffic flows. Without it, registration fails. See <code>config/vapi.php</code> lines 46&ndash;64 for the full rationale.</div>
+                                </li>
+                                <li><strong>HMAC webhook credential</strong> &mdash; Dashboard &rarr; Custom Credentials &rarr; HMAC &rarr; create. Capture <strong>id</strong> as <code>VAPI_WEBHOOK_CREDENTIAL_ID</code> and <strong>secret</strong> as <code>VAPI_WEBHOOK_SECRET</code>. The id has to be attached to BOTH the org-level Server URL AND each per-phone-number <code>server</code> config so Vapi signs every webhook delivery &mdash; <code>voice:dev-sync</code> handles the per-phone-number attachment in step 13. The org-level attachment is a one-time Console action (next step).</li>
+                                <li><strong>Org-level Server URL</strong> &mdash; Dashboard &rarr; Org Settings &rarr; Server URL &rarr; set to <code>https://&lt;your-subdomain&gt;.sharedwithexpose.com/webhooks/vapi</code>. Attach the HMAC credential from step 4. Vapi signs requests with <code>x-vapi-signature</code> (HMAC-SHA256 over raw body) &mdash; without the attachment, our middleware 401s every delivery.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 10. .env credentials -->
                 <section id="env-credentials" class="section-card bg-white border border-gray-200 rounded-xl p-5">
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="env-credentials" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">9. <code>.env</code> &mdash; Twilio credentials</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">10. <code>.env</code> &mdash; credentials</h2>
                             <pre>TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_API_KEY_SID=SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_API_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_TWIML_APP_SID=APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_EMAIL_VERIFICATION_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_SMS_VERIFICATION_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
-                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
-                                <strong>There is no <code>TWILIO_FROM</code> in this app.</strong> Outbound From comes from the per-institution <code>TwilioNumber.sms_number</code> row you'll bind in step 15. <code>TWILIO_TWIML_APP_SID</code> is only required if you intend to test browser-initiated voice &mdash; leave it blank for SMS / Verify only.
+TWILIO_SMS_VERIFICATION_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Vapi (only required for voice — skip if SMS / Verify only)
+VAPI_API_KEY=&lt;your-vapi-api-key&gt;
+VAPI_SIP_CREDENTIAL_ID=&lt;your-byo-sip-credential-id&gt;
+VAPI_WEBHOOK_CREDENTIAL_ID=&lt;your-hmac-credential-id&gt;
+VAPI_WEBHOOK_SECRET=&lt;your-hmac-secret&gt;
+
+# Local Twilio sender (auto-bound to lumion-cj-scenarios by the CJ scenarios — skip step 16's UI route when set)
+LOCAL_TWILIO_NUMBER=&lt;your-E.164-from-step-3&gt;
+LOCAL_TWILIO_MESSAGING_SERVICE_SID=&lt;your-MGxxxx-from-step-7&gt;
+LOCAL_TWILIO_PHONE_NUMBER_SID=&lt;your-PNxxxx-from-step-3&gt;</pre>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700 space-y-2">
+                                <p><strong>There is no <code>TWILIO_FROM</code> in this app.</strong> Outbound From comes from the per-institution <code>TwilioNumber.sms_number</code> row you'll bind in step 16. <code>TWILIO_TWIML_APP_SID</code> is only required if you intend to test browser-initiated voice &mdash; leave it blank for SMS / Verify only.</p>
+                                <p><strong><code>VAPI_WEBHOOK_*</code> is technically optional but not really.</strong> Without <code>VAPI_WEBHOOK_CREDENTIAL_ID</code>, Vapi delivers end-of-call webhooks unsigned and our signature middleware 401s them. <code>voice:dev-sync</code> warns when it's missing but does not abort. Set both to keep the call lifecycle observable.</p>
+                                <p><strong><code>LOCAL_TWILIO_*</code> are read by the CJ scenarios</strong> (<code>app/Scenarios/CustomerJourney/Concerns/CreatesJourneyBase.php::ensureLocalTwilioNumberForInstitution</code>) so step 15's <code>scenario:run</code> automatically creates the SMS Channel + TwilioNumber row pointing at your real number. Idempotent: re-runs reuse the existing row and update the SIDs to whatever's currently in <code>.env</code>. Leave them unset if you'd rather bind manually via Filament (step 16).</p>
                             </div>
                         </div>
                     </div>
@@ -305,12 +346,18 @@ TWILIO_SMS_VERIFICATION_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="env-webhooks" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">10. <code>.env</code> &mdash; webhook URLs</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">11. <code>.env</code> &mdash; webhook URLs</h2>
                             <p class="mt-2 text-sm text-gray-700">Replace <code>&lt;tunnel&gt;</code> with your Herd Share forwarding URL from step 8 (e.g. <code>https://&lt;your-subdomain&gt;.sharedwithexpose.com</code>). Because the subdomain is stable, you set this <strong>once</strong> &mdash; it'll keep working across machine reboots and tunnel restarts.</p>
                             <pre>TWILIO_VOICE_URL=&lt;tunnel&gt;
 TWILIO_SMS_URL=&lt;tunnel&gt;
 TWILIO_STATUS_CALLBACK_URL=&lt;tunnel&gt;/twilio/status-callback
-TWILIO_INBOUND_REQUEST_URL=&lt;tunnel&gt;/incoming-sms-messages/twilio</pre>
+TWILIO_INBOUND_REQUEST_URL=&lt;tunnel&gt;/incoming-sms-messages/twilio
+
+# Vapi MCP server (only required for voice agent)
+VAPI_MCP_SERVER_URL=&lt;tunnel&gt;/mcp/voice-agent</pre>
+                            <p class="mt-2 text-sm text-gray-700">
+                                <code>VAPI_MCP_SERVER_URL</code> defaults to <code>APP_URL + /mcp/voice-agent</code> if unset, but <code>APP_URL</code> is your local <code>.test</code> host that Vapi can't reach. Setting it explicitly to the tunnel host is what makes inbound MCP tool calls from Vapi land on your machine. <code>voice:dev-sync</code> warns when this drifts from the detected tunnel host.
+                            </p>
                         </div>
                     </div>
                 </section>
@@ -320,7 +367,7 @@ TWILIO_INBOUND_REQUEST_URL=&lt;tunnel&gt;/incoming-sms-messages/twilio</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="env-mocks-off" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">11. <code>.env</code> &mdash; turn off the fakes</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">12. <code>.env</code> &mdash; turn off the fakes</h2>
                             <p class="mt-2 text-sm text-gray-700">
                                 Both <code>.env</code> and <code>.env.example</code> ship with <code>AUTH_FAKE_VERIFICATION=true</code>, and <code>SMS_MOCK</code> defaults to <code>true</code> for many local setups (it's how <code>FakeSmsService</code> gets bound). Flip both to <code>false</code> so real Twilio traffic leaves the box:
                             </p>
@@ -340,7 +387,7 @@ SMS_MOCK=false</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="twilio-console-webhooks" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">12. Twilio Console webhooks</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">13. Twilio Console webhooks</h2>
                             <p class="mt-2 text-sm text-gray-700">Two paths &mdash; pick whichever you prefer.</p>
                             <h3 class="mt-3 text-sm font-semibold text-gray-900">Easy: <code>voice:dev-sync</code> (recommended)</h3>
                             <pre>php -d memory_limit=512M artisan voice:dev-sync \
@@ -348,10 +395,10 @@ SMS_MOCK=false</pre>
     --institution=lumion-cj-scenarios \
     --i-confirm-dev-vapi</pre>
                             <p class="mt-2 text-sm text-gray-700">
-                                Omit <code>--tunnel</code> to auto-detect &mdash; the command probes Expose at <code>localhost:9191</code> (and ngrok at <code>localhost:4040</code>), and Herd Share runs Expose under the hood, so when <code>herd share</code> is active <code>voice:dev-sync</code> finds it on its own. Patches Voice URL + status callbacks on the phone number record and on the <code>TwilioNumber</code> row in the DB. See its docs at <code>app/Console/Commands/Communications/VoiceDevSyncCommand.md</code>.
+                                Omit <code>--tunnel</code> to auto-detect &mdash; the command probes Expose at <code>localhost:9191</code> (and ngrok at <code>localhost:4040</code>), and Herd Share runs Expose under the hood, so when <code>herd share</code> is active <code>voice:dev-sync</code> finds it on its own. Patches Voice URL + status callbacks on the Twilio phone number, registers the number with Vapi (BYO), patches Vapi's per-phone-number Server URL with the HMAC credential from step 9, and updates the <code>TwilioNumber</code> row in the DB. See <code>app/Console/Commands/Communications/VoiceDevSyncCommand.md</code> for the full sequence.
                             </p>
                             <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
-                                Without <code>--i-confirm-dev-vapi</code>, the command pauses with an interactive "Are you using the Vapi DEV org?" prompt. Answer <code>yes</code> if so, abort if not. (Vapi org setup itself is a separate concern; this guide treats <code>voice:dev-sync</code> as the orchestrator and does not document Vapi onboarding.)
+                                Without <code>--i-confirm-dev-vapi</code>, the command pauses with an interactive "Are you using the Vapi DEV org?" prompt. Answer <code>yes</code> if so, abort if not &mdash; the prompt exists because misfiring this against prod Vapi would clobber production webhook URLs.
                             </div>
                             <h3 class="mt-4 text-sm font-semibold text-gray-900">Manual</h3>
                             <p class="mt-2 text-sm text-gray-700">If you'd rather click through the Console:</p>
@@ -369,6 +416,7 @@ SMS_MOCK=false</pre>
                                         <tr><td class="px-3 py-2 border border-gray-200">Phone Numbers &rarr; your number &rarr; Recording Status Callback (POST)</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/voice/recording-status</code></td></tr>
                                         <tr><td class="px-3 py-2 border border-gray-200">Phone Numbers &rarr; your number &rarr; Messaging URL (POST)</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/incoming-sms-messages/twilio</code></td></tr>
                                         <tr><td class="px-3 py-2 border border-gray-200">Messaging &rarr; Service &rarr; Integration &rarr; Inbound webhook (POST)</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/incoming-sms-messages/twilio</code></td></tr>
+                                        <tr><td class="px-3 py-2 border border-gray-200">Vapi &rarr; Phone Numbers &rarr; your number &rarr; Server URL</td><td class="px-3 py-2 border border-gray-200"><code>&lt;tunnel&gt;/webhooks/vapi</code> (HMAC credential attached)</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -381,7 +429,7 @@ SMS_MOCK=false</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="whitelist-self" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">13. Whitelist your phone (the new gate)</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">14. Whitelist your phone (the new gate)</h2>
                             <p class="mt-2 text-sm text-gray-700">
                                 Without this step, every real SMS / Verify / Voice call from your local box will throw <code>Twilio sms blocked: recipient ending in &hellip;</code> (or the voice equivalent). The magic Twilio test number <code>+15005550006</code> is auto-allowed by the boot whitelist; everything else needs a row.
                             </p>
@@ -402,7 +450,7 @@ SMS_MOCK=false</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="activate-cj-scenarios" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">14. Activate <code>lumion-cj-scenarios</code></h2>
+                            <h2 class="text-lg font-semibold text-gray-900">15. Activate <code>lumion-cj-scenarios</code></h2>
                             <pre>php -d memory_limit=512M artisan scenario:run customer_journey:magic_link_stage_actions</pre>
                             <p class="mt-2 text-sm text-gray-700">
                                 The scenario is idempotent &mdash; reuses the institution by subdomain. The console prints the seeded admin email (looks like <code>cj-admin-&lt;timestamp&gt;@test.com</code>) and confirms the password is <code>password</code>. The institution's subdomain is hard-coded <code>lumion-cj-scenarios</code>, defined in <code>app/Scenarios/CustomerJourney/Concerns/CreatesJourneyBase.php</code>.
@@ -416,10 +464,14 @@ SMS_MOCK=false</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="bind-twilio-number" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">15. Bind your Twilio number to the institution</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">16. Bind your Twilio number to the institution</h2>
+                            <div class="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm text-emerald-900">
+                                <strong>If you set <code>LOCAL_TWILIO_NUMBER</code> in step 10, skip this step</strong> &mdash; the scenario in step 15 already created the SMS Channel + TwilioNumber row for you. Verify by visiting <a href="https://lumion-cj-scenarios.tallahassee.test/settings/phone-numbers" class="text-lumion-teal-dark underline">https://lumion-cj-scenarios.tallahassee.test/settings/phone-numbers</a>; you should see a row with your E.164. The scenario also prints <code>✓ Bound TwilioNumber +1xxx…</code> to the console when it fires.
+                            </div>
+                            <p class="mt-3 text-sm text-gray-700">If you skipped the env vars (or the row didn't appear), bind manually:</p>
                             <ol class="mt-2 list-decimal pl-5 text-sm text-gray-700 space-y-2">
                                 <li>
-                                    Open <a href="https://lumion-cj-scenarios.tallahassee.test/settings/phone-numbers" class="text-lumion-teal-dark underline">https://lumion-cj-scenarios.tallahassee.test/settings/phone-numbers</a> and log in as the school admin from step 14.
+                                    Open <a href="https://lumion-cj-scenarios.tallahassee.test/settings/phone-numbers" class="text-lumion-teal-dark underline">https://lumion-cj-scenarios.tallahassee.test/settings/phone-numbers</a> and log in as the school admin from step 15.
                                     <div class="mt-1 bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs text-gray-700">
                                         Path is <code>/settings/&hellip;</code>, not <code>/admin/&hellip;</code> &mdash; the SchoolSettings panel is mounted at <code>path('settings')</code> per <code>SchoolSettingsPanelProvider</code>.
                                     </div>
@@ -444,7 +496,7 @@ SMS_MOCK=false</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="smoke-sms" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">16. Smoke test SMS</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">17. Smoke test SMS</h2>
                             <p class="mt-2 text-sm text-gray-700">Two paths &mdash; pick one.</p>
                             <h3 class="mt-3 text-sm font-semibold text-gray-900">Preferred: full pipeline via the app UI</h3>
                             <p class="mt-1 text-sm text-gray-700">
@@ -466,7 +518,7 @@ $result = $service-&gt;send(new \Lumion\Shared\DTOs\SendSmsDto(
 
 dump($result);</pre>
                             <p class="mt-2 text-sm text-gray-700">
-                                Pass criterion: real SMS arrives, <code>$result</code> is a <code>SmsMessageDto</code> with a Twilio <code>SMxxxx</code> id, no exception. Failure modes: <code>Twilio sms blocked: &hellip;</code> &rarr; recheck step 13; HTTP auth failure &rarr; recheck steps 9 + 11.
+                                Pass criterion: real SMS arrives, <code>$result</code> is a <code>SmsMessageDto</code> with a Twilio <code>SMxxxx</code> id, no exception. Failure modes: <code>Twilio sms blocked: &hellip;</code> &rarr; recheck step 14; HTTP auth failure &rarr; recheck steps 10 + 12.
                             </p>
                         </div>
                     </div>
@@ -477,13 +529,13 @@ dump($result);</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="smoke-verify" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">17. Smoke test Verify</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">18. Smoke test Verify</h2>
                             <p class="mt-2 text-sm text-gray-700">
                                 Trigger an OTP via any flow that uses <code>TwilioSmsVerification</code> (e.g. portal magic-link login, or any feature gated by SMS verification).
                             </p>
                             <ul class="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
                                 <li>Use <code>+15005550006</code> to hit Twilio Verify with the magic test number &mdash; Twilio always returns <code>approved</code>, no real SMS sent, no cost. Useful for E2E tests.</li>
-                                <li>Use your real whitelisted number from step 13 to receive a real OTP on your phone.</li>
+                                <li>Use your real whitelisted number from step 14 to receive a real OTP on your phone.</li>
                             </ul>
                         </div>
                     </div>
@@ -494,19 +546,19 @@ dump($result);</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="smoke-voice" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">18. Smoke test Voice</h2>
-                            <p class="mt-2 text-sm text-gray-700">Re-run the orchestrator if anything changed since step 12:</p>
+                            <h2 class="text-lg font-semibold text-gray-900">19. Smoke test Voice (Twilio + Vapi end-to-end)</h2>
+                            <p class="mt-2 text-sm text-gray-700">Re-run the orchestrator if anything changed since step 13:</p>
                             <pre>php -d memory_limit=512M artisan voice:dev-sync \
     --tunnel=https://&lt;your-subdomain&gt;.sharedwithexpose.com \
     --institution=lumion-cj-scenarios \
     --i-confirm-dev-vapi</pre>
                             <p class="mt-2 text-sm text-gray-700">Then either:</p>
                             <ul class="mt-1 list-disc pl-5 text-sm text-gray-700 space-y-1">
-                                <li>Place an outbound from the in-app voice client (an institution user with the right role can dial from a Contact).</li>
-                                <li>Dial your purchased Twilio number from any phone &mdash; should hit your TwiML app or the configured AI agent.</li>
+                                <li><strong>Inbound</strong> &mdash; dial your purchased Twilio number from any phone. Twilio bridges to Vapi, Vapi POSTs <code>assistant-request</code> to <code>&lt;tunnel&gt;/webhooks/vapi</code>, this app mints a per-call MCP token and replies with the assistant config, the conversational LLM uses MCP tools at <code>&lt;tunnel&gt;/mcp/voice-agent</code>. Watch the Expose dashboard for the webhook hits and <code>storage/logs/laravel.log</code> for the <code>assistant-request</code> handler.</li>
+                                <li><strong>Outbound</strong> &mdash; place a call from the in-app voice client (an institution user with the right role can dial from a Contact). Same MCP wiring; this path uses <code>POST https://api.vapi.ai/call</code> directly.</li>
                             </ul>
                             <p class="mt-2 text-sm text-gray-600">
-                                If <code>/voice/twiml</code> returns 502 or 301 in the Expose dashboard (the tab Herd Share opened), see <code>VoiceDevSyncCommand.md</code> "Common failure modes".
+                                If the call connects but you hear silence after the greeting, check that <code>VAPI_MCP_SERVER_URL</code> matches the active tunnel host &mdash; <code>voice:dev-sync</code> warns about drift but doesn't auto-fix <code>.env</code>. If <code>/voice/twiml</code> returns 502 or 301 in the Expose dashboard, see <code>VoiceDevSyncCommand.md</code> "Common failure modes". If Vapi end-of-call webhooks 401, the HMAC credential from step 9 isn't attached to the per-phone-number <code>server</code> config (rerun <code>voice:dev-sync</code>).
                             </p>
                         </div>
                     </div>
@@ -517,7 +569,7 @@ dump($result);</pre>
                     <div class="flex items-start gap-3">
                         <input type="checkbox" data-step-id="re-runs-and-cleanup" class="lumion-check mt-1 h-5 w-5 cursor-pointer flex-none">
                         <div class="min-w-0 flex-1">
-                            <h2 class="text-lg font-semibold text-gray-900">19. Re-runs and cleanup</h2>
+                            <h2 class="text-lg font-semibold text-gray-900">20. Re-runs and cleanup</h2>
                             <p class="mt-2 text-sm font-semibold text-gray-900">Tunnel restart (with the same <code>--subdomain</code>):</p>
                             <p class="mt-1 text-sm text-gray-700">
                                 Nothing to change in <code>.env</code> or Twilio Console &mdash; the URL is the same. Just bring the tunnel back up:
@@ -525,9 +577,12 @@ dump($result);</pre>
                             <pre>cd /Users/leezilla/conductor/workspaces/miashare-app/tallahassee
 herd share --subdomain=&lt;your-subdomain&gt;</pre>
                             <p class="mt-3 text-sm font-semibold text-gray-900">You changed the subdomain (or migrated to/from a free tunnel):</p>
-                            <pre># 1. Edit .env: update every TWILIO_*_URL to the new Herd Share host
+                            <pre># 1. Edit .env: update every TWILIO_*_URL and VAPI_MCP_SERVER_URL to the new Herd Share host
 php -d memory_limit=512M artisan config:clear
 php -d memory_limit=512M artisan voice:dev-sync --tunnel=https://&lt;new-subdomain&gt;.sharedwithexpose.com --i-confirm-dev-vapi</pre>
+                            <p class="mt-2 text-sm text-gray-600">
+                                The <code>voice:dev-sync</code> step also re-patches Vapi's per-phone-number Server URL. If the org-level Vapi Server URL is wrong, fix it in the Vapi Console &mdash; <code>voice:dev-sync</code> does not touch org-level settings.
+                            </p>
                             <p class="mt-3 text-sm font-semibold text-gray-900">You removed a number from the whitelist UI but the cache feels stale:</p>
                             <pre>php -d memory_limit=512M artisan tinker --execute 'Cache::forget("twilio.allowed_recipients");'</pre>
                             <p class="mt-3 text-sm font-semibold text-gray-900">Inspect the live whitelist cache:</p>
@@ -555,6 +610,7 @@ php -d memory_limit=512M artisan voice:dev-sync --tunnel=https://&lt;new-subdoma
             ['twilio-twiml-app',          'TwiML app'],
             ['twilio-messaging-service',  'Messaging service'],
             ['tunnel',                    'Tunnel (stable subdomain)'],
+            ['vapi-console',              'Vapi Console'],
             ['env-credentials',           '.env credentials'],
             ['env-webhooks',              '.env webhooks'],
             ['env-mocks-off',             '.env mocks off'],
