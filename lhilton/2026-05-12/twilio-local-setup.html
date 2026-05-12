@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twilio local-dev setup — Lumion</title>
-    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice (with Vapi AI agent), SMS, and Verify calls firing from a local dev box against the lumion-cj-scenarios institution — covers Twilio + Vapi Console setup (Private API key, BYO SIP credential with field-by-field form values, HMAC webhook credential matched to VapiWebhookSignatureMiddleware), Herd Share tunnel with stable subdomain, .env wiring, the new CRTX-905 recipient whitelist gate, scenario-driven auto-binding of the Twilio number to the institution, gate-focused SMS smoke test with A2P 10DLC carrier-delivery caveat, and Verify / Voice smoke tests. Interactive 20-step checkbox checklist persists progress in localStorage.">
-    <meta name="share-hash" content="88b3fd312c58b5d300172df906e5ebca8e07ee91f6e1aeb7addcbf31713c1808">
+    <meta name="share-summary" content="End-to-end checklist for getting Twilio voice (with Vapi AI agent), SMS, and Verify calls firing from a fresh local dev box against the lumion-cj-scenarios institution. Covers Twilio + Vapi Console setup with verified menu paths and field-by-field form values, Redis-backed Horizon prereq, Herd Share tunnel with stable subdomain, .env wiring (with APP_URL duplicate gotcha), CRTX-905 recipient whitelist gate, scenario-driven auto-binding of TwilioNumber + VoiceSetting + SIDs, curl recipes to fetch Vapi credential IDs (not exposed in dashboard), HMAC secret recovery via PATCH /credential/{id}, gate-focused SMS smoke test with A2P 10DLC carrier-delivery caveat, and Verify / Voice smoke tests. Interactive 20-step checkbox checklist persists progress in localStorage.">
+    <meta name="share-hash" content="d60e0d74dbbfbb5a83c385cbeecd306605cf4c7260404203738e48fedb48e0a2">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -152,6 +152,7 @@
                                 <li>Herd is serving <code>*.tallahassee.test</code> (run <code>herd open</code> to confirm).</li>
                                 <li>Branch checked out: <code>git checkout lhilton/twilio-phone-whitelist</code>.</li>
                                 <li>DB up to date: <code>php -d memory_limit=512M artisan migrate</code>.</li>
+                                <li><code>.env</code> has <code>QUEUE_CONNECTION=redis</code> (not <code>database</code>). Horizon only processes Redis-backed queues &mdash; every supervisor in <code>config/horizon.php</code> is pinned to <code>'connection' =&gt; 'redis'</code>. With <code>QUEUE_CONNECTION=database</code>, <code>php artisan horizon</code> boots fine but stands idle while jobs land in the MySQL <code>jobs</code> table and never get picked up. After flipping the value: <code>php -d memory_limit=512M artisan config:clear</code>.</li>
                                 <li>Horizon running in a separate terminal: <code>php -d memory_limit=512M artisan horizon</code>. Required for async voice jobs (transcription, Vapi cleanup) and any job-dispatched SMS path.</li>
                             </ul>
                         </div>
@@ -310,7 +311,14 @@ herd share --subdomain=&lt;your-subdomain&gt;</pre>
                                 </li>
 
                                 <li>
-                                    <strong>BYO SIP Trunk credential</strong> &mdash; Sidebar <strong>MANAGE &rarr; Integrations</strong> (URL <code>dashboard.vapi.ai/settings/integrations</code>) &rarr; scroll to the <strong>Phone Number Providers</strong> section &rarr; click the <strong>SIP Trunk</strong> card &rarr; <strong>Configure New SIP Trunk</strong> &rarr; fill the form below &rarr; <strong>Save SIP Trunk</strong>. Capture the credential ID from the resulting list as <code>VAPI_SIP_CREDENTIAL_ID</code>. (REST equivalent: <code>POST https://api.vapi.ai/credential</code> with provider <code>byo-sip-trunk</code>.)
+                                    <strong>BYO SIP Trunk credential</strong> &mdash; Sidebar <strong>MANAGE &rarr; Integrations</strong> (URL <code>dashboard.vapi.ai/settings/integrations</code>) &rarr; scroll to the <strong>Phone Number Providers</strong> section &rarr; click the <strong>SIP Trunk</strong> card &rarr; <strong>Configure New SIP Trunk</strong> &rarr; fill the form below &rarr; <strong>Save SIP Trunk</strong>.
+                                    <p class="mt-1 text-xs text-gray-600">The Vapi dashboard does <strong>not</strong> expose the credential ID anywhere in the UI &mdash; "View Details" shows only gateway config. Fetch the ID via the REST API after creation (requires <code>VAPI_API_KEY</code> from step 2 of this section, which you may want to set in <code>.env</code> first then <code>php artisan config:clear</code>):</p>
+                                    <pre>VAPI_KEY=$(grep -E '^VAPI_API_KEY=' .env | cut -d= -f2-)
+curl -s -H "Authorization: Bearer $VAPI_KEY" 'https://api.vapi.ai/credential' \
+    | python3 -c 'import json, sys
+for c in json.load(sys.stdin):
+    print(f"  provider={c.get(\"provider\"):24s}  name=\"{c.get(\"name\")}\"  id={c.get(\"id\")}")'</pre>
+                                    <p class="mt-2 text-xs text-gray-600">Copy the <code>id</code> for the row with <code>provider=byo-sip-trunk</code> and capture as <code>VAPI_SIP_CREDENTIAL_ID</code>.</p>
                                     <p class="mt-1 text-xs text-gray-600"><strong>Why required even though SIP isn't used:</strong> Vapi's <code>byo-phone-number</code> schema (used by <code>RegisterTwilioNumberWithVapi</code> to mint the <code>phoneNumberId</code> we pass to bypass calls) requires a <code>credentialId</code> pointing at a BYO trunk credential, even when no SIP traffic flows &mdash; the current Media Streams bypass flow connects Twilio &rarr; Vapi over WebSocket. So the form just needs to satisfy Vapi's schema validation; the values do not need to be operationally correct. See <code>config/vapi.php</code> lines 46&ndash;64 for the full rationale.</p>
                                     <p class="mt-2 text-xs text-gray-600"><strong>Form fields</strong> (only the two <code>*</code> fields are required by the form; everything else can keep defaults):</p>
                                     <div class="mt-2 overflow-x-auto">
@@ -340,7 +348,9 @@ herd share --subdomain=&lt;your-subdomain&gt;</pre>
                                 </li>
 
                                 <li>
-                                    <strong>HMAC webhook credential</strong> &mdash; Sidebar <strong>MANAGE &rarr; Integrations</strong> &rarr; scroll to the <strong>Server Configuration</strong> section &rarr; click the <strong>Server Configuration</strong> card &rarr; <strong>Add Custom Credential</strong> &rarr; fill the form below &rarr; <strong>Save</strong>. Capture the credential <strong>id</strong> from the resulting list as <code>VAPI_WEBHOOK_CREDENTIAL_ID</code> and the <strong>Secret Key</strong> value as <code>VAPI_WEBHOOK_SECRET</code>.
+                                    <strong>HMAC webhook credential</strong> &mdash; Sidebar <strong>MANAGE &rarr; Integrations</strong> &rarr; scroll to the <strong>Server Configuration</strong> section &rarr; click the <strong>Server Configuration</strong> card &rarr; <strong>Add Custom Credential</strong> &rarr; fill the form below &rarr; <strong>Save</strong>.
+                                    <p class="mt-1 text-xs text-gray-600">The dashboard does <strong>not</strong> show the credential ID. Re-run the same curl from the previous step &mdash; the new HMAC credential appears with <code>provider=custom-credential</code>. Capture its <code>id</code> as <code>VAPI_WEBHOOK_CREDENTIAL_ID</code>.</p>
+                                    <p class="mt-2 text-xs text-gray-600"><strong>The Secret Key is shown ONLY at creation time.</strong> Capture it from the form before clicking Save and stash as <code>VAPI_WEBHOOK_SECRET</code>. Vapi's API treats <code>secretKey</code> as write-only &mdash; <code>GET /credential/{id}</code> returns the algorithm + header config but never the secret. If you forget or lose it, see the recovery recipe at the end of this step.</p>
                                     <p class="mt-1 text-xs text-gray-600">The form defaults are tuned for Vapi's newer Standard-Webhooks-style framing; Lumion's <code>VapiWebhookSignatureMiddleware</code> (<code>app/Http/Middleware/VapiWebhookSignatureMiddleware.php</code>) verifies the legacy <code>x-vapi-signature</code> over the raw body, so override several defaults:</p>
                                     <div class="mt-2 overflow-x-auto">
                                         <table class="w-full text-xs border-collapse">
@@ -368,6 +378,20 @@ herd share --subdomain=&lt;your-subdomain&gt;</pre>
                                         </table>
                                     </div>
                                     <p class="mt-2 text-xs text-gray-600">The credential id has to be attached to BOTH the org-level Server URL (next step) AND each per-phone-number <code>server</code> config &mdash; <code>voice:dev-sync</code> handles the per-phone-number attachment in step 13.</p>
+                                    <p class="mt-2 text-xs text-gray-600"><strong>Lost or never captured the Secret Key?</strong> The Vapi dashboard has no "reveal" affordance for HMAC secrets. Recover by <code>PATCH</code>-ing a fresh secret onto the existing credential &mdash; same id, same per-phone-number attachments, no <code>voice:dev-sync</code> re-run needed:</p>
+                                    <pre>VAPI_KEY=$(grep -E '^VAPI_API_KEY=' .env | cut -d= -f2-)
+VAPI_CRED_ID=$(grep -E '^VAPI_WEBHOOK_CREDENTIAL_ID=' .env | cut -d= -f2-)
+NEW_SECRET=$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')
+
+curl -s -X PATCH \
+    -H "Authorization: Bearer $VAPI_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"authenticationPlan\":{\"type\":\"hmac\",\"algorithm\":\"sha256\",\"signatureHeader\":\"x-vapi-signature\",\"timestampHeader\":\"x-timestamp\",\"signaturePrefix\":\"\",\"includeTimestamp\":false,\"payloadFormat\":\"{body}\",\"messageIdHeader\":\"\",\"signatureEncoding\":\"hex\",\"secretIsBase64\":false,\"secretKey\":\"$NEW_SECRET\"}}" \
+    "https://api.vapi.ai/credential/$VAPI_CRED_ID" \
+    | python3 -m json.tool | head -10
+
+echo "VAPI_WEBHOOK_SECRET=$NEW_SECRET"   # add this line to .env, then config:clear</pre>
+                                    <p class="mt-1 text-xs text-gray-600">The PATCH preserves every other HMAC field (header name, payload format, etc.) &mdash; only the secret rotates.</p>
                                 </li>
 
                                 <li>
@@ -429,6 +453,9 @@ VAPI_MCP_SERVER_URL=&lt;tunnel&gt;/mcp/voice-agent</pre>
                             <p class="mt-2 text-sm text-gray-700">
                                 <code>VAPI_MCP_SERVER_URL</code> defaults to <code>APP_URL + /mcp/voice-agent</code> if unset, but <code>APP_URL</code> is your local <code>.test</code> host that Vapi can't reach. Setting it explicitly to the tunnel host is what makes inbound MCP tool calls from Vapi land on your machine. <code>voice:dev-sync</code> warns when this drifts from the detected tunnel host.
                             </p>
+                            <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                                <strong><code>APP_URL</code> duplicate gotcha.</strong> dotenv silently keeps the <strong>last</strong> definition of any duplicated key. If <code>.env</code> has two <code>APP_URL=&hellip;</code> lines (easy to do when alternating between local and tunnel testing), only the last one wins &mdash; and if you forget which is last, the <code>VAPI_MCP_SERVER_URL</code> fallback can resolve to the wrong host. Sanity-check with <code>grep -nE '^#?APP_URL=' .env</code>; comment out the one you don't want.
+                            </div>
                         </div>
                     </div>
                 </section>
