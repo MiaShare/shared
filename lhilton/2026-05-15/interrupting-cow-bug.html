@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Voice agent: callers can't interrupt the AI — what's happening and how we fix it</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { color-scheme: light; }
+  body { font-feature-settings: "ss01", "ss02", "cv11"; }
+  .mono { font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, monospace; }
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(15,23,42,0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15,23,42,0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .timeline-bar { height: 14px; border-radius: 7px; }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  @media print {
+    .no-print { display: none; }
+    body { background: white; }
+  }
+</style>
+<meta name="share-summary" content="This document is an internal engineering brief diagnosing why voice-agent callers cannot interrupt the AI—the root cause is that Vapi</head>amp;#39;s audio routing mixes the AI</head>amp;#39;s own voice into the inbound speech-recognition stream, drowning out the caller</head>amp;#39;s voice during answer read-backs, with three proposed solutions ranging from filing a vendor support ticket to architecturally rerouting call handling.">
+<meta name="share-hash" content="9c3a200d2a0dbd5482ea22979c703cb4fdfac1090b45709aa1743a6045b7008f">
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+
+<main class="mx-auto max-w-3xl px-6 py-12">
+
+  <!-- Header -->
+  <header class="mb-12">
+    <div class="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Internal — engineering brief</div>
+    <h1 class="mt-3 text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
+      Callers can't talk over the voice agent
+    </h1>
+    <p class="mt-4 text-lg leading-relaxed text-slate-700">
+      When the AI is reading an answer back to the caller, the caller can't interrupt it
+      — not because the system is ignoring them, but because the system literally cannot
+      hear them. The voice-recognition layer is being fed the AI's own voice instead of
+      the caller's.
+    </p>
+    <p class="mt-2 text-sm text-slate-500">Branch <span class="mono">lum-3088-voice-interruption-logic</span> · 2026-05-15</p>
+  </header>
+
+  <!-- 30-second summary -->
+  <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">The bug in 30 seconds</h2>
+    <ol class="mt-4 space-y-3 text-slate-700">
+      <li class="flex gap-3">
+        <span class="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">1</span>
+        <span>Caller asks the AI a question. The AI looks up an answer and starts reading it back.</span>
+      </li>
+      <li class="flex gap-3">
+        <span class="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">2</span>
+        <span>Caller tries to interject — "stop", "wait", "actually, never mind".</span>
+      </li>
+      <li class="flex gap-3">
+        <span class="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-rose-600 text-xs font-semibold text-white">3</span>
+        <span>The AI keeps talking. The caller has to either wait, repeat themselves louder, or hang up.</span>
+      </li>
+    </ol>
+    <p class="mt-5 text-sm text-slate-600">
+      We have hard evidence that this happens because the AI's own voice is being delivered into
+      the same audio channel the system uses to listen for the caller. While the AI is talking,
+      that channel is saturated with the AI's voice and the caller's voice never reaches the
+      speech-recognition layer.
+    </p>
+  </section>
+
+  <!-- Evidence -->
+  <section class="mb-12">
+    <h2 class="text-xl font-semibold text-slate-950">The evidence</h2>
+    <p class="mt-2 text-slate-700">
+      We placed two test calls into the staging system and pulled the per-event log from our
+      voice vendor (Vapi). The logs include every partial transcript the speech-recognition
+      service emitted, with timestamps.
+    </p>
+
+    <!-- Stat callout -->
+    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="text-3xl font-bold text-slate-950 mono">72 / 72</div>
+        <div class="mt-1 text-sm text-slate-600">
+          Partial transcripts fired during AI-speaking windows that contained
+          <strong>the AI's own voice</strong>, not the caller's.
+        </div>
+      </div>
+      <div class="rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
+        <div class="text-3xl font-bold text-rose-900 mono">0 sec</div>
+        <div class="mt-1 text-sm text-rose-900">
+          Of the 8-second answer read-back, the caller's voice was detected for
+          <strong>zero seconds</strong> — even though the caller was actively speaking.
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Call timeline — what the caller experienced</h3>
+      <p class="mt-2 text-sm text-slate-600">
+        Vapi call <span class="mono text-xs">019e2d2b-e088-7000-83e6-34ce6e97e011</span>.
+        Green segments are AI-speaking time. The single check mark is the one moment the
+        caller was able to interrupt; every other attempt was inaudible to the system.
+      </p>
+
+      <div class="mt-6 space-y-3">
+        <!-- Greeting -->
+        <div class="grid grid-cols-12 items-center gap-2">
+          <div class="col-span-3 text-xs text-slate-500">0.0s</div>
+          <div class="col-span-7">
+            <div class="timeline-bar bg-emerald-500/80 relative">
+              <span class="absolute -right-3 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white text-xs font-bold ring-2 ring-white">✓</span>
+            </div>
+          </div>
+          <div class="col-span-2 text-xs text-slate-700">Greeting</div>
+        </div>
+        <div class="grid grid-cols-12 gap-2 text-xs text-slate-600">
+          <div class="col-span-3"></div>
+          <div class="col-span-9">Caller said "Stop. Stop." — AI was successfully cut off mid-sentence.</div>
+        </div>
+
+        <!-- Tool-result read-back -->
+        <div class="mt-6 grid grid-cols-12 items-center gap-2">
+          <div class="col-span-3 text-xs text-slate-500">25.3s</div>
+          <div class="col-span-7">
+            <div class="timeline-bar bg-rose-500/80 relative">
+              <span class="absolute -right-3 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white text-xs font-bold ring-2 ring-white">✕</span>
+            </div>
+          </div>
+          <div class="col-span-2 text-xs text-slate-700">Read-back</div>
+        </div>
+        <div class="grid grid-cols-12 gap-2 text-xs text-slate-600">
+          <div class="col-span-3"></div>
+          <div class="col-span-9">Caller tried to interject throughout the 8-second answer. <strong>System never registered any speech.</strong> AI played all the way through.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What the system heard -->
+    <div class="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200">
+        <div class="p-6">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">What the caller said</div>
+          <div class="mt-3 text-sm text-slate-700 italic">
+            (Actively interrupting — "Stop", "Hold on", "Wait", repeatedly through the read-back.)
+          </div>
+        </div>
+        <div class="p-6 bg-slate-50">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">What the speech-recognition system received</div>
+          <div class="mono mt-3 text-sm leading-relaxed text-slate-700">
+            <div>"I don't"</div>
+            <div>"I don't have details on the"</div>
+            <div>"I don't have details on the programs from this chat."</div>
+            <div>"...and have someone follow-up with you soon."</div>
+            <div>"...soon. By the way, who am I"</div>
+          </div>
+          <div class="mt-3 text-xs text-slate-500">
+            Every snippet is the AI's own outbound sentence being transcribed as if it were
+            input from the caller. The caller is not in the transcript at all.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why it works on the greeting -->
+  <section class="mb-12">
+    <h2 class="text-xl font-semibold text-slate-950">Why this confused us for a while</h2>
+    <p class="mt-2 text-slate-700">
+      Interruption <em>does</em> work on the AI's opening greeting. That made the bug
+      look intermittent and hard to pin down. The logs explain why: during the greeting,
+      the caller's voice partially bleeds through to the recognition layer enough times
+      that the system eventually catches it. After the greeting, the AI's voice fully
+      dominates the channel and the caller becomes invisible to the system.
+    </p>
+    <p class="mt-3 text-slate-700">
+      We tried five different configuration changes before pulling the per-event log —
+      tightening voice-detection thresholds, swapping the speech-recognition provider,
+      adding noise suppression, switching transcription models. None of them moved the
+      needle, because the problem is upstream of every knob we have access to. The
+      vendor (Vapi) is mixing our AI's voice into the inbound audio stream before any
+      of our settings get to look at it.
+    </p>
+  </section>
+
+  <!-- Diagnosis -->
+  <section class="mb-12 rounded-2xl border border-slate-300 bg-slate-900 p-6 text-slate-100 shadow-sm">
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Root cause</h2>
+    <p class="mt-3 text-slate-100">
+      Our call architecture has Twilio (the carrier) hand the audio off to Vapi (the voice
+      AI platform) via a feature called <span class="mono text-sm">phoneCallProviderBypassEnabled</span>.
+      In that mode, Vapi appears to deliver a mixed audio stream into its own
+      speech-recognition pipeline — caller plus AI output combined. While the AI is silent
+      the recognizer hears the caller fine. While the AI is talking, the AI's own voice
+      drowns the caller out entirely.
+    </p>
+    <p class="mt-3 text-slate-300 text-sm">
+      This is not a bug in our code. It is how Vapi's audio routing behaves when running
+      in this mode. We've exhausted every configuration knob exposed to us by Vapi at the
+      assistant-config layer.
+    </p>
+  </section>
+
+  <!-- How we fix it -->
+  <section class="mb-12">
+    <h2 class="text-xl font-semibold text-slate-950">How we fix it</h2>
+    <p class="mt-2 text-slate-700">
+      Three paths, ordered by cost and confidence.
+    </p>
+
+    <ol class="mt-6 space-y-5">
+      <li class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold">1</span>
+          <h3 class="text-base font-semibold text-slate-950">File a Vapi support ticket with our evidence</h3>
+        </div>
+        <p class="mt-2 text-sm text-slate-700">
+          We now have a clean reproduction — two staging call IDs, the per-event log showing
+          the AI's voice arriving on the inbound transcription stream, the timestamps where
+          the caller spoke but was not heard. This is the cheapest path: Vapi support sees
+          this evidence and either fixes the audio routing on their side or tells us a
+          configuration we don't know about.
+        </p>
+        <p class="mt-2 text-xs text-slate-500">Cost: hours. Confidence it works: medium — depends on Vapi's responsiveness.</p>
+      </li>
+
+      <li class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-sm font-bold">2</span>
+          <h3 class="text-base font-semibold text-slate-950">Change how calls reach Vapi</h3>
+        </div>
+        <p class="mt-2 text-sm text-slate-700">
+          The mixing happens because of the specific way Twilio currently hands the call to
+          Vapi. There is an alternative — bring our Twilio phone numbers directly into Vapi
+          ownership and let Vapi receive the call without the Twilio "bypass" step in the
+          middle. This removes the audio path where the mixing happens. It's a larger
+          architectural change and would require careful migration of every institution's
+          numbers, but it is the highest-confidence fix if Vapi can't address it on their
+          side.
+        </p>
+        <p class="mt-2 text-xs text-slate-500">Cost: days to a couple of weeks. Confidence it works: high — different audio routing entirely.</p>
+      </li>
+
+      <li class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-rose-700 text-sm font-bold">3</span>
+          <h3 class="text-base font-semibold text-slate-950">Bring more of the voice pipeline in-house</h3>
+        </div>
+        <p class="mt-2 text-sm text-slate-700">
+          If Vapi can't fix this on their side and the architectural change in option 2
+          doesn't hold up, the longer-term answer is owning the audio handling ourselves —
+          our own server intercepts the Twilio stream, separates caller and AI audio, and
+          forwards only the caller's audio to the recognition service. This is the most
+          flexible and the most expensive; it's a fallback, not a starting point.
+        </p>
+        <p class="mt-2 text-xs text-slate-500">Cost: weeks. Confidence it works: very high — we control every byte.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- Recommendation -->
+  <section class="mb-12 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-emerald-800">Recommended next step</h2>
+    <p class="mt-3 text-slate-800">
+      File the Vapi support ticket this week with the two staging call IDs and the
+      per-event log evidence attached. In parallel, scope option 2 (the architectural
+      change) so we have a real second option ready if Vapi cannot resolve this on
+      their side within a reasonable window. We do not recommend committing to option
+      3 yet — it's an order of magnitude more work and we shouldn't take it on until
+      we know the first two paths are exhausted.
+    </p>
+    <p class="mt-3 text-sm text-slate-700">
+      In the meantime, the in-product interruption logic we built (clarify-vs-defer
+      classification, suppression of stale answers, bridge phrases) is sound and will
+      take effect the moment the underlying audio routing is fixed. None of that work
+      needs to be redone.
+    </p>
+  </section>
+
+  <!-- What this isn't -->
+  <section class="mb-12">
+    <h2 class="text-xl font-semibold text-slate-950">What this is not</h2>
+    <ul class="mt-3 space-y-2 text-slate-700">
+      <li class="flex gap-3">
+        <span class="mt-1 inline-block h-1.5 w-1.5 flex-none rounded-full bg-slate-400"></span>
+        <span>It is not a regression — this behavior has been present since we first turned
+          on the voice agent. We only just isolated the cause.</span>
+      </li>
+      <li class="flex gap-3">
+        <span class="mt-1 inline-block h-1.5 w-1.5 flex-none rounded-full bg-slate-400"></span>
+        <span>It is not a code bug in our application. Every layer we own is doing what it
+          should — the recognition layer simply never receives the caller's voice during
+          the AI's read-back.</span>
+      </li>
+      <li class="flex gap-3">
+        <span class="mt-1 inline-block h-1.5 w-1.5 flex-none rounded-full bg-slate-400"></span>
+        <span>It is not blocking us from shipping the rest of the voice-agent work. The
+          interruption-handling logic we built around it is ready and will start working
+          the moment the audio routing is fixed.</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Appendix -->
+  <details class="mb-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <summary class="flex items-center justify-between text-sm font-semibold text-slate-700">
+      <span>Appendix — call IDs and raw evidence</span>
+      <span class="text-slate-400">expand</span>
+    </summary>
+    <div class="mt-4 space-y-3 text-sm text-slate-700">
+      <div>
+        <div class="text-xs uppercase tracking-wider text-slate-500">Staging call 1 (caller hung up in frustration)</div>
+        <div class="mono mt-1 text-xs">019e2d1e-cfca-7774-ab1f-cf03435b3f3e</div>
+        <div class="text-xs text-slate-500 mt-1">Ended with <span class="mono">customer-ended-call</span> mid-read-back. The AI's final sentence was cut off because the caller hung up.</div>
+      </div>
+      <div>
+        <div class="text-xs uppercase tracking-wider text-slate-500">Staging call 2 (caller actively trying to interrupt)</div>
+        <div class="mono mt-1 text-xs">019e2d2b-e088-7000-83e6-34ce6e97e011</div>
+        <div class="text-xs text-slate-500 mt-1">Vapi's own metrics report <span class="mono">numUserInterrupted: 1</span> — exactly one of the caller's many interruption attempts registered, and it was on the greeting. The 8-second answer read-back played to completion despite continued interruption attempts.</div>
+      </div>
+      <div class="pt-2 border-t border-slate-200">
+        <div class="text-xs uppercase tracking-wider text-slate-500">Evidence we gathered</div>
+        <ul class="mt-2 space-y-1 text-xs text-slate-600 list-disc list-inside">
+          <li>Vapi assistant configuration emitted for the call (all interruption-related flags set correctly)</li>
+          <li>Vapi message log (5 AI turns, 4 caller turns, 1 successful interrupt on the greeting only)</li>
+          <li>Vapi per-event log (836 events including 104 Deepgram partial transcripts)</li>
+          <li>Bucketing of partials by AI-speaking window: 72 / 72 are the AI's own voice</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <footer class="border-t border-slate-200 pt-6 text-xs text-slate-500">
+    Prepared by engineering for the LUM-3088 voice-interruption workstream.
+    Source data and analysis available on request.
+  </footer>
+
+</main>
+
+</body>
+</html>
