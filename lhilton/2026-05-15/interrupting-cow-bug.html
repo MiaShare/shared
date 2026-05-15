@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><meta name="share-summary" content="Diagnosis and fix plan for a Vapi voice-agent bug where callers cannot interrupt the AI mid-response."><meta name="share-hash" content="524fd488c754dae4cb0400614beff6d81f655b202f60425d64388779f0ab018a">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Voice agent: callers can't interrupt the AI — what's happening and how we fix it</title>
@@ -23,8 +23,6 @@
     body { background: white; }
   }
 </style>
-<meta name="share-summary" content="This document is an internal engineering brief diagnosing why voice-agent callers cannot interrupt the AI—the root cause is that Vapi</head>amp;#39;s audio routing mixes the AI</head>amp;#39;s own voice into the inbound speech-recognition stream, drowning out the caller</head>amp;#39;s voice during answer read-backs, with three proposed solutions ranging from filing a vendor support ticket to architecturally rerouting call handling.">
-<meta name="share-hash" content="9c3a200d2a0dbd5482ea22979c703cb4fdfac1090b45709aa1743a6045b7008f">
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
 
@@ -166,6 +164,298 @@
     </div>
   </section>
 
+  <!-- How we proved it -->
+  <section class="mb-12">
+    <h2 class="text-xl font-semibold text-slate-950">How we proved it</h2>
+    <p class="mt-2 text-slate-700">
+      The two earlier test calls gave us strong circumstantial evidence — Vapi's
+      speech recognizer kept transcribing the AI's own words when the caller was
+      clearly talking — but circumstantial isn't a proof. To pin the bug down we
+      ran a controlled experiment that produced two independent transcripts of
+      the same call, captured at two different points in Vapi's pipeline, and
+      compared them.
+    </p>
+
+    <!-- Methodology diagram -->
+    <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500">The experiment, in five steps</h3>
+      <ol class="mt-5 space-y-5">
+        <li class="flex gap-4">
+          <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">1</span>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-slate-950">Turn Vapi's recording feature back on for one test call</div>
+            <p class="mt-1 text-sm text-slate-600">
+              We normally have Vapi-side recording off (Twilio records the carrier
+              leg directly, so storing it twice is wasteful). For this one call we
+              flipped <span class="mono text-xs">recordingEnabled: true</span> in
+              the assistant config so Vapi would also store the audio it
+              processed internally, broken out by channel.
+            </p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">2</span>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-slate-950">Place one staging call, interrupt aggressively</div>
+            <p class="mt-1 text-sm text-slate-600">
+              A 41-second test call where we tried to talk over the AI on every
+              one of its turns — greeting, hold-replies, the actual answer
+              read-back. Wired headset throughout, so acoustic echo from a
+              speakerphone can't be a factor.
+            </p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">3</span>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-slate-950">Download what Vapi stored — four audio files plus their internal event log</div>
+            <p class="mt-1 text-sm text-slate-600">
+              Vapi's API returned exactly what their documentation promises: four
+              audio recordings (caller-only, AI-only, mono mix, stereo) plus a
+              second separate artifact — the full chronological log of every event
+              their pipeline emitted during the call, including every partial
+              transcript their speech recognizer produced. Two completely separate
+              representations of the same call, captured at different stages of
+              their pipeline.
+            </p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">4</span>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-slate-950">Run a second, independent transcription against Vapi's own recordings</div>
+            <p class="mt-1 text-sm text-slate-600">
+              This is the trick. We took the four WAV files Vapi gave us and ran
+              each one through a completely separate speech-recognition tool
+              (macOS's built-in audio transcription, which has nothing to do with
+              Vapi or Deepgram). That gives us a neutral, ground-truth read of
+              what's actually in each audio file — independent of any decision
+              Vapi's pipeline made.
+            </p>
+          </div>
+        </li>
+        <li class="flex gap-4">
+          <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">5</span>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-slate-950">Compare the two transcripts, second by second</div>
+            <p class="mt-1 text-sm text-slate-600">
+              For each AI-speaking window in the call, we now have two answers
+              to "what was the caller saying?" — the independent macOS
+              transcription of Vapi's caller-only recording, and Vapi's own
+              recognizer output for that same window. If they agree, the
+              recognizer is doing its job. If they disagree, the recognizer is
+              receiving different audio than the recorder is — and the gap
+              between them tells us exactly where in their pipeline the bug
+              lives.
+            </p>
+          </div>
+        </li>
+      </ol>
+
+      <!-- Result -->
+      <div class="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-5">
+        <div class="text-xs font-semibold uppercase tracking-wider text-rose-800">The two transcripts disagree, dramatically</div>
+        <div class="mt-3 grid gap-3 text-xs sm:grid-cols-2">
+          <div>
+            <div class="font-semibold text-rose-900">macOS transcription of Vapi's <span class="mono">caller-only.wav</span> for the 11.6–19.3s window</div>
+            <div class="mono mt-2 rounded bg-white/60 p-3 text-rose-900">"Yeah, what programs do you offer?"</div>
+          </div>
+          <div>
+            <div class="font-semibold text-rose-900">Vapi's own speech-recognizer output for the same window (from their event log)</div>
+            <div class="mono mt-2 rounded bg-white/60 p-3 text-rose-900">"I understand you wanted to interrupt. I don't have the current time from this chat, but I'll have someone follow-up with you soon. By the way, who am I"</div>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-rose-800">
+          The audio file Vapi stored contains the caller's question. Vapi's own
+          recognizer, on the same call, transcribed something completely
+          different — the AI's own sentence, word for word.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Where the bug lives in the pipeline -->
+  <section class="mb-12">
+    <h2 class="text-xl font-semibold text-slate-950">Where this happens inside Vapi</h2>
+    <p class="mt-2 text-slate-700">
+      Vapi's pipeline has two distinct internal stages that both process the
+      same call audio in real time. One stores recordings. The other runs
+      speech recognition. They are reading from different audio sources, and
+      that's the bug.
+    </p>
+
+    <!-- Pipeline diagram -->
+    <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <svg viewBox="0 0 820 540" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vapi pipeline diagram">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+          </marker>
+          <marker id="arrRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#e11d48"/>
+          </marker>
+          <marker id="arrGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#059669"/>
+          </marker>
+        </defs>
+
+        <!-- Caller -->
+        <g>
+          <rect x="20" y="40" width="120" height="50" rx="10" fill="#f1f5f9" stroke="#cbd5e1"/>
+          <text x="80" y="62" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Caller</text>
+          <text x="80" y="80" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#475569">(headset)</text>
+        </g>
+
+        <!-- Arrow to Twilio -->
+        <line x1="142" y1="65" x2="208" y2="65" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="175" y="58" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">PSTN</text>
+
+        <!-- Twilio -->
+        <g>
+          <rect x="210" y="40" width="120" height="50" rx="10" fill="#f1f5f9" stroke="#cbd5e1"/>
+          <text x="270" y="62" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#0f172a">Twilio</text>
+          <text x="270" y="80" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#475569">(carrier)</text>
+        </g>
+
+        <!-- Arrow to Vapi -->
+        <line x1="332" y1="65" x2="398" y2="65" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="365" y="58" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Media Stream</text>
+
+        <!-- Vapi outer box -->
+        <g>
+          <rect x="400" y="20" width="400" height="500" rx="14" fill="#fafafa" stroke="#94a3b8" stroke-dasharray="4 4"/>
+          <text x="600" y="40" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#475569" letter-spacing="1">VAPI</text>
+        </g>
+
+        <!-- Audio ingress -->
+        <g>
+          <rect x="440" y="55" width="320" height="48" rx="10" fill="#fff" stroke="#cbd5e1"/>
+          <text x="600" y="76" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Audio ingress (caller's voice)</text>
+          <text x="600" y="92" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">from Twilio's Media Stream</text>
+        </g>
+
+        <!-- Split arrow down -->
+        <line x1="600" y1="103" x2="600" y2="135" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="608" y="125" font-family="system-ui, sans-serif" font-size="10" fill="#475569">routes to two places →</text>
+
+        <!-- Split arms -->
+        <line x1="600" y1="135" x2="500" y2="135" stroke="#475569" stroke-width="1.5"/>
+        <line x1="600" y1="135" x2="700" y2="135" stroke="#475569" stroke-width="1.5"/>
+        <line x1="500" y1="135" x2="500" y2="160" stroke="#059669" stroke-width="2" marker-end="url(#arrGreen)"/>
+        <line x1="700" y1="135" x2="700" y2="160" stroke="#e11d48" stroke-width="2" marker-end="url(#arrRed)"/>
+
+        <!-- AI TTS feed (the second input on the transcriber side) -->
+        <g>
+          <rect x="640" y="105" width="140" height="30" rx="8" fill="#fee2e2" stroke="#fca5a5"/>
+          <text x="710" y="124" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#991b1b">+ AI's TTS output</text>
+        </g>
+        <line x1="710" y1="135" x2="710" y2="160" stroke="#e11d48" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#arrRed)"/>
+
+        <!-- LEFT BRANCH — Recorder -->
+        <g>
+          <rect x="420" y="160" width="160" height="62" rx="10" fill="#d1fae5" stroke="#059669"/>
+          <text x="500" y="182" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#065f46">Recorder pipeline</text>
+          <text x="500" y="198" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#065f46">Reads caller audio</text>
+          <text x="500" y="213" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#065f46">on a separate channel</text>
+        </g>
+
+        <line x1="500" y1="222" x2="500" y2="248" stroke="#059669" stroke-width="2" marker-end="url(#arrGreen)"/>
+
+        <g>
+          <rect x="400" y="250" width="200" height="80" rx="10" fill="#ecfdf5" stroke="#10b981"/>
+          <text x="500" y="270" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#065f46">Output: 4 audio files</text>
+          <text x="500" y="288" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#065f46">caller-only.wav  (clean)</text>
+          <text x="500" y="302" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#065f46">assistant-only.wav</text>
+          <text x="500" y="316" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#065f46">combined.wav · stereo.wav</text>
+        </g>
+
+        <!-- Recorder result label -->
+        <g>
+          <rect x="410" y="346" width="180" height="32" rx="8" fill="#fff" stroke="#10b981" stroke-width="1.5"/>
+          <text x="500" y="367" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#065f46">Channel separation works</text>
+        </g>
+
+        <!-- RIGHT BRANCH — Transcriber -->
+        <g>
+          <rect x="620" y="160" width="160" height="62" rx="10" fill="#fee2e2" stroke="#e11d48"/>
+          <text x="700" y="182" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#991b1b">Recognizer pipeline</text>
+          <text x="700" y="198" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#991b1b">Reads a single channel</text>
+          <text x="700" y="213" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#991b1b">that includes the AI's voice</text>
+        </g>
+
+        <line x1="700" y1="222" x2="700" y2="248" stroke="#e11d48" stroke-width="2" marker-end="url(#arrRed)"/>
+
+        <g>
+          <rect x="600" y="250" width="200" height="40" rx="10" fill="#fecaca" stroke="#e11d48"/>
+          <text x="700" y="274" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#991b1b">Speech recognition</text>
+        </g>
+
+        <line x1="700" y1="290" x2="700" y2="308" stroke="#e11d48" stroke-width="2" marker-end="url(#arrRed)"/>
+
+        <g>
+          <rect x="600" y="310" width="200" height="40" rx="10" fill="#fecaca" stroke="#e11d48"/>
+          <text x="700" y="334" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#991b1b">Voice activity detector</text>
+        </g>
+
+        <line x1="700" y1="350" x2="700" y2="368" stroke="#e11d48" stroke-width="2" marker-end="url(#arrRed)"/>
+
+        <g>
+          <rect x="600" y="370" width="200" height="40" rx="10" fill="#fecaca" stroke="#e11d48"/>
+          <text x="700" y="386" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#991b1b">Barge-in / interrupt</text>
+          <text x="700" y="400" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#991b1b">decision</text>
+        </g>
+
+        <!-- Recognizer failure label -->
+        <g>
+          <rect x="600" y="426" width="200" height="50" rx="8" fill="#fff" stroke="#e11d48" stroke-width="1.5"/>
+          <text x="700" y="446" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#991b1b">Sees only the AI talking</text>
+          <text x="700" y="463" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#991b1b">No interrupt ever fires</text>
+        </g>
+
+        <!-- Bottom legend -->
+        <g>
+          <rect x="420" y="490" width="360" height="22" rx="6" fill="#fff" stroke="#e2e8f0"/>
+          <circle cx="436" cy="501" r="5" fill="#059669"/>
+          <text x="448" y="504" font-family="system-ui, sans-serif" font-size="10" fill="#0f172a">working as designed</text>
+          <circle cx="600" cy="501" r="5" fill="#e11d48"/>
+          <text x="612" y="504" font-family="system-ui, sans-serif" font-size="10" fill="#0f172a">where the bug lives</text>
+        </g>
+      </svg>
+
+      <div class="mt-4 grid gap-4 text-sm md:grid-cols-2">
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <div class="text-xs font-semibold uppercase tracking-wider text-emerald-800">Left branch — Vapi's recorder</div>
+          <p class="mt-2 text-emerald-900">
+            Reads the caller's audio on a clean, separate channel. Produces
+            the four WAV files we downloaded. The <span class="mono">caller-only.wav</span>
+            file contains the caller's voice and only the caller's voice.
+            Channel separation here is provably working.
+          </p>
+        </div>
+        <div class="rounded-lg border border-rose-200 bg-rose-50 p-4">
+          <div class="text-xs font-semibold uppercase tracking-wider text-rose-800">Right branch — Vapi's recognizer</div>
+          <p class="mt-2 text-rose-900">
+            Receives a different audio source — one that has the AI's own
+            outbound voice mixed in. The recognizer transcribes that audio,
+            sees the AI's words during AI turns, decides no caller is
+            speaking, and never tells the rest of the system to stop. This
+            branch is reading from the wrong place.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <p class="mt-6 text-slate-700">
+      We don't have visibility into the exact wiring inside Vapi's
+      infrastructure — only into what comes out the API. But the
+      observable behaviour pins the bug down to this one divergence: their
+      recorder and their recognizer are reading from two different audio
+      sources on the same call. Whatever they're doing for the recorder
+      (clean channel isolation) needs to also apply to the recognizer.
+      That's the fix.
+    </p>
+  </section>
+
   <!-- Why it works on the greeting -->
   <section class="mb-12">
     <h2 class="text-xl font-semibold text-slate-950">Why this confused us for a while</h2>
@@ -190,18 +480,73 @@
   <section class="mb-12 rounded-2xl border border-slate-300 bg-slate-900 p-6 text-slate-100 shadow-sm">
     <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Root cause</h2>
     <p class="mt-3 text-slate-100">
-      Our call architecture has Twilio (the carrier) hand the audio off to Vapi (the voice
-      AI platform) via a feature called <span class="mono text-sm">phoneCallProviderBypassEnabled</span>.
-      In that mode, Vapi appears to deliver a mixed audio stream into its own
-      speech-recognition pipeline — caller plus AI output combined. While the AI is silent
-      the recognizer hears the caller fine. While the AI is talking, the AI's own voice
-      drowns the caller out entirely.
+      Vapi (the voice AI platform between Twilio and our AI) has two separate
+      audio pipelines inside its system. The pipeline that <em>records</em> the
+      call keeps the caller and the AI on separate channels — we confirmed
+      this by downloading the per-channel recordings Vapi generated, and the
+      caller's channel contains only the caller's voice, with no AI audio.
+      The pipeline that feeds the <em>speech recognizer</em> does not. It
+      receives the AI's audio mixed in with the caller's, on the same
+      channel.
+    </p>
+    <p class="mt-3 text-slate-100">
+      When the AI is talking, its voice in the mixed stream is loud and
+      continuous; the caller's voice gets drowned out before the recognizer
+      can pick it up. From the recognizer's perspective the caller is silent
+      the whole time the AI is talking, so nothing fires the barge-in detector.
     </p>
     <p class="mt-3 text-slate-300 text-sm">
-      This is not a bug in our code. It is how Vapi's audio routing behaves when running
-      in this mode. We've exhausted every configuration knob exposed to us by Vapi at the
-      assistant-config layer.
+      The two pipelines diverging is the bug, and it lives inside Vapi's
+      infrastructure. Vapi's own recording layer proves that the channel
+      separation is technically achievable on the same call — they just don't
+      apply it to the recognizer input.
     </p>
+  </section>
+
+  <!-- The proof side-by-side -->
+  <section class="mb-12">
+    <h2 class="text-xl font-semibold text-slate-950">The proof, in one diagram</h2>
+    <p class="mt-2 text-slate-700">
+      Same call, two different audio routings inside Vapi.
+    </p>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+        <div class="text-xs font-semibold uppercase tracking-wider text-emerald-800">Recording pipeline</div>
+        <div class="mt-2 text-sm font-semibold text-emerald-950">Caller-only channel — clean</div>
+        <p class="mt-2 text-xs text-emerald-900">
+          We pulled the per-channel WAV file Vapi stored. Transcribed by a separate
+          tool, the caller channel contains:
+        </p>
+        <ul class="mono mt-3 space-y-1 text-xs text-emerald-900">
+          <li>"Hey, hello. I'd like to interrupt you."</li>
+          <li>"Yeah, what programs do you offer?"</li>
+          <li>"What programs do you offer?"</li>
+          <li>"What programs are you all involved in?"</li>
+        </ul>
+        <p class="mt-3 text-xs text-emerald-700">
+          Zero AI words present. The recording pipeline did its job.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
+        <div class="text-xs font-semibold uppercase tracking-wider text-rose-800">Speech-recognition pipeline</div>
+        <div class="mt-2 text-sm font-semibold text-rose-950">Same call, same caller — receives mixed audio</div>
+        <p class="mt-2 text-xs text-rose-900">
+          During the AI's 8-second answer, the recognizer fired 13 progressive snippets.
+          Every one of them is the AI's own sentence:
+        </p>
+        <ul class="mono mt-3 space-y-1 text-xs text-rose-900">
+          <li>"I understand"</li>
+          <li>"I understand you wanted to interrupt."</li>
+          <li>"...I don't have the current time from this chat..."</li>
+          <li>"...someone follow-up with you soon. By the way, who am I"</li>
+        </ul>
+        <p class="mt-3 text-xs text-rose-700">
+          Zero caller words present, despite the caller actively speaking.
+        </p>
+      </div>
+    </div>
   </section>
 
   <!-- How we fix it -->
@@ -215,16 +560,16 @@
       <li class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-baseline gap-3">
           <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold">1</span>
-          <h3 class="text-base font-semibold text-slate-950">File a Vapi support ticket with our evidence</h3>
+          <h3 class="text-base font-semibold text-slate-950">Vapi support ticket — already filed, now reinforced</h3>
         </div>
         <p class="mt-2 text-sm text-slate-700">
-          We now have a clean reproduction — two staging call IDs, the per-event log showing
-          the AI's voice arriving on the inbound transcription stream, the timestamps where
-          the caller spoke but was not heard. This is the cheapest path: Vapi support sees
-          this evidence and either fixes the audio routing on their side or tells us a
-          configuration we don't know about.
+          The initial support ticket is in with 8 reproducing call IDs. The new per-channel
+          recording from today's test call adds the missing piece: their own recorder proves
+          the channels can be separated on this exact call; their recognizer just doesn't use
+          the separation. That removes any room for Vapi to argue this is a configuration or
+          carrier issue on our side.
         </p>
-        <p class="mt-2 text-xs text-slate-500">Cost: hours. Confidence it works: medium — depends on Vapi's responsiveness.</p>
+        <p class="mt-2 text-xs text-slate-500">Cost: hours. Confidence it works: medium — depends on Vapi's responsiveness, but the evidence is now decisive.</p>
       </li>
 
       <li class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -321,13 +666,19 @@
         <div class="mono mt-1 text-xs">019e2d2b-e088-7000-83e6-34ce6e97e011</div>
         <div class="text-xs text-slate-500 mt-1">Vapi's own metrics report <span class="mono">numUserInterrupted: 1</span> — exactly one of the caller's many interruption attempts registered, and it was on the greeting. The 8-second answer read-back played to completion despite continued interruption attempts.</div>
       </div>
+      <div>
+        <div class="text-xs uppercase tracking-wider text-slate-500">Staging call 3 (with per-channel recording enabled — the decisive call)</div>
+        <div class="mono mt-1 text-xs">019e2d49-446e-7000-845f-ed3d7cdeb9ce</div>
+        <div class="text-xs text-slate-500 mt-1">We flipped on Vapi's recording feature for this one call so it would store the audio it processed, broken out by channel. The caller-only channel WAV contains the caller's voice only — Vapi's recorder confirms clean channel separation is achievable on this exact call. Same call, Vapi's recognizer received the AI's voice mixed in on the caller side. Both artifacts ship from Vapi, captured at different stages of the same call.</div>
+      </div>
       <div class="pt-2 border-t border-slate-200">
         <div class="text-xs uppercase tracking-wider text-slate-500">Evidence we gathered</div>
         <ul class="mt-2 space-y-1 text-xs text-slate-600 list-disc list-inside">
           <li>Vapi assistant configuration emitted for the call (all interruption-related flags set correctly)</li>
-          <li>Vapi message log (5 AI turns, 4 caller turns, 1 successful interrupt on the greeting only)</li>
-          <li>Vapi per-event log (836 events including 104 Deepgram partial transcripts)</li>
-          <li>Bucketing of partials by AI-speaking window: 72 / 72 are the AI's own voice</li>
+          <li>Vapi message log (per-turn structured events, including barge-in successes / failures)</li>
+          <li>Vapi per-event log (~800 events per call including every Deepgram partial transcript)</li>
+          <li>Bucketing of partials by AI-speaking window: across two calls, 158 of 158 partials in AI-speaking windows were the AI's own voice</li>
+          <li>Per-channel audio recordings (caller-only, assistant-only, combined, stereo) for the third call, confirming channel separation works at the recorder level</li>
         </ul>
       </div>
     </div>
