@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="share-summary" content="Audit of every MCP tool in the Lumion monorepo — 31 tool classes across 3 servers (Institution, Student, Voice), the auth and gating on each, the three transports that expose them, and the internal consumers that call them.">
+<meta name="share-hash" content="4328e22d8d48de631298e7a0523dab0d4d4c9f20ed59c6221be21876b4240325">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lumion MCP Tool Surface Audit</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['system-ui','-apple-system','Segoe UI','Roboto','Helvetica','Arial','sans-serif'],
+        mono: ['ui-monospace','SFMono-Regular','Menlo','Monaco','Consolas','monospace'],
+      },
+    },
+  },
+};
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  .pill { display:inline-flex; align-items:center; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:600; letter-spacing:0.02em; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; }
+  .row-hide { display: none !important; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary { list-style: none; cursor: pointer; }
+  .arrow::after { content: "→"; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased">
+
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+  <!-- ============================== HEADER ============================== -->
+  <header class="mb-10">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="pill bg-indigo-100 text-indigo-700">Internal audit</span>
+      <span class="text-xs text-slate-500">Generated 2026-05-19 · branch <span class="mono">lhilton/washington-v2</span></span>
+    </div>
+    <h1 class="text-3xl font-bold tracking-tight">Lumion MCP Tool Surface</h1>
+    <p class="mt-2 text-slate-600 max-w-3xl">
+      Inventory of every Model Context Protocol tool defined in the monorepo, the servers that expose them,
+      the auth that gates them, and the internal services that consume them through the in-process Prism bridge.
+    </p>
+
+    <!-- KPI tiles -->
+    <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-2xl font-bold tabular-nums">3</div>
+        <div class="text-xs text-slate-500 mt-0.5">MCP servers</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-2xl font-bold tabular-nums">31</div>
+        <div class="text-xs text-slate-500 mt-0.5">Tool classes</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-2xl font-bold tabular-nums">5</div>
+        <div class="text-xs text-slate-500 mt-0.5">Owning domains</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <div class="text-2xl font-bold tabular-nums">8</div>
+        <div class="text-xs text-slate-500 mt-0.5">Internal consumers tracked</div>
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <nav class="mt-6 text-sm flex flex-wrap gap-x-4 gap-y-1 text-slate-600">
+      <a href="#architecture" class="hover:text-indigo-600">Architecture</a>
+      <span class="text-slate-300">·</span>
+      <a href="#servers" class="hover:text-indigo-600">Servers</a>
+      <span class="text-slate-300">·</span>
+      <a href="#catalog" class="hover:text-indigo-600">Tool catalog</a>
+      <span class="text-slate-300">·</span>
+      <a href="#consumers" class="hover:text-indigo-600">Internal consumers</a>
+      <span class="text-slate-300">·</span>
+      <a href="#modes" class="hover:text-indigo-600">Availability modes</a>
+      <span class="text-slate-300">·</span>
+      <a href="#gating" class="hover:text-indigo-600">Gating &amp; auth</a>
+      <span class="text-slate-300">·</span>
+      <a href="#notes" class="hover:text-indigo-600">Footnotes</a>
+    </nav>
+  </header>
+
+  <!-- ============================== ARCHITECTURE ============================== -->
+  <section id="architecture" class="mb-12">
+    <h2 class="text-xl font-semibold tracking-tight mb-3">Architecture</h2>
+    <p class="text-slate-600 text-sm mb-6 max-w-3xl">
+      Every tool is one PHP class. The same class can ride three transports: external MCP HTTP
+      (JSON-RPC), an internal Prism bridge used by the production assistant, or a Cortex / Prism agent
+      wired by the CustomerJourney domain. There is no separate "JSON tool" surface.
+    </p>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-6">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6 items-stretch">
+
+        <!-- LEFT: tool source -->
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-2">Source</div>
+          <div class="font-mono text-sm">app/Domains/{Domain}/MCP/Tools/*Tool.php</div>
+          <div class="text-xs text-slate-500 mt-2">31 classes · extend AuthorizedMcpTool or VoiceAgentMcpTool</div>
+        </div>
+
+        <div class="hidden lg:flex items-center justify-center text-slate-400 text-3xl">&rarr;</div>
+
+        <!-- RIGHT: three transports -->
+        <div class="space-y-3">
+          <div class="border border-emerald-200 bg-emerald-50 rounded-lg p-4">
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="font-semibold text-emerald-900">External MCP (HTTP / JSON-RPC)</div>
+              <span class="pill bg-emerald-100 text-emerald-700">Mcp::web()</span>
+            </div>
+            <div class="text-xs text-emerald-800 mt-1">3 servers registered in <span class="mono">routes/mcp.php</span>. Sanctum or per-call bearer auth.</div>
+          </div>
+          <div class="border border-indigo-200 bg-indigo-50 rounded-lg p-4">
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="font-semibold text-indigo-900">Internal Prism bridge</div>
+              <span class="pill bg-indigo-100 text-indigo-700">McpToolAdapter</span>
+            </div>
+            <div class="text-xs text-indigo-800 mt-1">Rebinds MCP tool classes as Prism Tool instances. Used by <span class="mono">AgentOrchestrator</span> (Mia).</div>
+          </div>
+          <div class="border border-violet-200 bg-violet-50 rounded-lg p-4">
+            <div class="flex items-baseline justify-between gap-2">
+              <div class="font-semibold text-violet-900">Cortex / Prism agent tools</div>
+              <span class="pill bg-violet-100 text-violet-700">AgentPrismToolBuilder</span>
+            </div>
+            <div class="text-xs text-violet-800 mt-1">CustomerJourney agents compose per-agent tool sets at dispatch time. Server-scoped KB IDs.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== SERVERS ============================== -->
+  <section id="servers" class="mb-12">
+    <h2 class="text-xl font-semibold tracking-tight mb-3">External MCP servers</h2>
+    <p class="text-slate-600 text-sm mb-6 max-w-3xl">
+      All registered in <span class="mono">routes/mcp.php</span>. The base middleware stack is
+      <span class="mono">[api, auth:sanctum, throttle:mcp, subdomain.default]</span>; the voice server
+      opts out of the first and last in favor of a per-call bearer token.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <!-- Institution -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="flex items-baseline justify-between">
+          <h3 class="font-semibold text-lg">Institution</h3>
+          <span class="pill bg-indigo-100 text-indigo-700">17 tools</span>
+        </div>
+        <div class="text-xs text-slate-500 mono mt-0.5">institution-mcp · v1.0.0</div>
+
+        <dl class="mt-4 space-y-3 text-sm">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">URL</dt>
+            <dd class="mono mt-1 text-slate-800 break-all">https://{subdomain}.{root}/mcp/institution</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Auth</dt>
+            <dd class="mt-1 text-slate-700">Sanctum bearer token (stateless API client) + <span class="mono">subdomain.check</span></dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">For</dt>
+            <dd class="mt-1 text-slate-700">School staff &amp; admin tools. Tenant resolved from subdomain.</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Class</dt>
+            <dd class="mono mt-1 text-slate-700 text-xs">App\Domains\InstitutionMcp\MCP\InstitutionMcpServer</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Student -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="flex items-baseline justify-between">
+          <h3 class="font-semibold text-lg">Student</h3>
+          <span class="pill bg-indigo-100 text-indigo-700">9 tools</span>
+        </div>
+        <div class="text-xs text-slate-500 mono mt-0.5">student-mcp · v1.0.0</div>
+
+        <dl class="mt-4 space-y-3 text-sm">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">URL</dt>
+            <dd class="mono mt-1 text-slate-800 break-all">https://{subdomain}.{root}/mcp/student</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Auth</dt>
+            <dd class="mt-1 text-slate-700">Sanctum stateful web session. Requires institution subdomain in <span class="mono">SANCTUM_STATEFUL_DOMAINS</span>.</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">For</dt>
+            <dd class="mt-1 text-slate-700">Student-portal AI assistant. Scoped to authenticated student's Contact.</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Class</dt>
+            <dd class="mono mt-1 text-slate-700 text-xs">App\Domains\StudentMcp\MCP\StudentMcpServer</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Voice -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="flex items-baseline justify-between">
+          <h3 class="font-semibold text-lg">Voice Agent</h3>
+          <span class="pill bg-indigo-100 text-indigo-700">5 tools</span>
+        </div>
+        <div class="text-xs text-slate-500 mono mt-0.5">lumion-voice-agent · v1.0.0</div>
+
+        <dl class="mt-4 space-y-3 text-sm">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">URL</dt>
+            <dd class="mono mt-1 text-slate-800 break-all">https://{root}/mcp/voice-agent <span class="text-slate-400 text-[10px]">(apex)</span></dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Auth</dt>
+            <dd class="mt-1 text-slate-700">Per-call short-lived bearer (<span class="mono">VoiceCallTokenMiddleware</span>). TTL 10/15/35 min sliding. Opts out of Sanctum and subdomain.default.</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">For</dt>
+            <dd class="mt-1 text-slate-700">Vapi's remote-MCP tool executor during live AI calls. Token scoped to Call / Institution / Contact.</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Class</dt>
+            <dd class="mono mt-1 text-slate-700 text-xs">App\Domains\Communications\MCP\VoiceAgentMcpServer</dd>
+          </div>
+        </dl>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== TOOL CATALOG ============================== -->
+  <section id="catalog" class="mb-12">
+    <div class="flex items-end justify-between mb-3 flex-wrap gap-3">
+      <div>
+        <h2 class="text-xl font-semibold tracking-tight">Tool catalog</h2>
+        <p class="text-slate-600 text-sm mt-1">31 tool classes across 5 owning domains. <span class="text-slate-500">Filter or click a column to sort by domain band.</span></p>
+      </div>
+      <input
+        id="catalog-filter"
+        type="search"
+        placeholder="Filter by name, domain, server, summary..."
+        class="border border-slate-300 rounded-lg px-3 py-2 text-sm w-full sm:w-80 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+      />
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr class="text-left">
+              <th class="px-3 py-2 font-semibold">Tool name (MCP)</th>
+              <th class="px-3 py-2 font-semibold">Owning domain</th>
+              <th class="px-3 py-2 font-semibold">Server(s)</th>
+              <th class="px-3 py-2 font-semibold">Effect</th>
+              <th class="px-3 py-2 font-semibold">Summary</th>
+              <th class="px-3 py-2 font-semibold">Auth gate</th>
+            </tr>
+          </thead>
+          <tbody id="catalog-body" class="divide-y divide-slate-100">
+
+          <!-- ===== Communications / VoiceAgent (5) ===== -->
+          <tr class="bg-rose-50/30">
+            <td colspan="6" class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700">Communications · VoiceAgent (5)</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">end_call</td>
+            <td class="px-3 py-2 align-top">Communications</td>
+            <td class="px-3 py-2 align-top">Voice</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-amber-100 text-amber-700">mutating</span> <span class="pill bg-slate-100 text-slate-600">system</span></td>
+            <td class="px-3 py-2 align-top">Hang up the live call. Model must speak a goodbye line immediately before invoking.</td>
+            <td class="px-3 py-2 align-top text-xs">Per-call token; always-on system tool</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">transfer_call</td>
+            <td class="px-3 py-2 align-top">Communications</td>
+            <td class="px-3 py-2 align-top">Voice</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-amber-100 text-amber-700">mutating</span> <span class="pill bg-slate-100 text-slate-600">system</span></td>
+            <td class="px-3 py-2 align-top">Forward the live call to a configured staff number via Twilio dial. Target must resolve to a RingGroupMember.</td>
+            <td class="px-3 py-2 align-top text-xs">Per-call token; always-on system tool</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">initiate_authenticated_callback</td>
+            <td class="px-3 py-2 align-top">Communications</td>
+            <td class="px-3 py-2 align-top">Voice</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-amber-100 text-amber-700">mutating</span> <span class="pill bg-slate-100 text-slate-600">system</span></td>
+            <td class="px-3 py-2 align-top">Hang up and call the contact back on their on-file number to gate identity-sensitive conversation.</td>
+            <td class="px-3 py-2 align-top text-xs">Per-call token; callback-loop recursion guard</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">opt_out_of_voice</td>
+            <td class="px-3 py-2 align-top">Communications</td>
+            <td class="px-3 py-2 align-top">Voice</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-amber-100 text-amber-700">mutating</span> <span class="pill bg-purple-100 text-purple-700">authorized&nbsp;only</span></td>
+            <td class="px-3 py-2 align-top">Record the caller's request to opt out of voice marketing. Requires an authenticated-callback session.</td>
+            <td class="px-3 py-2 align-top text-xs">Per-call token; scope=authorized</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">respond_to_caller</td>
+            <td class="px-3 py-2 align-top">Communications</td>
+            <td class="px-3 py-2 align-top">Voice</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span> <span class="pill bg-slate-100 text-slate-600">default</span></td>
+            <td class="px-3 py-2 align-top">Generate the next reply line from the caller's verbatim utterance. Delegates to InboundReplyAgent.</td>
+            <td class="px-3 py-2 align-top text-xs">Per-call token; default operator tool</td>
+          </tr>
+
+          <!-- ===== ContextEngine (2) ===== -->
+          <tr class="bg-indigo-50/30">
+            <td colspan="6" class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-indigo-700">ContextEngine (2)</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">lumion_search_institution_knowledge</td>
+            <td class="px-3 py-2 align-top">ContextEngine</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Vector search over the current institution's knowledge base. Returns ranked chunks with citations.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">searchInstitutionKnowledge</span>; SLA monitored</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">lumion_search_platform_knowledge</td>
+            <td class="px-3 py-2 align-top">ContextEngine</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Search Lumion's product help docs (Intercom Help Center). Optional audience filter (student/school).</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">searchPlatformKnowledge</span></td>
+          </tr>
+
+          <!-- ===== CustomerJourney (1) ===== -->
+          <tr class="bg-violet-50/30">
+            <td colspan="6" class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-violet-700">CustomerJourney (1)</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">lumion_search_knowledge_base</td>
+            <td class="px-3 py-2 align-top">CustomerJourney</td>
+            <td class="px-3 py-2 align-top">Institution &middot; Agents</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Search the institution's Customer Journey Knowledge Bases. Server-enforced KB-id scope when used by an agent.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">searchKnowledgeBase</span></td>
+          </tr>
+
+          <!-- ===== InstitutionMcp (14) ===== -->
+          <tr class="bg-emerald-50/30">
+            <td colspan="6" class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">InstitutionMcp (14)</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">institution-academic-programs-catalog</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Active programs (name, type, length, tuition ranges), curricula by program, and active cohort summary.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">viewAcademicProgramsCatalog</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">activity-summary</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Daily activity metrics — new leads, applications, payments received, enrollment changes — with prior-period comparison.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">viewActivitySummary</span> · staff/admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">contact-search</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">CRM contact lookup by name, email, or phone. Scoped to the authenticated user's institution.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">searchContacts</span> · staff/admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">communication-draft</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Draft a professional email or SMS to a contact. Produces an ActionConfirmation card for review; nothing is sent.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">draftCommunication</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">send-communication</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-amber-100 text-amber-700">mutating</span></td>
+            <td class="px-3 py-2 align-top">Execute a CONFIRMED ActionConfirmation — sends the email or SMS. Content is pulled from the encrypted action payload.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">sendCommunication</span> · admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">application-search</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Enrollment applications by applicant name, email, phone, status, or ID. Optional date range.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">searchApplications</span> · staff/admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">enrollment-search</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Enrollment records by student name, program/curriculum, or cohort. Optional status filter (active/dropped).</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">searchEnrollments</span> · staff/admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">generate-enrollment-form</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-amber-100 text-amber-700">mutating</span></td>
+            <td class="px-3 py-2 align-top">Generate or edit an enrollment application form from a natural-language prompt. Persists to the form builder.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">generateEnrollmentForm</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">invoice-search</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Invoices by contact name, invoice ID, or status. Returns amounts, payment progress, and due dates.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">searchInvoices</span> · staff/admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">payment-collections</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Collections report over a date range. Daily breakdown by payment type (deposits, plans, RIC, invoices) with rates and ACH returns.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">viewPaymentCollections</span> · admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">payment-plan-search</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Payment plans and scheduled periods tied to funding contracts. Type/status/overdue filters.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">searchPaymentPlans</span> · staff/admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">payment-schedule</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Pure amortization calculator. Per-period principal, interest, payment, balance. Monthly/weekly/bi-weekly.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">viewPaymentSchedule</span> · staff/admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">payment-trends</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Payment trends — total collected, count by status, average amount. Optional curriculum/status filters.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">viewPaymentTrends</span> · staff/admin</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">servicer-performance</td>
+            <td class="px-3 py-2 align-top">InstitutionMcp</td>
+            <td class="px-3 py-2 align-top">Institution</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Servicer payment performance with aging buckets, per-servicer stats, and recovery analysis.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">viewServicerPerformance</span> · admin</td>
+          </tr>
+
+          <!-- ===== StudentMcp (9) ===== -->
+          <tr class="bg-sky-50/30">
+            <td colspan="6" class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700">StudentMcp (9)</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-admissions-applications</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">The authenticated student's admissions applications — program, status, submission/approval timestamps, pending disclosures, funding.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentViewApplications</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-attendance-grades</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Attendance rate, total sessions, present/absent/excused counts, ten most recent sessions. Grades when institution exposes them.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentViewAttendance</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-communications-history</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Recent SMS and email history for the student's contact — direction, channel, preview, timestamp, delivery status.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentViewCommunications</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-course-schedule</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Student's course schedule — courses, instructors, session date/time, location or virtual link, recurring pattern.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentViewCourseSchedule</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-enrollment-data</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Student's enrollment info — program, cohort, enrollment status, expected completion. Optional schedule summary.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentViewEnrollment</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-payment-schedule</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Student's payment schedule — overdue, next payment, payment method, contract summary, paid/unpaid counts, recent history.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentViewPaymentSchedule</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-school-contact</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">School contact info — phone, email, website, physical address.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentViewSchoolContact</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-knowledge-search</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Student-scoped semantic search over the institution's KB. PII scrubber + SLA monitoring on query.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentKnowledgeSearch</span></td>
+          </tr>
+
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 mono align-top">student-platform-knowledge-search</td>
+            <td class="px-3 py-2 align-top">StudentMcp</td>
+            <td class="px-3 py-2 align-top">Student</td>
+            <td class="px-3 py-2 align-top"><span class="pill bg-emerald-100 text-emerald-700">read</span></td>
+            <td class="px-3 py-2 align-top">Semantic search over Lumion's product help docs, student-facing articles only.</td>
+            <td class="px-3 py-2 align-top text-xs">Gate <span class="mono">studentPlatformKnowledgeSearch</span></td>
+          </tr>
+
+          </tbody>
+        </table>
+      </div>
+      <div class="px-3 py-2 text-xs text-slate-500 border-t border-slate-200 bg-slate-50">
+        <span id="catalog-count"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== INTERNAL CONSUMERS ============================== -->
+  <section id="consumers" class="mb-12">
+    <h2 class="text-xl font-semibold tracking-tight mb-3">Internal consumers</h2>
+    <p class="text-slate-600 text-sm mb-6 max-w-3xl">
+      Code paths that call MCP tools from inside the monorepo, either through the
+      <span class="mono">McpToolAdapter</span> Prism bridge or through Cortex / Prism agent builders.
+      Vapi is the only external MCP client today; it calls back into our voice server during live calls.
+    </p>
+
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr class="text-left">
+            <th class="px-3 py-2 font-semibold">Consumer</th>
+            <th class="px-3 py-2 font-semibold">Path</th>
+            <th class="px-3 py-2 font-semibold">Tools used</th>
+            <th class="px-3 py-2 font-semibold">Trigger</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+
+          <tr>
+            <td class="px-3 py-3 font-semibold">AgentOrchestrator <span class="font-normal text-slate-500 text-xs">(Mia)</span></td>
+            <td class="px-3 py-3 mono text-xs">app/Domains/AI/Services/AgentOrchestrator.php</td>
+            <td class="px-3 py-3">All Institution + Student + ContextEngine tools via <span class="mono">McpToolAdapter</span>. Streaming multi-turn loop.</td>
+            <td class="px-3 py-3 text-xs">Livewire / WebSocket — school dashboard chat + student portal chat</td>
+          </tr>
+
+          <tr>
+            <td class="px-3 py-3 font-semibold">AgentSandboxService</td>
+            <td class="px-3 py-3 mono text-xs">app/Domains/AI/Services/AgentSandboxService.php</td>
+            <td class="px-3 py-3">Agent-scoped Knowledge Bases via <span class="mono">AgentPrismToolBuilder</span></td>
+            <td class="px-3 py-3 text-xs">Filament admin agent preview / testing page</td>
+          </tr>
+
+          <tr>
+            <td class="px-3 py-3 font-semibold">InboundReplyAgent</td>
+            <td class="px-3 py-3 mono text-xs">app/Domains/CustomerJourney/Services/</td>
+            <td class="px-3 py-3">Optional assigned-agent tools + <span class="mono">lumion_search_knowledge_base</span></td>
+            <td class="px-3 py-3 text-xs"><span class="mono">ProcessInboundReplyJob</span> — inbound SMS / Email / Voice webhooks</td>
+          </tr>
+
+          <tr>
+            <td class="px-3 py-3 font-semibold">TransitionAgentEvaluator</td>
+            <td class="px-3 py-3 mono text-xs">app/Domains/CustomerJourney/Services/</td>
+            <td class="px-3 py-3">Agent platform KBs</td>
+            <td class="px-3 py-3 text-xs"><span class="mono">EvaluateAiTransitionJob</span> — decides whether to advance a contact through a stage transition</td>
+          </tr>
+
+          <tr>
+            <td class="px-3 py-3 font-semibold">PlayAutomationGeneratorAgent</td>
+            <td class="px-3 py-3 mono text-xs">app/Domains/CustomerJourney/Services/</td>
+            <td class="px-3 py-3">Agent platform KBs</td>
+            <td class="px-3 py-3 text-xs">Automation trigger queue — generates outreach automation plans</td>
+          </tr>
+
+          <tr>
+            <td class="px-3 py-3 font-semibold">PlayAutomationActionEventReevaluatorAgent</td>
+            <td class="px-3 py-3 mono text-xs">app/Domains/CustomerJourney/Services/</td>
+            <td class="px-3 py-3">Agent platform KBs</td>
+            <td class="px-3 py-3 text-xs">Post-automation event queue — re-evaluates contact eligibility after actions complete</td>
+          </tr>
+
+          <tr>
+            <td class="px-3 py-3 font-semibold">Vapi voice flow</td>
+            <td class="px-3 py-3 mono text-xs">app/Domains/Communications/Services/Voice/AiAgent/</td>
+            <td class="px-3 py-3">All 5 VoiceAgent tools (Vapi is an external MCP client hitting our voice server)</td>
+            <td class="px-3 py-3 text-xs">Live phone call — Vapi remote-MCP executor invokes <span class="mono">/mcp/voice-agent</span></td>
+          </tr>
+
+          <tr>
+            <td class="px-3 py-3 font-semibold">InboundAgentTest Filament page</td>
+            <td class="px-3 py-3 mono text-xs">app/Filament/Admin/Pages/InboundAgentTest.php</td>
+            <td class="px-3 py-3">Same surface as InboundReplyAgent</td>
+            <td class="px-3 py-3 text-xs">Admin manual test of inbound reply behavior</td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================== AVAILABILITY MODES ============================== -->
+  <section id="modes" class="mb-12">
+    <h2 class="text-xl font-semibold tracking-tight mb-3">Availability modes</h2>
+    <p class="text-slate-600 text-sm mb-6 max-w-3xl">
+      Same PHP tool class, three transports. There is no separate "JSON-only" tool surface — JSON
+      is just MCP's wire format. The other two modes are in-process consumers.
+    </p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="pill bg-emerald-100 text-emerald-700 mb-3">External — MCP over HTTP</div>
+        <h3 class="font-semibold mb-2">Mcp::web() routes</h3>
+        <p class="text-sm text-slate-600 mb-3">JSON-RPC over HTTP/SSE. Tool class is serialized by Laravel MCP into MCP schema.</p>
+        <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+          <li>3 endpoints in <span class="mono">routes/mcp.php</span></li>
+          <li>Auth: Sanctum or per-call bearer</li>
+          <li>Rate limited <span class="mono">throttle:mcp</span> (120/min) + per-tool buckets</li>
+          <li>Audit logged to <span class="mono">mysql_logs.mcp_audit_logs</span></li>
+          <li>Used today by Vapi; reachable by any Sanctum-authenticated MCP client</li>
+        </ul>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="pill bg-indigo-100 text-indigo-700 mb-3">Internal — Prism bridge</div>
+        <h3 class="font-semibold mb-2">McpToolAdapter</h3>
+        <p class="text-sm text-slate-600 mb-3">Rebinds MCP tool classes as Prism <span class="mono">Tool</span> instances so <span class="mono">Prism::text()-&gt;withTools(...)</span> can call them in-process.</p>
+        <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+          <li><span class="mono">app/Domains/AI/Services/McpToolAdapter.php</span></li>
+          <li>Used by <span class="mono">AgentOrchestrator</span> (Mia assistant)</li>
+          <li>Enforces (user, institution, contact) scope</li>
+          <li>Same policy gates as external path</li>
+          <li>Streams via Prism's tool-loop instead of MCP JSON-RPC</li>
+        </ul>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-xl p-5">
+        <div class="pill bg-violet-100 text-violet-700 mb-3">Internal — Cortex / Prism agent tools</div>
+        <h3 class="font-semibold mb-2">AgentPrismToolBuilder</h3>
+        <p class="text-sm text-slate-600 mb-3">CustomerJourney agents build a per-agent tool set at dispatch time. May include <span class="mono">SearchKnowledgeBaseTool</span> with a server-set KB-id scope plus a generated set of platform-KB tools.</p>
+        <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+          <li>One-shot Cortex dispatches and multi-turn Prism agents</li>
+          <li>Used by InboundReply, TransitionAgent, PlayAutomation generators</li>
+          <li>Same tool classes as MCP path, different composition layer</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================== GATING ============================== -->
+  <section id="gating" class="mb-12">
+    <h2 class="text-xl font-semibold tracking-tight mb-3">Gating &amp; auth</h2>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-700">
+      <ul class="space-y-2 list-disc list-inside">
+        <li>Every tool extends <span class="mono">AuthorizedMcpTool</span> or <span class="mono">VoiceAgentMcpTool</span> and declares a <span class="mono">policyAbility()</span> → Laravel Gate check.</li>
+        <li>Institution policy (<span class="mono">app/Domains/InstitutionMcp/Policies/InstitutionMcpPolicy.php</span>) splits staff-or-admin from admin-only abilities.</li>
+        <li>Student policy delegates to <span class="mono">is_student_user</span> + Contact existence; per-record data scoping happens inside each tool body.</li>
+        <li>Voice tools partition by <span class="mono">isSystem()</span> / <span class="mono">isAuthorizedOnly()</span> and consult the per-call token's scope.</li>
+        <li>Per-tool rate limits live in <span class="mono">config/institution-mcp.php</span> (30–60 req/min), <span class="mono">config/student-mcp.php</span>, and <span class="mono">config/vapi.php</span> (30/min per-token + sliding TTL).</li>
+        <li>Composite rate-limit key: <span class="mono">Mcp-Session-Id</span> header → user id → client IP (see <span class="mono">RouteServiceProvider</span>).</li>
+        <li>Audit log: <span class="mono">AuditsToolExecution</span> trait → <span class="mono">CreateMcpAuditLog</span> action → <span class="mono">mysql_logs.mcp_audit_logs</span>. Records tool, params (sanitized), result status, duration, session, IP.</li>
+        <li>Subdomain validation: <span class="mono">SubdomainCheck</span> middleware blocks cross-tenant token use on Institution / Student endpoints (servicers bypass).</li>
+        <li>Voice token lifecycle: minted at call accept, 10-min initial TTL, +10 min slide per tool call, hard cap 35 min standard / 15 min authorized-callback; revoked at end-of-call with 60-sec grace returning HTTP 410.</li>
+        <li>No end-user-facing settings UI for external MCP today. Gating is purely code-level (policy + auth + rate limit).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================== NOTES ============================== -->
+  <section id="notes" class="mb-16">
+    <h2 class="text-xl font-semibold tracking-tight mb-3">Footnotes &amp; caveats</h2>
+
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-900 space-y-3">
+      <p>
+        <strong>"Prism Relay" reference is stale.</strong> <span class="mono">CLAUDE.md</span> mentions
+        "Prism Relay (MCP exposure with asBroadcast streaming)". A grep for <span class="mono">asBroadcast</span>
+        / <span class="mono">PrismRelay</span> turns up nothing in <span class="mono">app/</span> — the only hit
+        is <span class="mono">_ide_helper.php</span>. External exposure is exclusively the three
+        <span class="mono">Mcp::web(...)</span> servers in <span class="mono">routes/mcp.php</span>. Worth a
+        follow-up edit to that instruction file.
+      </p>
+      <p>
+        <strong>MCP feature flags were removed.</strong> The flags <span class="mono">student-mcp</span> and
+        <span class="mono">institution-mcp</span> were removed by migration
+        <span class="mono">2026_05_01_234020_remove_stale_display_only_features_from_features_table.php</span>.
+        MCP availability is no longer flag-gated; only Gate policies + auth + rate limits remain.
+      </p>
+      <p>
+        <strong>InstitutionMcpServer registers 17 tools but the catalog lists 14 InstitutionMcp-owned tools.</strong>
+        The other three are <span class="mono">SearchInstitutionKnowledgeTool</span> and
+        <span class="mono">SearchPlatformKnowledgeTool</span> (owned by ContextEngine) plus
+        <span class="mono">SearchKnowledgeBaseTool</span> (owned by CustomerJourney), all registered into the
+        Institution server. A tool can appear on more than one server.
+      </p>
+      <p>
+        <strong>Voice tools have a deliberately narrow surface.</strong> The voice server header note in
+        <span class="mono">VoiceAgentMcpServer.php</span> warns that every additional tool widens the agent's
+        action surface mid-call. Substantive reply generation runs through
+        <span class="mono">respond_to_caller</span> &rarr; InboundReplyAgent rather than realtime improvisation.
+      </p>
+    </div>
+
+    <p class="text-xs text-slate-500 mt-6">
+      Source-of-truth glob: <span class="mono">app/Domains/*/MCP/Tools/**/*.php</span> · Server registrations:
+      <span class="mono">routes/mcp.php</span> lines 36–71 · Bridge:
+      <span class="mono">app/Domains/AI/Services/McpToolAdapter.php</span>.
+    </p>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  const filter = document.getElementById('catalog-filter');
+  const body = document.getElementById('catalog-body');
+  const countEl = document.getElementById('catalog-count');
+  if (!filter || !body || !countEl) return;
+
+  const allRows = Array.from(body.querySelectorAll('tr'));
+  // Only count "tool" rows (skip the category-band rows which have a single td colspan=6)
+  const toolRows = allRows.filter(r => !r.querySelector('td[colspan]'));
+  const bandRows = allRows.filter(r => r.querySelector('td[colspan]'));
+
+  function rowText(r) {
+    return r.innerText.toLowerCase();
+  }
+
+  function update() {
+    const q = filter.value.trim().toLowerCase();
+    let visible = 0;
+    toolRows.forEach(r => {
+      const match = !q || rowText(r).includes(q);
+      r.classList.toggle('row-hide', !match);
+      if (match) visible++;
+    });
+    // Hide a band whose entire group is filtered out
+    bandRows.forEach(band => {
+      let n = band.nextElementSibling;
+      let anyVisible = false;
+      while (n && !n.querySelector('td[colspan]')) {
+        if (!n.classList.contains('row-hide')) { anyVisible = true; break; }
+        n = n.nextElementSibling;
+      }
+      band.classList.toggle('row-hide', !anyVisible);
+    });
+    countEl.textContent = `${visible} of ${toolRows.length} tools`;
+  }
+
+  filter.addEventListener('input', update);
+  update();
+})();
+</script>
+
+</body>
+</html>
