@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vapi voice agent — capability roadmap</title>
+<style>
+  :root {
+    --ink: #0f172a;
+    --ink-2: #334155;
+    --ink-3: #64748b;
+    --paper: #f7f7f9;
+    --card: #ffffff;
+    --rule: #e2e8f0;
+    --rule-soft: #eef2f7;
+    --accent: #5261ce;
+    --accent-soft: #eef0fb;
+    --accent-deep: #3b48a8;
+    --teal: #6cb8ba;
+    --rose: #fe6d73;
+    --amber: #d97706;
+    --emerald: #059669;
+    --code-bg: #f1f5f9;
+    --phase-1: #5261ce;
+    --phase-2: #0891b2;
+    --phase-3: #059669;
+    --phase-4: #7c3aed;
+    --warn: #b45309;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--paper); }
+  body {
+    color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  main {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 40px 28px 80px;
+  }
+
+  header.title {
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+  header.title .tag {
+    display: inline-block;
+    font: 600 11px/1 -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  header.title h1 {
+    margin: 0 0 6px;
+    font: 700 30px/1.2 -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+  }
+  header.title .subtitle {
+    color: var(--ink-2);
+    font-size: 16px;
+    font-weight: 500;
+    margin: 4px 0 12px;
+  }
+  header.title .meta {
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+  header.title .meta a { color: var(--accent); text-decoration: none; }
+  header.title .meta a:hover { text-decoration: underline; }
+
+  h2 {
+    margin: 48px 0 16px;
+    font: 700 22px/1.3 -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  h3 {
+    margin: 22px 0 12px;
+    font: 600 17px/1.4 -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink-2);
+  }
+  p, ul, ol { margin: 0 0 14px; }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent); }
+  code, .mono {
+    font: 13px/1.45 "SF Mono", "Menlo", "Consolas", monospace;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  .tldr {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin: 0 0 28px;
+  }
+  .tldr p:last-child { margin-bottom: 0; }
+
+  /* Summary stat strip */
+  .stat-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin: 0 0 36px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .stat-card .label {
+    color: var(--ink-3);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .stat-card .value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .stat-card .sub {
+    color: var(--ink-3);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  /* Phase cards */
+  .phase {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 0;
+    margin: 24px 0;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  }
+  .phase-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--rule-soft);
+    background: #fafbfc;
+  }
+  .phase-num {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 700 17px/1 -apple-system, sans-serif;
+    color: white;
+    letter-spacing: -0.02em;
+  }
+  .phase-1 .phase-num { background: var(--phase-1); }
+  .phase-2 .phase-num { background: var(--phase-2); }
+  .phase-3 .phase-num { background: var(--phase-3); }
+  .phase-4 .phase-num { background: var(--phase-4); }
+  .phase-title {
+    flex: 1;
+  }
+  .phase-title h3 {
+    margin: 0;
+    font-size: 17px;
+    color: var(--ink);
+  }
+  .phase-title .blurb {
+    color: var(--ink-3);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .phase-meta {
+    flex: 0 0 auto;
+    text-align: right;
+    color: var(--ink-3);
+    font-size: 12px;
+  }
+  .phase-meta .effort {
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .phase-body {
+    padding: 6px 24px 22px;
+  }
+
+  /* Work item rows inside a phase */
+  .item {
+    border-top: 1px solid var(--rule-soft);
+    padding: 16px 0 6px;
+  }
+  .item:first-child { border-top: none; padding-top: 14px; }
+  .item-head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .item-name {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 15px;
+  }
+  .item-kind {
+    font: 600 10.5px/1.5 -apple-system, sans-serif;
+    color: var(--ink-3);
+    background: var(--rule-soft);
+    border-radius: 3px;
+    padding: 1px 7px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .item-effort {
+    margin-left: auto;
+    color: var(--ink-3);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .item-body {
+    color: var(--ink-2);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .item-body p { margin: 0 0 6px; }
+  .item-body p:last-child { margin: 0; }
+  .item-meta {
+    color: var(--ink-3);
+    font-size: 12.5px;
+    margin-top: 6px;
+  }
+  .item-meta code { font-size: 11.5px; }
+
+  /* Deferred + open-decision panels */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 16px 0;
+  }
+  .panel.warn { border-left: 4px solid var(--warn); }
+  .panel.deferred { border-left: 4px solid var(--ink-3); }
+  .panel.scoped { border-left: 4px solid var(--emerald); }
+  .panel h3 { margin-top: 0; }
+
+  .deferred-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 18px;
+    padding: 10px 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+  .deferred-row:first-of-type { border-top: none; }
+  .deferred-row .what {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .deferred-row .why {
+    color: var(--ink-2);
+    font-size: 13.5px;
+  }
+
+  /* Pills */
+  .pill {
+    display: inline-block;
+    font: 600 11px/1.4 -apple-system, "Segoe UI", sans-serif;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+  }
+  .pill-tool { background: #eef0fb; color: var(--accent-deep); }
+  .pill-context { background: #fee2e2; color: #991b1b; }
+  .pill-postcall { background: #ccfbf1; color: #0f766e; }
+  .pill-prompt { background: #ede9fe; color: #6d28d9; }
+  .pill-decision { background: #fef3c7; color: #92400e; }
+  .pill-effort-s { background: #f3e8ff; color: #6b21a8; }
+  .pill-effort-m { background: #ffedd5; color: #9a3412; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 22px;
+    font-size: 13.5px;
+    background: var(--card);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  thead th {
+    text-align: left;
+    background: #f8fafc;
+    color: var(--ink-2);
+    font: 600 12px/1.3 -apple-system, sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+  tbody td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-3);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media (max-width: 720px) {
+    main { padding: 24px 16px 60px; }
+    .phase-head { flex-wrap: wrap; padding: 14px 16px; }
+    .phase-meta { flex: 1 0 100%; text-align: left; margin-top: 6px; }
+    .phase-body { padding: 6px 16px 18px; }
+    .item-effort { margin-left: 0; }
+    .deferred-row { grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  @media print {
+    body { background: white; }
+    main { max-width: none; padding: 0; }
+    .phase, .panel, .tldr, .stat-card { box-shadow: none; break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+<meta name="share-summary" content="Recommended four-phase build roadmap for porting InboundReplyAgent capabilities to the Vapi realtime voice agent — Phase 1 context foundation + prompt rules, Phase 2 mid-call tools (schedule_callback, update_contact_name), Phase 3 post-call re-evaluation pipeline, Phase 4 defensive backstops. Excludes PRAX-1159 / PRAX-1166 as already-scoped sibling work, defers play-attribution per direction, and flags one open product decision on opt-out caller handling."><meta name="share-hash" content="25e89cfc8b4f331d060f32013ddb26b22a52504a0975527a11e9cb90e94fef73"></head>
+<body>
+<main>
+
+<header class="title">
+  <div class="tag">Build plan · PRAX-1163 follow-up</div>
+  <h1>Vapi voice agent — capability roadmap</h1>
+  <div class="subtitle">Recommended sequencing for porting InboundReplyAgent capabilities to the realtime voice agent.</div>
+  <div class="meta">
+    Source audit: <a href="prax-1163-inbound-reply-vs-vapi-tools.html">prax-1163-inbound-reply-vs-vapi-tools.html</a>
+    · Ticket: <a href="https://linear.app/lumion/issue/PRAX-1163/audit-functionalities-of">PRAX-1163</a>
+    · Parent: <a href="https://linear.app/lumion/issue/PRAX-1167">PRAX-1167</a>
+    · Generated 2026-05-20
+  </div>
+</header>
+
+<div class="stat-strip">
+  <div class="stat-card">
+    <div class="label">Phases</div>
+    <div class="value">4</div>
+    <div class="sub">sequenced by dependency + ROI</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Active items</div>
+    <div class="value">13</div>
+    <div class="sub">+ 2 already-scoped under sibling tickets</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Sequential effort</div>
+    <div class="value">~5–7 weeks</div>
+    <div class="sub">much less if parallelized</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Open decisions</div>
+    <div class="value">1</div>
+    <div class="sub">opt-out caller handling</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Deferred / declined</div>
+    <div class="value">2</div>
+    <div class="sub">listed at bottom with reasons</div>
+  </div>
+</div>
+
+<section>
+<h2>TL;DR</h2>
+<div class="tldr">
+<p>Port the InboundReplyAgent capability surface to the Vapi realtime voice agent in <strong>four sequenced phases</strong>. Phase 1 is the highest-leverage work — a single combined <code>BuildInboundCallContext</code> service that gives the realtime agent the journey context InboundReplyAgent already has (candidate plays, recent outreach, conversation state, funding summary headline). Without this, every later phase reads weaker context and produces weaker results.</p>
+<p>Phases 2-4 layer on the matching function tools, post-call pipeline, and prompt-rule tightening. Two sibling tickets (<a href="https://linear.app/lumion/issue/PRAX-1159">PRAX-1159</a> <code>send_link</code>, <a href="https://linear.app/lumion/issue/PRAX-1166">PRAX-1166</a> <code>create_task_for_human</code>) already cover two related tools and are excluded from this roadmap. One product decision (opt-out caller handling) is needed before Phase 2 can finalize.</p>
+</div>
+</section>
+
+<section>
+<h2>Why four phases (and what they unlock)</h2>
+<table>
+<thead><tr>
+  <th>Phase</th><th>Theme</th><th>Why it goes here</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td><strong>Phase 1</strong></td>
+  <td>Context + prompt foundation</td>
+  <td>Every later phase depends on the agent having journey context + tight grounding rules. Building tools first against a context-blind agent produces tools that the LLM under-uses or misroutes.</td>
+</tr>
+<tr>
+  <td><strong>Phase 2</strong></td>
+  <td>High-value mid-call tools</td>
+  <td>Once the agent has context, the two highest-value mid-call actions (schedule a callback, capture the caller's name) unlock real-world workflow parity with SMS/email outreach.</td>
+</tr>
+<tr>
+  <td><strong>Phase 3</strong></td>
+  <td>Post-call pipeline</td>
+  <td>Keep downstream automation cadence consistent with what the call covered. Cheap once we agree to listen for Vapi's end-of-call-report.</td>
+</tr>
+<tr>
+  <td><strong>Phase 4</strong></td>
+  <td>Defensive backstops + optional depth</td>
+  <td>Only pursued if Phase 1 context isn't rich enough on its own, or if Phase 2 tool fires miss real-world cases.</td>
+</tr>
+</tbody>
+</table>
+</section>
+
+<!-- PHASE 1 -->
+<div class="phase phase-1">
+<div class="phase-head">
+  <div class="phase-num">1</div>
+  <div class="phase-title">
+    <h3>Context + prompt foundation</h3>
+    <div class="blurb">Give the realtime agent the journey grounding InboundReplyAgent already has, and tighten the prompt rules that govern how it speaks.</div>
+  </div>
+  <div class="phase-meta">
+    <div class="effort">~3 weeks</div>
+    <div>parallel-build friendly</div>
+  </div>
+</div>
+<div class="phase-body">
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name">Build the <code>BuildInboundCallContext</code> service</span>
+  <span class="item-kind"><span class="pill pill-context">Context</span></span>
+  <span class="item-effort">~2 weeks</span>
+</div>
+<div class="item-body">
+<p>One combined service called from <code>BuildVapiAssistantConfig</code> at call start. Returns a single context payload bundling everything the realtime agent needs to know about the contact before the first turn.</p>
+<p>Payload sections:</p>
+<ul>
+  <li><strong>candidate_plays (lite)</strong> — caller's active journey plays via <code>PlayContextService::getContextLite()</code>. Always-on; the agent cannot pick a play it cannot see.</li>
+  <li><strong>recent_automation_events (top 3)</strong> — last 3 outreach actions sent to the contact. Drives "you replied to my text about X" recognition.</li>
+  <li><strong>conversation_state.current_program_interest</strong> — carry-forward so the agent doesn't re-ask which program the caller is interested in. Verify column persists on Contact (not session-scoped only).</li>
+  <li><strong>funding_summary headline</strong> — 2-3 line summary baked into the prompt ("This school offers N programs; ask <code>get_program_details</code> for specifics"). Keeps the existing function tools as the primary surface but gives the agent enough to know what to offer.</li>
+  <li><strong>inbound session context</strong> — analog of outbound's <code>AutomationVoiceCallContext</code>. Surface "we sent SMS 2hrs ago about deposit deadline" type framing. Likely just a curated view over the three sections above.</li>
+</ul>
+</div>
+<div class="item-meta">Maps from: <code>InboundReplyAgent</code>:L307 (voice context build), <code>PlayContextService::getContextLite()</code>, <code>AutomationVoiceCallContext</code>. Lands in <code>BuildVapiAssistantConfig.php</code>.</div>
+</div>
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name">Tighten <code>RenderSessionInstructions</code> prompt rules</span>
+  <span class="item-kind"><span class="pill pill-prompt">Prompt</span></span>
+  <span class="item-effort">~1 week</span>
+</div>
+<div class="item-body">
+<p>Three additive rule edits, all direct copies / tightenings of what InboundReplyAgent's voice guidelines already enforce:</p>
+<ol>
+  <li><strong>Anti-fabrication tightening.</strong> The existing line ("Do not improvise facts outside that returned answer", <code>RenderSessionInstructions.php</code>:L95) covers tool output but not the intro/outro phrasing the agent composes around it. Add a CLAIM-LEVEL SELF-CHECK rule matching InboundReplyAgent: before stating any specific number, date, program name, or instructor name, locate the exact string in tool output / loaded context.</li>
+  <li><strong>Loop-breaker.</strong> If the agent's immediately preceding turn asked a clarifier and the caller didn't answer, do not re-ask — answer with what is known or defer to <code>create_task_for_human</code>. Source: <code>InboundReplyAgent.php</code>:L939 <code>voiceReplyGuidelines()</code>.</li>
+  <li><strong>Recommendation hand-off.</strong> Once a program recommendation lands in a call, subsequent same-recommendation turns acknowledge briefly and return the floor to the caller without re-announcing. Source: same as above.</li>
+</ol>
+</div>
+<div class="item-meta">Lands in <code>app/Domains/Communications/Services/Voice/AiAgent/RenderSessionInstructions.php</code>.</div>
+</div>
+
+</div>
+</div>
+
+<!-- PHASE 2 -->
+<div class="phase phase-2">
+<div class="phase-head">
+  <div class="phase-num">2</div>
+  <div class="phase-title">
+    <h3>High-value mid-call tools</h3>
+    <div class="blurb">Two new function tools matching the highest-impact JSON output fields from InboundReplyAgent.</div>
+  </div>
+  <div class="phase-meta">
+    <div class="effort">~2 weeks</div>
+    <div>follows Phase 1 context</div>
+  </div>
+</div>
+<div class="phase-body">
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name"><code>schedule_callback</code></span>
+  <span class="item-kind"><span class="pill pill-tool">Function tool</span></span>
+  <span class="item-effort"><span class="pill pill-effort-m">M</span> ~1 week</span>
+</div>
+<div class="item-body">
+<p>Mid-call tool: the agent commits to an outbound callback at a concrete future time. Creates the same <code>Automation</code> + <code>AutomationAction(Voice, scheduled)</code> + <code>AutomationActionEvent</code> chain that <code>DispatchInboundReply</code> creates from InboundReplyAgent's <code>commits_to_call=true</code> output.</p>
+<p>Tool inputs: <code>callback_at</code> (ISO 8601), <code>call_brief</code> (2-4 sentence brief). Tool returns voice-formatted confirmation ("Got it, we'll call you back tomorrow at 2 PM").</p>
+</div>
+<div class="item-meta">Maps from: <code>DispatchInboundReply.php</code>:L141 <code>scheduleOutboundCall()</code>. New action class + <code>VapiScheduleCallbackToolController</code> + route in <code>routes/webhooks.php</code>.</div>
+</div>
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name"><code>update_contact_name</code> + <code>mark_asked_for_name</code></span>
+  <span class="item-kind"><span class="pill pill-tool">Function tool (pair)</span></span>
+  <span class="item-effort"><span class="pill pill-effort-s">S</span> ~1 week combined</span>
+</div>
+<div class="item-body">
+<p>Two tools that touch the same Contact column area — build together with one migration audit.</p>
+<ul>
+  <li><strong><code>update_contact_name</code></strong>: caller corrects or provides their name mid-call. Inputs: <code>first_name</code>, <code>last_name</code>, <code>is_correction</code> (false = fill blanks only, true = overwrite). Reuses the same correction-vs-fill logic as <code>ApplyInboundContactNameUpdate</code>:L36. Implicitly sets the asked-for-name flag (the agent already got the name, no need to ask again).</li>
+  <li><strong><code>mark_asked_for_name</code></strong>: agent has just done a soft name-ask in this turn. Sets the flag so consecutive turns in the same call (and the next call) don't re-ask.</li>
+</ul>
+</div>
+<div class="item-meta">Maps from: <code>InboundReplyAgent</code> <code>contact_name_update</code> + <code>asked_for_name</code> JSON fields. New action classes + 2 controllers + routes. Verify Contact column name for the asked-for-name flag during build.</div>
+</div>
+
+</div>
+</div>
+
+<!-- PHASE 3 -->
+<div class="phase phase-3">
+<div class="phase-head">
+  <div class="phase-num">3</div>
+  <div class="phase-title">
+    <h3>Post-call pipeline</h3>
+    <div class="blurb">Listen for Vapi's <code>end-of-call-report</code> and run the same downstream side-effects InboundReplyAgent triggers.</div>
+  </div>
+  <div class="phase-meta">
+    <div class="effort">~4 days</div>
+    <div>cheap, high consistency payoff</div>
+  </div>
+</div>
+<div class="phase-body">
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name">Post-call re-evaluation job</span>
+  <span class="item-kind"><span class="pill pill-postcall">Post-call</span></span>
+  <span class="item-effort"><span class="pill pill-effort-s">S</span> ~3 days</span>
+</div>
+<div class="item-body">
+<p>Vapi end-of-call-report handler kicks a <code>ReevaluateContactAfterInboundReplyJob</code> analog that re-runs <code>PlayAutomationActionEventReevaluatorAgent</code>. Keeps pending SMS/email outreach in line with what the call just covered (no double-texting "are you still interested?" 10 minutes after the caller said yes on a call).</p>
+</div>
+<div class="item-meta">Maps from: <code>DispatchInboundReply.php</code>:L173-179. Lands as a new job + Vapi server-message handler. Idempotency matters — guard against duplicate end-of-call-reports.</div>
+</div>
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name">Inactive-journey suppression</span>
+  <span class="item-kind"><span class="pill pill-postcall">Post-call</span></span>
+  <span class="item-effort"><span class="pill pill-effort-s">S</span> ~1 day extension of above</span>
+</div>
+<div class="item-body">
+<p>Verify the reevaluator above honors <code>journey.is_active=false</code> (audit trail still writes, but new outbound is suppressed). If it does, this row is satisfied implicitly by shipping the row above. If not, add the gate.</p>
+</div>
+<div class="item-meta">Maps from: <code>DispatchInboundReply.php</code>:L108 + L115 + L136. Verify behavior, add the gate if missing.</div>
+</div>
+
+</div>
+</div>
+
+<!-- PHASE 4 -->
+<div class="phase phase-4">
+<div class="phase-head">
+  <div class="phase-num">4</div>
+  <div class="phase-title">
+    <h3>Defensive backstops + optional depth</h3>
+    <div class="blurb">Only pursue if Phase 1 context proves insufficient or Phase 2 tools miss real-world cases. Hold these unless we see the gap in practice.</div>
+  </div>
+  <div class="phase-meta">
+    <div class="effort">~2 weeks if all built</div>
+    <div>conditional</div>
+  </div>
+</div>
+<div class="phase-body">
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name">Transcript-mined contact name backstop</span>
+  <span class="item-kind"><span class="pill pill-postcall">Post-call</span></span>
+  <span class="item-effort"><span class="pill pill-effort-m">M</span> ~3-5 days</span>
+</div>
+<div class="item-body">
+<p>Post-call LLM pass over the transcript catches name updates the mid-call <code>update_contact_name</code> tool missed (caller says it casually mid-sentence, agent doesn't recognize as a name correction). Only worth building if Phase 2 <code>update_contact_name</code> ships and we observe missed updates in production.</p>
+</div>
+<div class="item-meta">Maps from: <code>ApplyInboundContactNameUpdate</code>:L36.</div>
+</div>
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name"><code>lookup_recent_conversation</code> + <code>lookup_recent_outreach</code></span>
+  <span class="item-kind"><span class="pill pill-tool">Function tools</span></span>
+  <span class="item-effort"><span class="pill pill-effort-m">M</span> ~1 week</span>
+</div>
+<div class="item-body">
+<p>On-demand deeper lookup beyond the 3-message / 3-event summary Phase 1 bakes into context. Only worth building if Phase 1's headline counts prove insufficient.</p>
+<ul>
+  <li><code>lookup_recent_conversation</code> — return more SMS/email/voice history when the agent needs to recall a specific past exchange.</li>
+  <li><code>lookup_recent_outreach</code> — return more <code>AutomationActionEvent</code> rows for the same reason.</li>
+</ul>
+</div>
+<div class="item-meta">Maps from: <code>contact_context.messages</code> + <code>recent_automation_events</code> in InboundReplyAgent. Hold until Phase 1 ships and call recordings show the agent fishing for more context than it has.</div>
+</div>
+
+</div>
+</div>
+
+<!-- OPEN DECISIONS -->
+<div class="panel warn" id="decisions">
+<h3>Open product decisions needed before Phase 2</h3>
+
+<div class="item">
+<div class="item-head">
+  <span class="item-name">Opt-out caller handling — what does Vapi do when a contact with <code>ai_outreach_enabled=false</code> calls in?</span>
+  <span class="item-kind"><span class="pill pill-decision">Decision</span></span>
+</div>
+<div class="item-body">
+<p><code>DispatchInboundReply</code>:L84 creates a Task instead of an AI reply when the contact has opted out. The Vapi voice path does not currently read this column (zero hits for <code>ai_outreach_enabled</code> under <code>app/Domains/Communications/Services/Voice/</code>).</p>
+<p>Options:</p>
+<ol>
+  <li><strong>Answer normally</strong> — opt-out means "don't <em>us</em> contact <em>them</em>". Inbound is caller-initiated, so the opt-out doesn't apply. <em>(Recommendation.)</em></li>
+  <li>Answer with a short scripted "your account is set to no AI; I'll have a teammate call you back" + create a Task.</li>
+  <li>Hang up + create Task.</li>
+  <li>Route to voicemail.</li>
+</ol>
+<p>Default recommendation lets Phase 2 ship without a product decision blocking it. Worth confirming explicitly with Bilal before locking.</p>
+</div>
+</div>
+
+</div>
+
+<!-- ALREADY SCOPED -->
+<div class="panel scoped">
+<h3>Already scoped under sibling tickets — excluded from this roadmap</h3>
+<div class="deferred-row">
+  <div class="what"><code>send_link</code> — text/email a URL to the caller</div>
+  <div class="why">Covered by <a href="https://linear.app/lumion/issue/PRAX-1159">PRAX-1159</a>.</div>
+</div>
+<div class="deferred-row">
+  <div class="what"><code>create_task_for_human</code> — task when the AI doesn't know</div>
+  <div class="why">Covered by <a href="https://linear.app/lumion/issue/PRAX-1166">PRAX-1166</a>.</div>
+</div>
+</div>
+
+<!-- DEFERRED -->
+<div class="panel deferred">
+<h3>Deferred / declined</h3>
+<div class="deferred-row">
+  <div class="what">Attribute the call to a specific journey play/stage (mid-call <em>or</em> post-call)</div>
+  <div class="why">Out of scope per direction. Both the mid-call <code>log_play_attribution</code> tool and its post-call transcript-classification alternative are dropped from the roadmap. <code>JourneyActivityLog</code> entries from Vapi calls will not be play-attributed for now.</div>
+</div>
+<div class="deferred-row">
+  <div class="what">Three-branch routing (<code>active_play</code> / <code>no_active_play</code> / <code>new_contact</code>)</div>
+  <div class="why">InboundReplyAgent uses explicit branch routing in a single LLM turn. Voice intent surfaces more dynamically across multiple turns — the caller states their context. Hold unless Phase 1 + Phase 2 in production show the agent confusing first-touch callers with active-play returners.</div>
+</div>
+</div>
+
+<footer>
+<p>Roadmap produced 2026-05-20 by Lee Hilton + Claude Opus 4.7.<br>
+Companion: <a href="prax-1163-inbound-reply-vs-vapi-tools.html">prax-1163-inbound-reply-vs-vapi-tools.html</a> (full audit). Source markdown: <code>.dev/audits/prax-1163-inbound-reply-vs-vapi-tools.md</code>.</p>
+</footer>
+
+</main>
+</body>
+</html>

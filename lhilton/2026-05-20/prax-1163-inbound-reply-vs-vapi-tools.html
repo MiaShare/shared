@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRAX-1163 · InboundReplyAgent → Vapi voice tools audit</title>
+<style>
+  :root {
+    --ink: #0f172a;
+    --ink-2: #334155;
+    --ink-3: #64748b;
+    --paper: #fafafa;
+    --card: #ffffff;
+    --rule: #e2e8f0;
+    --accent: #5261ce;
+    --accent-soft: #eef0fb;
+    --teal: #6cb8ba;
+    --rose: #fe6d73;
+    --amber: #d97706;
+    --emerald: #059669;
+    --slate: #475569;
+    --code-bg: #f1f5f9;
+    --bucket-a: #5261ce;
+    --bucket-b: #b91c1c;
+    --bucket-c: #0891b2;
+    --bucket-d: #7c3aed;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--paper); }
+  body {
+    color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 28px 80px;
+  }
+  header.title {
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 24px;
+    margin-bottom: 36px;
+  }
+  header.title .tag {
+    display: inline-block;
+    font: 600 11px/1 -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  header.title h1 {
+    margin: 0 0 6px;
+    font: 700 28px/1.25 -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  header.title .meta {
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+  header.title .meta a { color: var(--accent); text-decoration: none; }
+  header.title .meta a:hover { text-decoration: underline; }
+  h2 {
+    margin: 48px 0 16px;
+    font: 700 21px/1.3 -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  h3 {
+    margin: 28px 0 12px;
+    font: 600 16px/1.4 -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink-2);
+  }
+  p, ul, ol { margin: 0 0 14px; }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent); }
+  code, .mono {
+    font: 13px/1.45 "SF Mono", "Menlo", "Consolas", monospace;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    font: 13px/1.55 "SF Mono", "Menlo", "Consolas", monospace;
+    margin: 0 0 18px;
+  }
+  pre code { background: transparent; padding: 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 22px;
+    font-size: 13.5px;
+    background: var(--card);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  thead th {
+    text-align: left;
+    background: #f8fafc;
+    color: var(--ink-2);
+    font: 600 12px/1.3 -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+  tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafbfd; }
+  td code, td .mono { font-size: 12.5px; }
+
+  .tldr {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 18px 22px;
+    margin: 0 0 28px;
+  }
+  .tldr p:last-child { margin-bottom: 0; }
+
+  .bucket {
+    margin: 32px 0;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 22px 24px;
+  }
+  .bucket-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .bucket-badge {
+    display: inline-block;
+    font: 700 11px/1 -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    padding: 5px 9px;
+    border-radius: 4px;
+  }
+  .bucket-a .bucket-badge { background: var(--bucket-a); }
+  .bucket-b .bucket-badge { background: var(--bucket-b); }
+  .bucket-c .bucket-badge { background: var(--bucket-c); }
+  .bucket-d .bucket-badge { background: var(--bucket-d); }
+  .bucket h2 { margin: 0; }
+  .bucket-summary {
+    color: var(--ink-3);
+    font-size: 13px;
+    margin: 14px 0 8px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-left: 3px solid var(--rule);
+    border-radius: 4px;
+  }
+  .bucket-b .bucket-summary { border-left-color: var(--bucket-b); }
+
+  .pill {
+    display: inline-block;
+    font: 600 11px/1.4 -apple-system, "Segoe UI", sans-serif;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+  }
+  .pill-yes { background: #d1fae5; color: #065f46; }
+  .pill-no { background: #fee2e2; color: #991b1b; }
+  .pill-partial { background: #fef3c7; color: #92400e; }
+  .pill-inflight { background: #dbeafe; color: #1e40af; }
+  .pill-effort-s { background: #f3e8ff; color: #6b21a8; }
+  .pill-effort-m { background: #ffedd5; color: #9a3412; }
+  .pill-effort-l { background: #fecaca; color: #7f1d1d; }
+
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 36px;
+  }
+  .toc a {
+    text-decoration: none;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--ink-2);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+  .toc a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 22px 0 32px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .stat-card .label {
+    color: var(--ink-3);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .stat-card .value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .stat-card .sub {
+    color: var(--ink-3);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-3);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media (max-width: 720px) {
+    main { padding: 24px 16px 60px; }
+    h2 { font-size: 19px; }
+    .bucket { padding: 16px 14px; }
+    table { font-size: 12.5px; }
+    thead th, tbody td { padding: 8px; }
+  }
+
+  @media print {
+    body { background: white; }
+    main { max-width: none; padding: 0; }
+    .toc { display: none; }
+    .bucket, .tldr, .stat-card { box-shadow: none; break-inside: avoid; }
+    table { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+<meta name="share-summary" content="Capability gap audit comparing the SMS/email InboundReplyAgent (CustomerJourney domain) with the Vapi inbound voice agent, split into four buckets — function tools, context loaders, post-call signals, and prompt rules — with file:line citations, effort estimates, cross-bucket dependencies, recommended build order, and source-citation appendix."><meta name="share-hash" content="f5a98f84a1918af63d115d28e8632cfcaa390d43274f12d4de392eb54c414113"></head>
+<body>
+<main>
+
+<header class="title">
+  <div class="tag">PRAX-1163 · Capability gap audit</div>
+  <h1>InboundReplyAgent → Vapi voice tools</h1>
+  <div class="meta">
+    Ticket: <a href="https://linear.app/lumion/issue/PRAX-1163/audit-functionalities-of">PRAX-1163</a>
+    · Parent: <a href="https://linear.app/lumion/issue/PRAX-1167">PRAX-1167</a>
+    · Audit owner: Lee Hilton
+    · Triage owner: Bilal Aslim
+    · Generated 2026-05-20
+  </div>
+</header>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="label">Bucket A — Tools</div>
+    <div class="value">6 net-new</div>
+    <div class="sub">+ 2 already-scoped (PRAX-1159, -1166)</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Bucket B — Context</div>
+    <div class="value">5 confirmed gaps</div>
+    <div class="sub">Highest ROI bucket</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Bucket C — Post-call</div>
+    <div class="value">4 gaps</div>
+    <div class="sub">Depends on Bucket A choices</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Bucket D — Prompt rules</div>
+    <div class="value">5 gaps</div>
+    <div class="sub">1 partially present</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">If all built</div>
+    <div class="value">~7–9 weeks</div>
+    <div class="sub">single dev, much less if parallelized</div>
+  </div>
+</div>
+
+<div class="toc">
+  <a href="#tldr">TL;DR</a>
+  <a href="#howto">How to read</a>
+  <a href="#current">Current Vapi tools</a>
+  <a href="#bucket-a">Bucket A — Tools</a>
+  <a href="#bucket-b">Bucket B — Context</a>
+  <a href="#bucket-c">Bucket C — Post-call</a>
+  <a href="#bucket-d">Bucket D — Prompt</a>
+  <a href="#deps">Dependencies</a>
+  <a href="#order">Build order</a>
+  <a href="#appendix">Appendix</a>
+</div>
+
+<section id="tldr">
+<h2>TL;DR</h2>
+<div class="tldr">
+<p><code>InboundReplyAgent</code> (<code>app/Domains/CustomerJourney/Services/InboundReplyAgent.php</code>) is a structured-output SMS/email agent with a rich context payload, a strict prompt, and a fan-out of post-dispatch side-effects in <code>DispatchInboundReply</code>. The Vapi inbound voice agent (<code>BuildVapiAssistantConfig.php</code>) is a realtime LLM with function tools and a deliberately lean system prompt.</p>
+<p>The two systems are <strong>shaped differently</strong> — InboundReplyAgent expresses capabilities as JSON output fields + post-dispatch behaviors, Vapi expresses them as function tools + assistant context + prompt rules. So the gap list cannot just be "tools missing". It splits into four buckets:</p>
+<ul>
+<li><strong>A. Function tools</strong> — 6 net-new gaps + 2 already-scoped.</li>
+<li><strong>B. Context loaders</strong> — 5 confirmed gaps. Vapi inbound currently runs with significantly less grounding context than InboundReplyAgent.</li>
+<li><strong>C. Post-call signals</strong> — 4 gaps.</li>
+<li><strong>D. Prompt rules</strong> — 5 gaps, 1 already partially present.</li>
+</ul>
+<p>The single highest-leverage gap is <strong>Bucket B</strong>: the realtime voice agent does not see candidate journey plays, recent outreach events, conversation state, the funding summary, or any inbound-call session context analog — which means it cannot accurately route callers responding to recent SMS/email outreach. Two function-tool gaps (<code>send_link</code>, <code>create_task_for_human</code>) are <strong>already scoped</strong> under PRAX-1159 / PRAX-1166 and are listed here only for completeness.</p>
+</div>
+</section>
+
+<section id="howto">
+<h2>How to read this doc</h2>
+<p>Each row in the bucket tables answers:</p>
+<table>
+<thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><strong>Capability</strong></td><td>What the InboundReplyAgent system can do</td></tr>
+<tr><td><strong>Maps from</strong></td><td>File:line in InboundReplyAgent / DispatchInboundReply / context services</td></tr>
+<tr><td><strong>Suggested name</strong></td><td>If this becomes a function tool, a proposed function name</td></tr>
+<tr><td><strong>Already covered?</strong></td><td>Y/N — links a merged PR, in-flight PR, or planned ticket</td></tr>
+<tr><td><strong>Effort</strong></td><td><span class="pill pill-effort-s">S</span> 1-2 day · <span class="pill pill-effort-m">M</span> 3-5 day · <span class="pill pill-effort-l">L</span> >5 day</td></tr>
+<tr><td><strong>Open question</strong></td><td>Decision Bilal needs to make before this can be built</td></tr>
+</tbody>
+</table>
+<p>Effort estimates assume the PR <a href="https://github.com/MiaShare/miashare-app/pull/6772">#6772</a> / <a href="https://github.com/MiaShare/miashare-app/pull/6783">#6783</a> pattern (action class + webhook controller + route + assistant-config registration + RenderSessionInstructions update + tests).</p>
+</section>
+
+<section id="current">
+<h2>Current Vapi tool inventory (state of the world)</h2>
+<table>
+<thead><tr><th>Tool</th><th>Status</th><th>Action class</th></tr></thead>
+<tbody>
+<tr><td><code>respond_to_caller</code></td><td><span class="pill pill-yes">merged</span></td><td><code>RespondToCaller</code></td></tr>
+<tr><td><code>search_knowledge_base</code></td><td><span class="pill pill-yes">merged</span></td><td><code>SearchKnowledgeBaseForVoice</code></td></tr>
+<tr><td><code>list_programs</code></td><td><span class="pill pill-yes">merged</span> (<a href="https://github.com/MiaShare/miashare-app/pull/6772">#6772</a>)</td><td><code>ListProgramsForVoice</code></td></tr>
+<tr><td><code>get_program_details</code></td><td><span class="pill pill-yes">merged</span> (<a href="https://github.com/MiaShare/miashare-app/pull/6772">#6772</a>)</td><td><code>GetProgramDetailsForVoice</code></td></tr>
+<tr><td><code>school_contact</code></td><td><span class="pill pill-inflight">in-flight</span> (<a href="https://github.com/MiaShare/miashare-app/pull/6783">#6783</a>, PRAX-1158)</td><td><code>FetchSchoolContactForVoice</code></td></tr>
+<tr><td><code>send_link</code></td><td><span class="pill pill-inflight">planned</span> (PRAX-1159)</td><td>—</td></tr>
+<tr><td><code>create_task_for_human</code></td><td><span class="pill pill-inflight">planned</span> (PRAX-1166)</td><td>—</td></tr>
+</tbody>
+</table>
+<p>Vapi platform features in use: voicemail detection, VAD barge-in, idle-timeout hooks, <code>endCall</code>, monitor/control URL, ambient sound, Deepgram Flux multilingual transcriber with eager EOT.</p>
+</section>
+
+<div class="bucket bucket-a" id="bucket-a">
+<div class="bucket-header"><span class="bucket-badge">Bucket A</span><h2 style="margin:0;">Function tools (synchronous mid-call actions)</h2></div>
+<table>
+<thead><tr>
+  <th>Capability</th>
+  <th>Maps from</th>
+  <th>Suggested name</th>
+  <th>Covered?</th>
+  <th>Effort</th>
+  <th>Open question</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td>Text/email a URL to the caller during the call</td>
+  <td>InboundReply prompt's "I'll text you that" deferral + opt-pref guard</td>
+  <td><code>send_link</code></td>
+  <td><span class="pill pill-yes">Yes — PRAX-1159</span></td>
+  <td>—</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>Create a Task when the agent doesn't know the answer</td>
+  <td><code>requests_human_followup</code> + <code>human_followup_summary</code>. <code>DispatchInboundReply</code>:L161-171 <code>createHumanFollowupTask</code> → Task w/ description=summary, priority=Medium, status=Open, due_date=today</td>
+  <td><code>create_task_for_human</code></td>
+  <td><span class="pill pill-yes">Yes — PRAX-1166</span></td>
+  <td>—</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>Schedule an outbound callback for the contact</td>
+  <td><code>commits_to_call=true</code> + <code>call_at</code> + <code>call_brief</code>. <code>DispatchInboundReply</code>:L141 <code>scheduleOutboundCall()</code> → <code>Automation</code> + <code>AutomationAction(Voice, scheduled)</code> + <code>AutomationActionEvent</code></td>
+  <td><code>schedule_callback</code></td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-m">M</span></td>
+  <td>Mid-call vs. end-of-call? Recommendation: mid-call for real-time confirmation to caller.</td>
+</tr>
+<tr>
+  <td>Update contact name when caller corrects/provides it</td>
+  <td><code>contact_name_update: {first_name, last_name, rationale, is_correction}</code>. <code>ApplyInboundContactNameUpdate</code>:L36 — correction flag controls overwrite vs fill-blank</td>
+  <td><code>update_contact_name</code></td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Implicitly set <code>asked_for_name</code> flag when this tool fires? Recommendation: yes.</td>
+</tr>
+<tr>
+  <td>Attribute the call to a specific journey play/stage</td>
+  <td><code>chosen_play_id</code> + <code>chosen_journey_id</code> + <code>chosen_journey_stage_id</code> + <code>rationale</code>. <code>DispatchInboundReply</code>:L304 <code>logActivity()</code> → <code>JourneyActivityLog</code> w/ event_type=InboundReplied</td>
+  <td><code>log_play_attribution</code> (or post-call → Bucket C)</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-m">M</span></td>
+  <td>Bucket A (mid-call, requires Bucket B candidate_plays) vs. Bucket C (post-call transcript pass). <strong>Recommendation: post-call</strong> — keeps realtime path lean.</td>
+</tr>
+<tr>
+  <td>Pull the contact's recent cross-channel message history</td>
+  <td><code>contact_context.messages</code> — up to 50 messages SMS/email/voice, newest first, last 30 days. Passed inline to InboundReplyAgent; absent from Vapi</td>
+  <td><code>lookup_recent_conversation</code></td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-m">M</span></td>
+  <td>Always-in-context (Bucket B) vs. on-demand tool? <strong>Recommendation: 5-msg summary in B, deeper lookup via tool.</strong></td>
+</tr>
+<tr>
+  <td>Pull the contact's recent automation events</td>
+  <td><code>recent_automation_events</code> — last 10 <code>AutomationActionEvent</code> rows. <code>InboundReplyAgent</code>:L307 explicitly skips for voice channel</td>
+  <td><code>lookup_recent_outreach</code></td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Same Bucket B/on-demand question. <strong>Recommendation: top 3 in B, deeper via tool.</strong></td>
+</tr>
+<tr>
+  <td>Persist the "agent has asked for name" flag</td>
+  <td><code>asked_for_name=true</code> → next-turn CALLER_CONTEXT to prevent re-asking (column on Contact — verify during build)</td>
+  <td><code>mark_asked_for_name</code></td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Mid-call vs. post-call signal? <strong>Recommendation: mid-call</strong> so consecutive turns in the same call also avoid re-asking.</td>
+</tr>
+</tbody>
+</table>
+<div class="bucket-summary"><strong>Bucket A summary:</strong> 6 net-new function tools + 2 already-scoped. Net new effort estimate: ~3M + 3S ≈ 3 weeks of single-developer work assuming the PR #6772 / #6783 pattern.</div>
+</div>
+
+<div class="bucket bucket-b" id="bucket-b">
+<div class="bucket-header"><span class="bucket-badge">Bucket B</span><h2 style="margin:0;">Context loaders (data baked into Vapi assistant config at call start)</h2></div>
+<p style="margin: 8px 0 12px; color: var(--ink-2); font-weight: 500;">This is the biggest gap. <code>BuildVapiAssistantConfig</code> delegates all context injection to <code>RenderSessionInstructions</code>, which ships a lean prompt (institution name + agent identity + caller name-known/unknown + direction/greeting + tool routing). It does <strong>not</strong> carry the journey/outreach context InboundReplyAgent gets.</p>
+<table>
+<thead><tr>
+  <th>Capability</th>
+  <th>Maps from</th>
+  <th>Covered?</th>
+  <th>Effort</th>
+  <th>Open question</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td>Caller's <code>candidate_plays</code> (lite shape)</td>
+  <td><code>InboundReplyAgent</code>:L307 via <code>PlayContextService::getContextLite()</code> for voice channel. Vapi: <strong>no equivalent</strong>.</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-m">M</span></td>
+  <td>Always-on vs. tool? <strong>Recommendation: always-on, lite shape</strong> — agent can't pick a play it doesn't know exists.</td>
+</tr>
+<tr>
+  <td><code>recent_automation_events</code> (top 3-10)</td>
+  <td><code>InboundReplyAgent</code>:L307 explicitly <strong>skips</strong> this for voice. No carrier into Vapi.</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Top-N count: 3 is enough for "you replied to my text about X" disambiguation.</td>
+</tr>
+<tr>
+  <td><code>contact_context.conversation_state.current_program_interest</code></td>
+  <td>InboundReplyAgent uses for new_contact branch carry-forward. Vapi: every call starts cold on program interest.</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Verify <code>conversation_state</code> persists on Contact (not session-scoped only).</td>
+</tr>
+<tr>
+  <td><code>institution_context.funding_summary</code> headline (programs + price hints + lenders)</td>
+  <td>InboundReplyAgent injects for new_contact grounding. Vapi today relies on <code>list_programs</code>/<code>get_program_details</code> function tools instead.</td>
+  <td><span class="pill pill-partial">Partial</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Keep function tools as primary, but add 2-3 line summary to prompt ("This school offers N programs; ask <code>get_program_details</code> for specifics") so the agent knows what's available without a round-trip.</td>
+</tr>
+<tr>
+  <td>Inbound-call session context (analog of outbound's <code>voice_session_context</code>)</td>
+  <td><code>AutomationVoiceCallContext</code> persists to <code>Call.session_context</code> column — populated for outbound automation only. Inbound: blank.</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-m">M</span></td>
+  <td>What goes in? Likely overlaps with rows 1, 2, 3 above. <strong>Recommendation: ship as one combined <code>BuildInboundCallContext</code> action.</strong></td>
+</tr>
+</tbody>
+</table>
+<div class="bucket-summary"><strong>Bucket B summary:</strong> 5 gaps, all confirmed. Total effort ~2M + 3S ≈ 2 weeks. <strong>Highest ROI bucket</strong> — fixes accurate play attribution, "you replied to my text" recognition, and reduces wasted tool calls.</div>
+</div>
+
+<div class="bucket bucket-c" id="bucket-c">
+<div class="bucket-header"><span class="bucket-badge">Bucket C</span><h2 style="margin:0;">Post-call signals (transcript-driven side-effects after end_call)</h2></div>
+<p style="margin: 8px 0 12px; color: var(--ink-2);">These are things <code>DispatchInboundReply</code> does as side-effects after the LLM call. Vapi today fires <code>end_call</code> and stops — no equivalent post-call pipeline.</p>
+<table>
+<thead><tr>
+  <th>Capability</th>
+  <th>Maps from</th>
+  <th>Covered?</th>
+  <th>Effort</th>
+  <th>Open question</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td>Mine transcript for contact name update (backstop)</td>
+  <td><code>ApplyInboundContactNameUpdate</code>:L36</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-m">M</span></td>
+  <td>Only useful if Bucket A <code>update_contact_name</code> tool ships. If so, low-priority backstop.</td>
+</tr>
+<tr>
+  <td>Write <code>JourneyActivityLog</code> row attributing the call to a play + rationale</td>
+  <td><code>DispatchInboundReply</code>:L304 <code>logActivity()</code> writes event_type=InboundReplied with journey_id, journey_stage_id, journey_stage_play_id, note=rationale</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-m">M</span></td>
+  <td>Requires (a) Bucket B candidate_plays + mid-call tool, or (b) post-call LLM transcript classification. <strong>Recommendation: post-call LLM pass.</strong></td>
+</tr>
+<tr>
+  <td>Kick <code>ReevaluateContactAfterInboundReplyJob</code> analog after every Vapi call</td>
+  <td><code>DispatchInboundReply</code>:L173-179 dispatches the job to re-run <code>PlayAutomationActionEventReevaluatorAgent</code></td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Trigger point = Vapi <code>end-of-call-report</code> server message handler. Mostly idempotency considerations.</td>
+</tr>
+<tr>
+  <td>Inactive-journey suppression of follow-on outreach</td>
+  <td><code>DispatchInboundReply</code>:L108 + L115 + L136: when <code>journey.is_active=false</code>, skip outbound sends + call scheduling (audit trail still writes)</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Verify the reevaluator from row 3 already honors <code>journey.is_active</code>. If yes, this is satisfied by shipping row 3.</td>
+</tr>
+</tbody>
+</table>
+<div class="bucket-summary"><strong>Bucket C summary:</strong> 4 gaps, ~2M + 2S ≈ 2 weeks. Heavily dependent on Bucket A decisions (play attribution).</div>
+</div>
+
+<div class="bucket bucket-d" id="bucket-d">
+<div class="bucket-header"><span class="bucket-badge">Bucket D</span><h2 style="margin:0;">Prompt-level behaviors to mirror in RenderSessionInstructions</h2></div>
+<table>
+<thead><tr>
+  <th>Rule</th>
+  <th>Maps from</th>
+  <th>Covered?</th>
+  <th>Effort</th>
+  <th>Open question</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td>Anti-fabrication / grounding self-check</td>
+  <td>InboundReply CLAIM-LEVEL SELF-CHECK</td>
+  <td><span class="pill pill-partial">Partial</span> — <code>RenderSessionInstructions</code>:L95 says "Do not improvise facts outside that returned answer"; L280, L294, L448 reinforce. Weaker than InboundReply.</td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Tighten the existing language. Agent still composes intro/outro words around tool output and can fabricate there.</td>
+</tr>
+<tr>
+  <td>Three-branch routing (active_play / no_active_play / new_contact)</td>
+  <td><code>InboundReplyAgent</code>:L337 branch logic</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td><strong>Recommendation: skip for now</strong> — voice intent surfaces more dynamically; revisit if play attribution shows the agent confusing branches.</td>
+</tr>
+<tr>
+  <td>Loop-breaker (don't re-ask same clarifier)</td>
+  <td><code>InboundReplyAgent</code>:L939 <code>voiceReplyGuidelines()</code></td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Direct copy from InboundReply voice guidelines.</td>
+</tr>
+<tr>
+  <td>Recommendation hand-off (don't re-announce same program)</td>
+  <td><code>InboundReplyAgent</code>:L939 <code>voiceReplyGuidelines()</code></td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span></td>
+  <td>Direct copy from InboundReply voice guidelines.</td>
+</tr>
+<tr>
+  <td>Contact <code>ai_outreach_enabled=false</code> honor</td>
+  <td><code>DispatchInboundReply</code>:L84, L116-117, L138-139 — opt-out triggers Task creation instead of AI reply. <code>rg "ai_outreach_enabled" app/Domains/Communications/Services/Voice/</code> = <strong>zero hits</strong> today.</td>
+  <td><span class="pill pill-no">No</span></td>
+  <td><span class="pill pill-effort-s">S</span> (prompt) + <span class="pill pill-effort-m">M</span> (handling)</td>
+  <td>What should Vapi <strong>do</strong> when an opted-out contact calls? <strong>Recommendation: answer normally</strong> (opt-out = "don't <em>us</em> contact <em>them</em>"; inbound is caller-initiated). Verify with product.</td>
+</tr>
+</tbody>
+</table>
+<div class="bucket-summary"><strong>Bucket D summary:</strong> 4-5 prompt-level gaps, ~5S ≈ 1 week. Mostly copy-paste from InboundReplyAgent voice guidelines, with one product decision on opt-out handling.</div>
+</div>
+
+<section id="deps">
+<h2>Cross-bucket dependencies</h2>
+<table>
+<thead><tr><th>Dependency</th><th>Consequence</th></tr></thead>
+<tbody>
+<tr><td>Bucket A <code>log_play_attribution</code> depends on Bucket B <code>candidate_plays</code></td><td>If you don't load plays into the prompt, the agent has no list to pick from. Recommendation routes attribution to Bucket C (post-call) to break this dependency.</td></tr>
+<tr><td>Bucket A <code>update_contact_name</code> and <code>mark_asked_for_name</code> write the same Contact column area</td><td>Build together; one migration / column audit.</td></tr>
+<tr><td>Bucket B inbound session context + <code>candidate_plays</code> + <code>recent_automation_events</code> overlap</td><td>Three views of "what was happening with this contact before the call". <strong>Build as one <code>BuildInboundCallContext</code> action.</strong></td></tr>
+<tr><td>Bucket C row 3 (post-call re-eval job) is a prerequisite for Bucket C row 4 (inactive-journey suppression)</td><td>Build in order.</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="order">
+<h2>Recommended build order (Bilal's input requested)</h2>
+<p>A defensible order based on dependencies + ROI, <strong>not</strong> authoritative — Bilal triages:</p>
+<ol>
+<li><strong>Bucket B as one workstream</strong> (<code>BuildInboundCallContext</code> combining candidate_plays + recent_automation_events + conversation_state + funding_summary headline + inbound session context). Highest ROI, unblocks future buckets. ~2 weeks.</li>
+<li><strong>Bucket D rows 1, 3, 4</strong> (anti-fabrication tighten + loop-breaker + recommendation hand-off). Cheap, high quality-of-output payoff. ~1 week.</li>
+<li><strong>Bucket A <code>schedule_callback</code></strong> — most-requested mid-call action per ticket signal. ~1 week.</li>
+<li><strong>Bucket A <code>update_contact_name</code> + <code>mark_asked_for_name</code></strong> (same migration area). ~1 week.</li>
+<li><strong>Bucket C row 3</strong> (post-call re-evaluation job). ~3 days.</li>
+<li><strong>Bucket C row 2 + row 1 combined</strong> (post-call play attribution + transcript name backstop). ~1.5 weeks.</li>
+<li><strong>Bucket A <code>lookup_recent_conversation</code> + <code>lookup_recent_outreach</code></strong> — only if Bucket B's lite versions aren't enough. May not be needed. ~1 week.</li>
+<li><strong>Bucket D row 5 (opt-out handling)</strong> — pending product decision.</li>
+<li><strong>Bucket D row 2 (branch routing)</strong> — defer; not obviously needed.</li>
+</ol>
+<p>Total if all built: ~7-9 weeks single-dev, much less if parallelized.</p>
+</section>
+
+<section id="appendix">
+<h2>Appendix A — InboundReplyAgent JSON output schema</h2>
+<pre><code>{
+  branch: "active_play" | "no_active_play" | "new_contact",
+  channel: "sms" | "email" | "voice",
+  reply_body: string,
+  reply_subject: string | null,           // email only
+  chosen_play_id: int | null,             // active_play branch only
+  chosen_journey_id: int | null,
+  chosen_journey_stage_id: int | null,
+  rationale: string,                      // 1-2 sentences, audit log
+  commits_to_call: boolean,
+  call_at: ISO8601 | null,
+  call_brief: string | null,              // required when commits_to_call=true
+  requests_human_followup: boolean,
+  human_followup_summary: string | null,  // required when requests_human_followup=true
+  contact_name_update: {
+    first_name: string | null,
+    last_name: string | null,
+    rationale: string,
+    is_correction: boolean
+  } | null,
+  asked_for_name: boolean                 // soft name-ask in this turn
+}</code></pre>
+
+<h2>Appendix B — Parked / out of scope</h2>
+<ul>
+<li><code>PlayAutomationGeneratorAgent</code> — separate agent that generates automation sequences; not part of inbound reply path.</li>
+<li><code>PlayAutomationActionEventReevaluatorAgent</code> — referenced by Bucket C row 3 as the job target, not a tool to port.</li>
+<li><code>TransitionAgentEvaluator</code> — journey transitions; downstream of inbound replies, not a peer capability.</li>
+<li>InboundReplyAgent test-mode (synthetic contact, debug transcript) — admin-only feature for tuning prompts; no production analog needed in Vapi.</li>
+<li>InboundReplyAgent <code>data_dictionary</code> — JSON field definitions for the LLM; only useful when the prompt carries the structured context. If Bucket B ships, port this as a sub-task.</li>
+</ul>
+
+<h2>Appendix C — Source citations</h2>
+<table>
+<thead><tr><th>Subject</th><th>File</th><th>Notable lines</th></tr></thead>
+<tbody>
+<tr><td>Vapi assistant config builder</td><td><code>app/Domains/Communications/Services/Voice/AiAgent/BuildVapiAssistantConfig.php</code></td><td>L77-85 (delegates to RenderSessionInstructions)</td></tr>
+<tr><td>Vapi session prompt</td><td><code>app/Domains/Communications/Services/Voice/AiAgent/RenderSessionInstructions.php</code></td><td>L95 (anti-fabrication partial), L280, L294, L448</td></tr>
+<tr><td>InboundReplyAgent entry</td><td><code>app/Domains/CustomerJourney/Services/InboundReplyAgent.php</code></td><td>L307 (voice context strip), L334 (voice_ai_enabled), L337 (branch), L474 (<code>voiceAiEnabledForInstitution</code>), L939 (<code>voiceReplyGuidelines</code>), L989 (<code>voiceCallContextGuidance</code>)</td></tr>
+<tr><td>DispatchInboundReply</td><td><code>app/Domains/CustomerJourney/Actions/DispatchInboundReply.php</code></td><td>L84 (opt-out), L86-87 (label), L90-101 (name update), L108 (journey active), L115-121 (channel send), L123 (activity log), L136-155 (commits_to_call), L161-171 (human followup task), L173-179 (re-eval job)</td></tr>
+<tr><td><code>AutomationVoiceCallContext</code></td><td><code>app/Domains/Communications/Services/Voice/AiAgent/AutomationVoiceCallContext.php</code></td><td>Persists to <code>Call.session_context</code></td></tr>
+<tr><td>Contact name update apply</td><td><code>app/Domains/CustomerJourney/Actions/ApplyInboundContactNameUpdate.php</code></td><td>L36 (correction vs fill-blank)</td></tr>
+</tbody>
+</table>
+</section>
+
+<footer>
+<p>Audit produced 2026-05-20 by Lee Hilton + Claude Opus 4.7. No code changed; read-only inspection only.<br>
+Sources: <code>.dev/audits/prax-1163-inbound-reply-vs-vapi-tools.md</code> · this file: <code>.dev/audits/prax-1163-inbound-reply-vs-vapi-tools.html</code></p>
+</footer>
+
+</main>
+</body>
+</html>
