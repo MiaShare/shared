@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Agent Test Scripts — Lumion</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --surface-alt: #f4f4f5;
+    --border: #e4e4e7;
+    --text: #18181b;
+    --text-muted: #71717a;
+    --primary: #4f46e5;
+    --primary-soft: #eef2ff;
+    --success: #16a34a;
+    --success-soft: #ecfdf5;
+    --warn: #d97706;
+    --warn-soft: #fffbeb;
+    --code-bg: #f4f4f5;
+    --code-text: #18181b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #09090b;
+      --surface: #18181b;
+      --surface-alt: #27272a;
+      --border: #3f3f46;
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
+      --primary: #818cf8;
+      --primary-soft: #1e1b4b;
+      --success: #4ade80;
+      --success-soft: #052e16;
+      --warn: #fbbf24;
+      --warn-soft: #451a03;
+      --code-bg: #27272a;
+      --code-text: #fafafa;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .container {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  header {
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 3rem 0 1rem;
+    letter-spacing: -0.01em;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary);
+    display: inline-block;
+  }
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--text);
+  }
+  p { margin: 0 0 1rem; color: var(--text-muted); }
+  p strong, li strong { color: var(--text); font-weight: 600; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .subtitle { font-size: 1rem; color: var(--text-muted); margin-bottom: 1rem; }
+  .meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 1rem;
+  }
+  .meta-item { display: flex; align-items: center; gap: 0.25rem; }
+  .meta-item code {
+    background: var(--code-bg);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+  }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0 2rem;
+  }
+  nav.toc strong {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+  nav.toc ol { margin: 0; padding-left: 1.25rem; column-count: 2; column-gap: 2rem; }
+  nav.toc li { margin: 0.25rem 0; break-inside: avoid; }
+  @media (max-width: 640px) { nav.toc ol { column-count: 1; } }
+
+  section { margin-bottom: 2rem; }
+  article {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  article h3 { margin-top: 0; }
+  .goal {
+    font-style: italic;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+  .goal strong { font-style: normal; color: var(--text); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  thead { background: var(--surface-alt); }
+  th, td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+  tr:last-child td { border-bottom: 0; }
+  td.step-num {
+    font-weight: 600;
+    color: var(--text-muted);
+    width: 2.5rem;
+    text-align: center;
+  }
+  td.say {
+    font-weight: 500;
+    color: var(--text);
+    min-width: 16rem;
+  }
+  td.tag { font-size: 0.85rem; color: var(--text-muted); }
+  td.expect { font-size: 0.9rem; }
+
+  .say-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .say-quote::before { content: "“"; color: var(--primary); margin-right: 0.125rem; }
+  .say-quote::after { content: "”"; color: var(--primary); margin-left: 0.125rem; }
+  .say-quote {
+    font-style: italic;
+    color: var(--text);
+  }
+  .wait { color: var(--text-muted); font-style: italic; }
+
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-left: 0.5rem;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+  .copy-btn.copied { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0.75rem 0;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  code {
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 0.85em;
+    background: var(--code-bg);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    color: var(--code-text);
+  }
+  pre code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.85rem;
+    color: var(--code-text);
+  }
+  .code-block-wrap { position: relative; }
+  .code-block-wrap .copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    margin: 0;
+    z-index: 1;
+  }
+
+  .callout {
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+  }
+  .callout-warn { background: var(--warn-soft); border-color: var(--warn); }
+  .callout-success { background: var(--success-soft); border-color: var(--success); }
+  .callout-primary { background: var(--primary-soft); border-color: var(--primary); }
+  .callout strong { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; }
+  .callout p { margin: 0; color: var(--text); }
+
+  .badge {
+    display: inline-block;
+    background: var(--primary-soft);
+    color: var(--primary);
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  .badge-guard { background: var(--warn-soft); color: var(--warn); }
+
+  .verify-block {
+    margin-top: 1rem;
+  }
+  .verify-block strong {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  /* Print friendliness */
+  @media print {
+    body { background: white; color: black; }
+    nav.toc, .copy-btn { display: none; }
+    article, pre, table { break-inside: avoid; }
+    h1, h2, h3 { color: black; }
+    .container { padding: 0; max-width: 100%; }
+  }
+</style>
+<meta name="share-summary" content="Voice agent test scripts for Lumion Vapi tools and post-PRAX-1166 guardrails, with a single-call walkthrough and per-tool deep-dive scripts to exercise tools like update_contact_name, search_knowledge_base, schedule_callback, and create_followup_task against staging.">
+<meta name="share-hash" content="d912ba26df5f201f7b788c9e8fccb0f6767b5786652f93cdb148f4f59b875980">
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>Voice agent test scripts</h1>
+  <p class="subtitle">Manual call scripts to exercise every Vapi voice tool and the six post-PRAX-1166 guardrails. Use these against staging via <code>+1&nbsp;(253)&nbsp;656-0707</code>.</p>
+  <div class="meta">
+    <div class="meta-item">Staging line: <code>+1 (253) 656-0707</code></div>
+    <div class="meta-item">Institution: <code>12</code></div>
+    <div class="meta-item">Pre-seeded contact: <code>871</code> (+15129533841)</div>
+    <div class="meta-item">PR: <code>#6799</code></div>
+  </div>
+</header>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#single-call">Single-call script</a> — exercises 8 tools in one ~6-7 min call</li>
+    <li><a href="#per-tool">Per-tool deep-dives</a> — one call per tool</li>
+    <li><a href="#tool-1">1. update_contact_name + mark_asked_for_name</a></li>
+    <li><a href="#tool-2">2. respond_to_caller (hallucination guard)</a></li>
+    <li><a href="#tool-3">3. search_knowledge_base (broad vs specific)</a></li>
+    <li><a href="#tool-4">4. school_contact</a></li>
+    <li><a href="#tool-5">5. schedule_callback</a></li>
+    <li><a href="#tool-6">6. create_followup_task (4 triggers)</a></li>
+    <li><a href="#tool-7">7. lookup_recent_conversation</a></li>
+    <li><a href="#tool-8">8. lookup_recent_outreach</a></li>
+    <li><a href="#logging">Logging tip</a></li>
+  </ol>
+</nav>
+
+<section id="single-call">
+  <h2>Single-call script</h2>
+  <p>~6-7 minutes. Hits 8 tools and 4 of the 6 new guardrails. Call from the dev test phone that's tied to contact 871 (existing prior history makes <code>lookup_recent_conversation</code> meaningful). Wait for the greeting, then walk through the steps in order.</p>
+
+  <div class="callout callout-primary">
+    <strong>Speak naturally with normal pauses.</strong>
+    <p>Wait for the agent to finish each reply before delivering the next line. The agent's barge-in detection is tuned for natural speech, not rapid-fire.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>What you say</th>
+        <th>Exercises</th>
+        <th>Expect</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="step-num">1</td>
+        <td class="say"><span class="wait">(wait for greeting)</span></td>
+        <td class="tag"><span class="badge">first_message</span></td>
+        <td class="expect">Agent greets you by stored name.</td>
+      </tr>
+      <tr>
+        <td class="step-num">2</td>
+        <td class="say"><div class="say-line"><span class="say-quote">Hey — actually, my name is Casey.</span><button class="copy-btn" data-copy="Hey — actually, my name is Casey.">Copy</button></div></td>
+        <td class="tag"><span class="badge">update_contact_name</span><span class="badge">mark_asked_for_name</span><span class="badge badge-guard">A+F</span></td>
+        <td class="expect">Agent says <em>“Got it Casey — what can I help you with today?”</em>. <strong>Does NOT</strong> propose specific topics (no “are you calling about pricing or scheduling?”).</td>
+      </tr>
+      <tr>
+        <td class="step-num">3</td>
+        <td class="say"><div class="say-line"><span class="say-quote">What's your school's address?</span><button class="copy-btn" data-copy="What's your school's address?">Copy</button></div></td>
+        <td class="tag"><span class="badge">school_contact</span></td>
+        <td class="expect">Reads back the institution's address.</td>
+      </tr>
+      <tr>
+        <td class="step-num">4</td>
+        <td class="say"><div class="say-line"><span class="say-quote">What programs do you offer?</span><button class="copy-btn" data-copy="What programs do you offer?">Copy</button></div></td>
+        <td class="tag"><span class="badge">search_knowledge_base</span><span class="badge badge-guard">B</span></td>
+        <td class="expect"><strong>2-3 category summary</strong> + a narrowing follow-up, under ~35 words. Does NOT enumerate all 14 programs.</td>
+      </tr>
+      <tr>
+        <td class="step-num">5</td>
+        <td class="say"><div class="say-line"><span class="say-quote">Tell me more about CDL Class A.</span><button class="copy-btn" data-copy="Tell me more about CDL Class A.">Copy</button></div></td>
+        <td class="tag"><span class="badge">search_knowledge_base</span><span class="badge badge-guard">B</span></td>
+        <td class="expect">Specific answer for CDL Class A only. No category-list preface.</td>
+      </tr>
+      <tr>
+        <td class="step-num">6</td>
+        <td class="say"><div class="say-line"><span class="say-quote">Can you arrange a campus tour for me?</span><button class="copy-btn" data-copy="Can you arrange a campus tour for me?">Copy</button></div></td>
+        <td class="tag"><span class="badge">create_followup_task</span></td>
+        <td class="expect">Tool fires. Agent reads the canned confirmation: <em>“Got it — I've made a note for the team to follow up…”</em></td>
+      </tr>
+      <tr>
+        <td class="step-num">7</td>
+        <td class="say"><div class="say-line"><span class="say-quote">Actually, can someone call me back tomorrow at 2 PM Pacific?</span><button class="copy-btn" data-copy="Actually, can someone call me back tomorrow at 2 PM Pacific?">Copy</button></div></td>
+        <td class="tag"><span class="badge">schedule_callback</span></td>
+        <td class="expect">Tool fires with a concrete ISO datetime. Agent confirms the time.</td>
+      </tr>
+      <tr>
+        <td class="step-num">8</td>
+        <td class="say"><div class="say-line"><span class="say-quote">What were we just talking about?</span><button class="copy-btn" data-copy="What were we just talking about?">Copy</button></div></td>
+        <td class="tag"><span class="badge">lookup_recent_conversation</span><span class="badge badge-guard">C+D</span></td>
+        <td class="expect">Returned text reads as <strong>one thread</strong> (“today on a call, You said: …” — NOT “We sent a call”). Ends with <em>“Want me to pick up where we left off?”</em></td>
+      </tr>
+      <tr>
+        <td class="step-num">9</td>
+        <td class="say"><div class="say-line"><span class="say-quote">Did you guys text me anything recently?</span><button class="copy-btn" data-copy="Did you guys text me anything recently?">Copy</button></div></td>
+        <td class="tag"><span class="badge">lookup_recent_outreach</span></td>
+        <td class="expect">Tool fires. Agent reads back recent outbound messages.</td>
+      </tr>
+      <tr>
+        <td class="step-num">10</td>
+        <td class="say"><div class="say-line"><span class="say-quote">Thanks, that's all.</span><button class="copy-btn" data-copy="Thanks, that's all.">Copy</button></div></td>
+        <td class="tag"><span class="badge">(social)</span></td>
+        <td class="expect">Agent says goodbye, ends gracefully.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Verification</h3>
+  <p>Replace <code>&lt;call-id&gt;</code> with the just-completed <code>cortex_forge.calls.id</code>.</p>
+
+  <div class="code-block-wrap">
+    <button class="copy-btn" data-copy="SELECT tool_name, COUNT(*) FROM cortex_forge.voice_call_debug_events&#10;WHERE call_id = '<call-id>' AND type = 'tool.invoked'&#10;GROUP BY tool_name;">Copy</button>
+<pre><code>-- All tools fired exactly once each
+SELECT tool_name, COUNT(*) FROM cortex_forge.voice_call_debug_events
+WHERE call_id = '&lt;call-id&gt;' AND type = 'tool.invoked'
+GROUP BY tool_name;
+
+-- Expect: update_contact_name=1, school_contact=1, search_knowledge_base=2,
+-- create_followup_task=1, schedule_callback=1, lookup_recent_conversation=1,
+-- lookup_recent_outreach=1, plus respond_to_caller for turn transitions.</code></pre>
+  </div>
+
+  <div class="code-block-wrap">
+    <button class="copy-btn" data-copy="SELECT text FROM cortex_forge.voice_call_debug_events&#10;WHERE call_id = '<call-id>' AND tool_name = 'respond_to_caller' AND type = 'tool.result';">Copy</button>
+<pre><code>-- Phase-1+2 check: no topic-invention in respond_to_caller results.
+SELECT text FROM cortex_forge.voice_call_debug_events
+WHERE call_id = '&lt;call-id&gt;' AND tool_name = 'respond_to_caller' AND type = 'tool.result';
+
+-- The early replies (steps 1-2) MUST NOT mention pricing, scheduling,
+-- two-pack, etc. unless the caller named them.</code></pre>
+  </div>
+
+  <div class="code-block-wrap">
+    <button class="copy-btn" data-copy="SELECT id, title, description, due_date FROM tasks&#10;WHERE institution_id = 12 AND created_at >= NOW() - INTERVAL 10 MINUTE&#10;ORDER BY id DESC LIMIT 5;">Copy</button>
+<pre><code>-- A new task row scoped to your institution exists for step 6.
+SELECT id, title, description, due_date FROM tasks
+WHERE institution_id = 12 AND created_at &gt;= NOW() - INTERVAL 10 MINUTE
+ORDER BY id DESC LIMIT 5;</code></pre>
+  </div>
+</section>
+
+<section id="per-tool">
+  <h2>Per-tool deep-dives</h2>
+  <p>One call per tool. Each script targets edge cases the single-call run can't hit.</p>
+
+  <article id="tool-1">
+    <h3>1. <code>update_contact_name</code> + <code>mark_asked_for_name</code></h3>
+    <p class="goal"><strong>Goal:</strong> verify name correction and name-asked-once persistence across turns.</p>
+    <table>
+      <thead><tr><th>#</th><th>Say</th><th>Expect</th></tr></thead>
+      <tbody>
+        <tr><td class="step-num">1</td><td class="say"><span class="wait">(wait for greeting)</span></td><td class="expect">Greeting uses stored name.</td></tr>
+        <tr><td class="step-num">2</td><td class="say"><div class="say-line"><span class="say-quote">Hi.</span><button class="copy-btn" data-copy="Hi.">Copy</button></div></td><td class="expect">Agent asks for your name once (sets <code>mark_asked_for_name</code>).</td></tr>
+        <tr><td class="step-num">3</td><td class="say"><div class="say-line"><span class="say-quote">Sam.</span><button class="copy-btn" data-copy="Sam.">Copy</button></div></td><td class="expect"><code>update_contact_name</code> fires with <code>first_name=Sam</code>, <code>last_name=null</code>, <code>is_correction=false</code>.</td></tr>
+        <tr><td class="step-num">4</td><td class="say"><div class="say-line"><span class="say-quote">Sorry — actually it's Sam Rivera, not just Sam.</span><button class="copy-btn" data-copy="Sorry — actually it's Sam Rivera, not just Sam.">Copy</button></div></td><td class="expect"><code>update_contact_name</code> fires again with <code>is_correction=true</code> and both name parts.</td></tr>
+        <tr><td class="step-num">5</td><td class="say"><div class="say-line"><span class="say-quote">Hey are you still there?</span><button class="copy-btn" data-copy="Hey are you still there?">Copy</button></div></td><td class="expect">Agent does <strong>NOT</strong> ask for your name again — <code>ai_inbound_name_requested_at</code> is set.</td></tr>
+      </tbody>
+    </table>
+    <div class="verify-block">
+      <strong>Verify</strong>
+      <p><code>calls.contact_name</code> ends up as <code>"Sam"</code> then <code>"Sam Rivera"</code>. <code>calls.ai_inbound_name_requested_at</code> is set after step 2.</p>
+    </div>
+  </article>
+
+  <article id="tool-2">
+    <h3>2. <code>respond_to_caller</code> <span class="badge badge-guard">A+F</span></h3>
+    <p class="goal"><strong>Goal:</strong> verify the agent does NOT propose topics that aren't in the caller's utterance.</p>
+    <table>
+      <thead><tr><th>#</th><th>Say</th><th>Expect</th></tr></thead>
+      <tbody>
+        <tr><td class="step-num">1</td><td class="say"><span class="wait">(wait for greeting)</span></td><td class="expect">—</td></tr>
+        <tr><td class="step-num">2</td><td class="say"><div class="say-line"><span class="say-quote">Hi.</span><button class="copy-btn" data-copy="Hi.">Copy</button></div></td><td class="expect">Open-ended reply (“how can I help?”, “what brings you in today?”) — no specific topic offered.</td></tr>
+        <tr><td class="step-num">3</td><td class="say"><div class="say-line"><span class="say-quote">Hello?</span><button class="copy-btn" data-copy="Hello?">Copy</button></div></td><td class="expect">Agent re-anchors to open-ended; does NOT improvise.</td></tr>
+        <tr><td class="step-num">4</td><td class="say"><div class="say-line"><span class="say-quote">I'm calling about my application status.</span><button class="copy-btn" data-copy="I'm calling about my application status.">Copy</button></div></td><td class="expect">Now the agent has substantive intent and can engage.</td></tr>
+        <tr><td class="step-num">5</td><td class="say"><div class="say-line"><span class="say-quote">Yeah.</span><button class="copy-btn" data-copy="Yeah.">Copy</button></div></td><td class="expect">Re-anchors on the pending clarifying question, does NOT topic-shift.</td></tr>
+      </tbody>
+    </table>
+    <div class="verify-block">
+      <strong>Verify</strong>
+      <p>Search <code>voice_call_debug_events</code> for <code>tool_name='respond_to_caller'</code> results. None of the reply texts mention pricing, programs, financial aid, etc. unless turn 4+ raised them.</p>
+    </div>
+  </article>
+
+  <article id="tool-3">
+    <h3>3. <code>search_knowledge_base</code> <span class="badge badge-guard">B</span></h3>
+    <p class="goal"><strong>Goal:</strong> verify summarization on broad asks, specific answers on specific, length cap on both.</p>
+    <table>
+      <thead><tr><th>#</th><th>Say</th><th>Expect</th></tr></thead>
+      <tbody>
+        <tr><td class="step-num">1</td><td class="say"><div class="say-line"><span class="say-quote">What do you guys offer?</span><button class="copy-btn" data-copy="What do you guys offer?">Copy</button></div></td><td class="expect">2-3 categories + a narrowing question, ≤ ~35 words.</td></tr>
+        <tr><td class="step-num">2</td><td class="say"><div class="say-line"><span class="say-quote">What about CDL training specifically?</span><button class="copy-btn" data-copy="What about CDL training specifically?">Copy</button></div></td><td class="expect">Narrowed into the CDL category.</td></tr>
+        <tr><td class="step-num">3</td><td class="say"><div class="say-line"><span class="say-quote">Do you have a Class B program?</span><button class="copy-btn" data-copy="Do you have a Class B program?">Copy</button></div></td><td class="expect">Specific yes/no + brief detail.</td></tr>
+        <tr><td class="step-num">4</td><td class="say"><div class="say-line"><span class="say-quote">How much does the bulldozer course cost?</span><button class="copy-btn" data-copy="How much does the bulldozer course cost?">Copy</button></div></td><td class="expect">Specific price if grounded; honest deferral if not.</td></tr>
+        <tr><td class="step-num">5</td><td class="say"><div class="say-line"><span class="say-quote">Tell me everything about every program.</span><button class="copy-btn" data-copy="Tell me everything about every program.">Copy</button></div></td><td class="expect">Should NOT dump 14 items — still summarize and ask which area.</td></tr>
+      </tbody>
+    </table>
+    <div class="verify-block">
+      <strong>Verify</strong>
+      <p><code>cortex_ms</code> for each KB call stays under ~3s. <code>payload-&gt;hit_count</code> for step 1 is high (~5), step 4 is lower (~1-2).</p>
+    </div>
+  </article>
+
+  <article id="tool-4">
+    <h3>4. <code>school_contact</code></h3>
+    <p class="goal"><strong>Goal:</strong> verify all four <code>field</code> values plus the <code>all</code> aggregate.</p>
+    <table>
+      <thead><tr><th>#</th><th>Say</th><th>Expected <code>field</code></th></tr></thead>
+      <tbody>
+        <tr><td class="step-num">1</td><td class="say"><div class="say-line"><span class="say-quote">What's your phone number?</span><button class="copy-btn" data-copy="What's your phone number?">Copy</button></div></td><td class="expect"><code>phone</code></td></tr>
+        <tr><td class="step-num">2</td><td class="say"><div class="say-line"><span class="say-quote">What's the email I can reach you at?</span><button class="copy-btn" data-copy="What's the email I can reach you at?">Copy</button></div></td><td class="expect"><code>email</code></td></tr>
+        <tr><td class="step-num">3</td><td class="say"><div class="say-line"><span class="say-quote">Where are you located?</span><button class="copy-btn" data-copy="Where are you located?">Copy</button></div></td><td class="expect"><code>address</code></td></tr>
+        <tr><td class="step-num">4</td><td class="say"><div class="say-line"><span class="say-quote">Do you have a website?</span><button class="copy-btn" data-copy="Do you have a website?">Copy</button></div></td><td class="expect"><code>website</code></td></tr>
+        <tr><td class="step-num">5</td><td class="say"><div class="say-line"><span class="say-quote">Can you give me all your contact info?</span><button class="copy-btn" data-copy="Can you give me all your contact info?">Copy</button></div></td><td class="expect"><code>all</code> — one consolidated read</td></tr>
+      </tbody>
+    </table>
+    <div class="verify-block">
+      <strong>Verify</strong>
+      <p>Each <code>tool.invoked</code> row has the expected <code>field</code> in its <code>payload</code>.</p>
+    </div>
+  </article>
+
+  <article id="tool-5">
+    <h3>5. <code>schedule_callback</code></h3>
+    <p class="goal"><strong>Goal:</strong> verify concrete-time happy path, fuzzy-time resolution, and unresolved-time fallback to <code>create_followup_task</code>.</p>
+    <table>
+      <thead><tr><th>#</th><th>Say (new call each)</th><th>Expect</th></tr></thead>
+      <tbody>
+        <tr><td class="step-num">1</td><td class="say"><div class="say-line"><span class="say-quote">Can someone call me back tomorrow at 2 PM Pacific?</span><button class="copy-btn" data-copy="Can someone call me back tomorrow at 2 PM Pacific?">Copy</button></div></td><td class="expect"><code>schedule_callback</code> fires with ISO datetime including timezone.</td></tr>
+        <tr><td class="step-num">2</td><td class="say"><div class="say-line"><span class="say-quote">Can you call me later today?</span><button class="copy-btn" data-copy="Can you call me later today?">Copy</button></div></td><td class="expect">Fuzzy “today” → resolved to specific ISO within business hours; <code>schedule_callback</code> fires.</td></tr>
+        <tr><td class="step-num">3</td><td class="say"><div class="say-line"><span class="say-quote">Have someone get back to me sometime.</span><button class="copy-btn" data-copy="Have someone get back to me sometime.">Copy</button></div></td><td class="expect">No concrete time → <strong>falls through to <code>create_followup_task</code></strong> (PRAX-1166 routing).</td></tr>
+        <tr><td class="step-num">4</td><td class="say"><div class="say-line"><span class="say-quote">Call me yesterday.</span><button class="copy-btn" data-copy="Call me yesterday.">Copy</button></div></td><td class="expect">Past time → agent rejects gracefully, does NOT fire <code>schedule_callback</code>.</td></tr>
+      </tbody>
+    </table>
+    <div class="verify-block">
+      <strong>Verify</strong>
+      <p><code>journey_activity_log</code> has a row for each successful schedule. For step 3, <code>tasks</code> table gets a row but <code>journey_activity_log</code> does not.</p>
+    </div>
+  </article>
+
+  <article id="tool-6">
+    <h3>6. <code>create_followup_task</code> — all 4 triggers</h3>
+    <p class="goal"><strong>Goal:</strong> verify all four routes into the tool fire correctly.</p>
+    <table>
+      <thead><tr><th>#</th><th>Say</th><th>Trigger</th><th>Expect</th></tr></thead>
+      <tbody>
+        <tr><td class="step-num">1</td><td class="say"><div class="say-line"><span class="say-quote">Do you have weekend bowling lessons?</span><button class="copy-btn" data-copy="Do you have weekend bowling lessons?">Copy</button></div></td><td class="tag">Can't-answer</td><td class="expect">Tool fires after KB returns no useful hits.</td></tr>
+        <tr><td class="step-num">2</td><td class="say"><div class="say-line"><span class="say-quote">Can you arrange a campus tour?</span><button class="copy-btn" data-copy="Can you arrange a campus tour?">Copy</button></div></td><td class="tag">Arrange/book/schedule (PRAX-1166)</td><td class="expect">Tool fires directly, no KB loop.</td></tr>
+        <tr><td class="step-num">3</td><td class="say"><div class="say-line"><span class="say-quote">Have someone get back to me.</span><button class="copy-btn" data-copy="Have someone get back to me.">Copy</button></div></td><td class="tag">Human follow-up, no time</td><td class="expect">Tool fires; does NOT route to <code>schedule_callback</code>.</td></tr>
+        <tr><td class="step-num">4</td><td class="say"><div class="say-line">After KB returns a redirect (“call this 800-number”), next turn: <span class="say-quote">but I want YOU to handle it</span><button class="copy-btn" data-copy="but I want YOU to handle it">Copy</button></div></td><td class="tag">Redirect-escalation (PRAX-1166)</td><td class="expect">Tool fires on the next turn instead of re-reading the redirect.</td></tr>
+        <tr><td class="step-num">5</td><td class="say"><div class="say-line">After the agent asks any clarifying question twice, reply <span class="say-quote">Hello?</span> / <span class="say-quote">Okay.</span> twice in a row<button class="copy-btn" data-copy="Hello? / Okay.">Copy</button></div></td><td class="tag"><strong>Stuck-loop (E)</strong></td><td class="expect">Tool fires on the 3rd round instead of asking a 3rd time.</td></tr>
+      </tbody>
+    </table>
+    <div class="verify-block">
+      <strong>Verify</strong>
+      <p><code>tasks</code> table — one row per call with <code>description</code> containing the call ID, the caller's utterance as <code>title</code> (capped at 100), <code>priority=Medium</code>, <code>status=Open</code>. Cache key <code>vapi-tool:create-followup-task:{toolCallId}</code> is set for 600s (PRAX-1166 idempotency).</p>
+    </div>
+  </article>
+
+  <article id="tool-7">
+    <h3>7. <code>lookup_recent_conversation</code> <span class="badge badge-guard">C+D</span></h3>
+    <p class="goal"><strong>Goal:</strong> verify thread-style rendering and topic-continuity closer.</p>
+    <div class="callout callout-warn">
+      <strong>Prerequisite</strong>
+      <p>The contact you're calling from must have recent SMS/voice history. Contact 871 (+15129533841) does.</p>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Say</th><th>Expect</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="step-num">1</td>
+          <td class="say"><div class="say-line"><span class="say-quote">Hey what did we talk about last time?</span><button class="copy-btn" data-copy="Hey what did we talk about last time?">Copy</button></div></td>
+          <td class="expect">
+            <code>lookup_recent_conversation</code> fires.<br>
+            • Starts with <em>“Here is the recent thread on file.”</em><br>
+            • Each turn reads <em>“today on a call, You said: …”</em> / <em>“yesterday by text, We replied: …”</em> (NOT “sent a call”).<br>
+            • If any turn is from today: ends with <em>“Want me to pick up where we left off, or is this a fresh question?”</em><br>
+            • If everything is older: ends with <em>“Is there something from that thread you wanted to revisit…”</em>
+          </td>
+        </tr>
+        <tr><td class="step-num">2</td><td class="say"><div class="say-line"><span class="say-quote">What did you text me?</span><button class="copy-btn" data-copy="What did you text me?">Copy</button></div></td><td class="expect">Same tool, <code>channel</code> filter may be applied — only SMS turns returned.</td></tr>
+        <tr><td class="step-num">3</td><td class="say"><div class="say-line"><span class="say-quote">Want me to pick up where we left off.</span><button class="copy-btn" data-copy="Want me to pick up where we left off.">Copy</button></div></td><td class="expect">Agent references a <strong>specific topic</strong> from the prior thread, NOT a generic clarifying question.</td></tr>
+      </tbody>
+    </table>
+    <div class="verify-block">
+      <strong>Verify</strong>
+      <p>The <code>text</code> column of the <code>tool.result</code> row contains the new thread shape. No <code>"sent a call"</code> / <code>"sent a text"</code> substrings.</p>
+    </div>
+  </article>
+
+  <article id="tool-8">
+    <h3>8. <code>lookup_recent_outreach</code></h3>
+    <p class="goal"><strong>Goal:</strong> verify outreach-history lookup distinct from conversation lookup.</p>
+    <table>
+      <thead><tr><th>#</th><th>Say</th><th>Expect</th></tr></thead>
+      <tbody>
+        <tr><td class="step-num">1</td><td class="say"><div class="say-line"><span class="say-quote">Did the school send me anything recently?</span><button class="copy-btn" data-copy="Did the school send me anything recently?">Copy</button></div></td><td class="expect"><code>lookup_recent_outreach</code> fires (NOT <code>lookup_recent_conversation</code>).</td></tr>
+        <tr><td class="step-num">2</td><td class="say"><div class="say-line"><span class="say-quote">What was that text you sent last week?</span><button class="copy-btn" data-copy="What was that text you sent last week?">Copy</button></div></td><td class="expect">Tool fires with <code>channel='sms'</code> filter if the prompt routes it.</td></tr>
+        <tr><td class="step-num">3</td><td class="say"><div class="say-line"><span class="say-quote">What about emails?</span><button class="copy-btn" data-copy="What about emails?">Copy</button></div></td><td class="expect">Tool fires with <code>channel='email'</code> filter.</td></tr>
+      </tbody>
+    </table>
+    <div class="verify-block">
+      <strong>Verify</strong>
+      <p><code>tool.result</code> text describes outbound messages only (no inbound caller turns). Compare against <code>lookup_recent_conversation</code> output from script 7 — outreach should be a strict subset focused on school-initiated messages.</p>
+    </div>
+  </article>
+</section>
+
+<section id="logging">
+  <h2>Logging tip</h2>
+  <p>After each test call, pull events with a single query so you can see tool order, payloads, and result text in one place. If a tool didn't fire when expected, the absence of its <code>tool.invoked</code> row is your signal — the surrounding <code>caller.transcript</code> rows tell you what utterance the agent actually saw.</p>
+  <div class="code-block-wrap">
+    <button class="copy-btn" data-copy="SELECT occurred_at, type, tool_name, LEFT(text, 200) AS text_preview, payload&#10;FROM cortex_forge.voice_call_debug_events&#10;WHERE call_id = '<call-id>'&#10;  AND type IN ('caller.transcript','tool.invoked','tool.result')&#10;ORDER BY occurred_at, id;">Copy</button>
+<pre><code>SELECT occurred_at, type, tool_name, LEFT(text, 200) AS text_preview, payload
+FROM cortex_forge.voice_call_debug_events
+WHERE call_id = '&lt;call-id&gt;'
+  AND type IN ('caller.transcript','tool.invoked','tool.result')
+ORDER BY occurred_at, id;</code></pre>
+  </div>
+</section>
+
+<footer style="margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border);font-size:0.85rem;color:var(--text-muted);">
+  <p>Generated for PR <a href="https://github.com/MiaShare/miashare-app/pull/6799">#6799</a> (PRAX-1173 / 1175 / 1176 / 1166). Guardrails A–F shipped in <code>d745875c62..e7fd57f62e</code>.</p>
+</footer>
+
+</div>
+
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const text = btn.dataset.copy;
+    try {
+      await navigator.clipboard.writeText(text);
+      const original = btn.textContent;
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1500);
+    } catch (e) {
+      btn.textContent = 'Err';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+    }
+  });
+});
+</script>
+
+</body>
+</html>
