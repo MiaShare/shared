@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="share-summary" content="PLAT-7 Classic Website Forms gap analysis — PRD vs. merged PR #6887: scoreboard across all 6 sub-PRDs, what works vs. prioritized gaps (CI-blocking deleted-enum import, incomplete use-case-neutrality, missing LEAD_FORM/forContext API), and the commit-vs-tree narrative drift behind the reopen. Adversarially verified across 5 review rounds.">
+<meta name="share-hash" content="6a29a89197941cd45f083b3f91ae4a0e1779fea49f03b8272296a1a092d9456c">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PLAT-7 "Classic Website Forms" — Gap Analysis</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1c212c; --ink:#e8eaf0; --muted:#9aa3b2;
+    --line:#272d3a; --accent:#6cb8ba; --code:#cdd6f4; --codebg:#11151d;
+    --green:#3fb950; --green-bg:#10341c; --amber:#e3b341; --amber-bg:#3a2e0c;
+    --red:#f85149; --red-bg:#3d1417; --blue:#58a6ff;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f6f7f9; --panel:#ffffff; --panel2:#f2f4f7; --ink:#1a1f29; --muted:#5b6472;
+      --line:#e3e7ec; --accent:#0f8a8d; --code:#1f2430; --codebg:#f0f2f5;
+      --green:#1a7f37; --green-bg:#e6f4ea; --amber:#9a6700; --amber-bg:#fbf3da;
+      --red:#cf222e; --red-bg:#fbe9e9; --blue:#0969da;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); line-height:1.62;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px 96px}
+  header.page{padding:48px 0 28px; border-bottom:1px solid var(--line); margin-bottom:8px}
+  h1{font-size:30px; line-height:1.2; margin:0 0 10px; letter-spacing:-0.01em}
+  .sub{color:var(--muted); font-size:15px; max-width:78ch}
+  .meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{font-size:12.5px; padding:4px 10px; border-radius:999px; border:1px solid var(--line);
+        background:var(--panel2); color:var(--muted)}
+  .chip strong{color:var(--ink); font-weight:600}
+  .layout{display:grid; grid-template-columns:210px 1fr; gap:40px; margin-top:28px}
+  nav.toc{position:sticky; top:24px; align-self:start; font-size:13.5px; max-height:calc(100vh - 48px); overflow:auto}
+  nav.toc a{display:block; color:var(--muted); text-decoration:none; padding:5px 10px; border-left:2px solid transparent; border-radius:0 6px 6px 0}
+  nav.toc a:hover{color:var(--ink); background:var(--panel2)}
+  nav.toc a.lead{color:var(--ink); font-weight:600; margin-top:6px}
+  main{min-width:0}
+  h2{font-size:21px; margin:38px 0 14px; padding-top:8px; letter-spacing:-0.01em}
+  h2:first-child{margin-top:0}
+  h3{font-size:16px; margin:26px 0 10px; display:flex; align-items:center; gap:9px}
+  p{margin:0 0 14px}
+  ul{margin:0 0 16px; padding-left:20px}
+  li{margin:0 0 10px}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace; font-size:13px;
+       background:var(--codebg); color:var(--code); padding:1.5px 6px; border-radius:5px;
+       border:1px solid var(--line); white-space:nowrap}
+  strong{font-weight:650}
+  em{color:var(--muted)}
+  a{color:var(--blue)}
+  .callout{border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel);
+           border-radius:10px; padding:18px 20px; margin:18px 0}
+  .callout.headline{border-left-color:var(--amber)}
+  .callout h2{margin-top:0}
+  .tier{border:1px solid var(--line); border-radius:10px; padding:4px 20px 8px; margin:16px 0; background:var(--panel)}
+  .tier.red{border-left:4px solid var(--red)}
+  .tier.amber{border-left:4px solid var(--amber)}
+  .tier.green{border-left:4px solid var(--green)}
+  .tier.yellow{border-left:4px solid var(--amber)}
+  .badge{font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; white-space:nowrap; letter-spacing:.02em}
+  .b-green{background:var(--green-bg); color:var(--green)}
+  .b-amber{background:var(--amber-bg); color:var(--amber)}
+  .b-red{background:var(--red-bg); color:var(--red)}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:14px; display:block; overflow-x:auto}
+  th,td{text-align:left; padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600; background:var(--panel2)}
+  tbody tr:hover{background:var(--panel2)}
+  td:first-child{white-space:nowrap; font-weight:600}
+  .legend{font-size:13.5px; color:var(--muted); margin-top:-4px}
+  .legend .badge{margin-right:4px}
+  hr{border:none; border-top:1px solid var(--line); margin:34px 0}
+  details{border:1px solid var(--line); border-radius:10px; padding:0 18px; margin:18px 0; background:var(--panel)}
+  details summary{cursor:pointer; padding:14px 0; font-weight:600; font-size:14.5px}
+  details[open] summary{border-bottom:1px solid var(--line); margin-bottom:14px}
+  details .body{font-size:13.5px; color:var(--muted); padding-bottom:16px}
+  footer.page{margin-top:48px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13px}
+  .pill-row{display:flex; gap:6px; flex-wrap:wrap; margin:2px 0 14px}
+  @media (max-width:820px){ .layout{grid-template-columns:1fr} nav.toc{display:none} h1{font-size:25px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>PLAT-7 &ldquo;Classic Website Forms&rdquo; — Gap Analysis</h1>
+  <p class="sub">PRD vs. merged implementation. Audit of PR #6887 (merged to <code>master</code>) against the
+  6-part Notion PRD <em>&ldquo;Forms as a First-Class, Use-Case-Neutral Platform.&rdquo;</em>
+  Evidence is <code>file:line</code> on disk; every finding adversarially re-verified across 5 review rounds.</p>
+  <div class="meta">
+    <span class="chip">base <strong>master @ 66e6f2cf63</strong></span>
+    <span class="chip">PR <strong>#6887</strong> merged · 159 files</span>
+    <span class="chip">PR <strong>#6740</strong> open + conflicting</span>
+    <span class="chip">ticket <strong>Done → reopened Todo</strong></span>
+    <span class="chip">prototypes <strong>none relevant</strong></span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <a class="lead" href="#artifacts">Artifacts</a>
+    <a href="#headline">⭐ Headline: PR over-claims</a>
+    <a class="lead" href="#scoreboard">Scoreboard</a>
+    <a class="lead" href="#works">What works</a>
+    <a class="lead" href="#broken">What doesn&rsquo;t work</a>
+    <a href="#ci">🔴 CI-blocking import</a>
+    <a href="#neutral">🟠 Not use-case-neutral</a>
+    <a href="#specgaps">🟠 PRD-spec gaps</a>
+    <a href="#hygiene">🟡 Hygiene / debt</a>
+    <a class="lead" href="#bottom">Bottom line</a>
+    <a href="#verification">Verification</a>
+  </nav>
+
+  <main>
+
+  <section id="artifacts">
+    <h2>Artifacts</h2>
+    <ul>
+      <li><strong>PRD</strong> (Notion &ldquo;Forms as a First-Class, Use-Case-Neutral Platform&rdquo;): 6 engineering
+        sub-PRDs. Goal = pull form infrastructure out of Enrollment into a neutral
+        <code>app/Domains/FormBuilder/</code> that Lead Capture, Enrollment, and a future Lead Form all compose from.</li>
+      <li><strong>Prototypes: none relevant.</strong> Both prototype links on the Linear ticket point to
+        <code>phone-number-management</code> — a different feature, off-topic paste. PLAT-7 is a backend/domain
+        refactor with no UI surface.</li>
+      <li><strong>Implementation:</strong> PR <strong>#6887</strong> (&ldquo;Forms as a use-case-neutral platform&rdquo;)
+        — squash commit <code>ad84df5224</code>, <strong>159 files</strong> (+6222 / −2676) — <strong>merged</strong> to
+        <code>master</code>. PR <strong>#6740</strong> (&ldquo;Genericize Forms by Type&rdquo;) still <strong>open + conflicting</strong>.</li>
+      <li><strong>Ticket state:</strong> Done (2026-05-30) → reopened to <strong>Todo</strong> (2026-06-01). Two concrete
+        reopen triggers: (1) the PR&rsquo;s commit message claims PRD work <strong>not in the merged tree</strong>;
+        (2) a broken import of a deleted enum reddens the <code>enrollment</code> CI shard.</li>
+    </ul>
+  </section>
+
+  <section id="headline">
+    <div class="callout headline">
+      <h2>⭐ Headline: the merged PR over-claims what it delivered</h2>
+      <p>PR #6887&rsquo;s own squash-commit body asserts these landed:</p>
+      <ul>
+        <li><em>&ldquo;Add LEAD_FORM case to FormContext (PRD 6 #1, PRD 2 #3)&rdquo;</em></li>
+        <li><em>&ldquo;FormElementType::forContext() returns universals for LEAD_FORM&rdquo;</em></li>
+        <li><em>&ldquo;Add LEAD_FORM case to ContactDetailSource (PRD 5 #3)&rdquo;</em></li>
+      </ul>
+      <p><strong>None of the three exist in the merged tree.</strong> <code>FormContext</code> has only
+      <code>LEAD_CAPTURE/FORM/APPLICATION</code> (<code>FormContext.php:25-27</code>); <code>FormElementType</code> has
+      no <code>forContext()</code>; <code>ContactDetailSource</code> has no <code>LEAD_FORM</code>. The PR&rsquo;s
+      &ldquo;PRD-alignment follow-ups&rdquo; narrative landed only <strong>partially</strong> in the squash: other items
+      it describes — the <code>FormSubmitted</code> marker interface (<code>FormSubmitted.php:27</code>) and the
+      <code>Form::pages</code> typed cast (<code>Form.php:59</code>) — <strong>are</strong> in the tree, but these three
+      <code>LEAD_FORM</code> / <code>forContext()</code> deliverables are <strong>not</strong>. The log reads
+      &ldquo;PRD-complete&rdquo; while the code is not — which made the original &ldquo;Done&rdquo; defensible and is a likely
+      reopen cause. Treat the commit message as unreliable; the sections below judge against the <strong>code</strong>.</p>
+    </div>
+  </section>
+
+  <section id="scoreboard">
+    <h2>Scoreboard (vs PRD requirements)</h2>
+    <table>
+      <thead><tr><th>PRD</th><th>Verdict</th><th>What landed</th><th>What&rsquo;s missing / deferred</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1 · Extract shared domain</td>
+          <td><span class="badge b-amber">🟡 Mostly</span></td>
+          <td>DTOs + <code>FormPageTransformer</code> relocated, old deleted; <code>FormPagesSchema</code>+<code>Config</code> composable; Enrollment resources compose; neutral naming</td>
+          <td><strong>&ldquo;Zero deps&rdquo; not met</strong> — FormBuilder still imports Enrollment enums + LeadCapture actions (documented deferral)</td>
+        </tr>
+        <tr>
+          <td>2 · Unify <code>FormElementType</code></td>
+          <td><span class="badge b-amber">🟡 Partial</span></td>
+          <td>Unified 25-case superset; both old enums deleted; LeadCapture refs migrated</td>
+          <td>No <code>isUniversalType/isEnrollmentType/forContext</code>; builder filters by <code>ApplicationFormType</code> not <code>FormContext</code>; 2 broken imports of the deleted enum</td>
+        </tr>
+        <tr>
+          <td>3 · Unify storage</td>
+          <td><span class="badge b-green">🟢 Solid</span></td>
+          <td><code>pages</code> column; idempotent backfill (tested); model cast + back-compat <code>elements</code>; <code>elementsByPage()</code> reads pages; actions write pages; <code>elements</code> correctly kept</td>
+          <td>Builder trait still emits flat <code>elements</code> (conversion delegated); no equivalence/AI-mode test</td>
+        </tr>
+        <tr>
+          <td>4 · Shared rendering</td>
+          <td><span class="badge b-amber">🟡 Deferred</span></td>
+          <td>Both traits exist; <code>RendersFormFields</code> is domain-pure; both DynamicForms compose them</td>
+          <td><strong>Shared field-rendering layer not built</strong> (no Blade partials / schema factory) — explicitly deferred to the Lead Form ticket; trait does paging only</td>
+        </tr>
+        <tr>
+          <td>5 · Submission pipeline</td>
+          <td><span class="badge b-amber">🟡 Mostly</span></td>
+          <td><code>ProcessFormSubmission</code> action; DynamicForm delegates; old ContactService method → deprecated shim; <code>FormSubmitted</code> marker decouples all 5 listeners; idempotency hardened</td>
+          <td>No <code>LEAD_FORM</code> source (reuses <code>LEAD_CAPTURE_FORM</code>); event made a marker iface, not renamed; action still imports LeadCapture + hardcodes its automation event</td>
+        </tr>
+        <tr>
+          <td>6 · Widget <code>FormContext</code></td>
+          <td><span class="badge b-amber">🟡 Mostly</span></td>
+          <td>Enum + virtual generated column + index; cast + <code>scopeFormContext</code>; legacy scopes intact</td>
+          <td><strong><code>LEAD_FORM</code> case deferred</strong>; whole slice currently <strong>unconsumed</strong> (zero <code>scopeFormContext</code> callers); no tests</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="legend"><span class="badge b-green">🟢</span> solid &nbsp;·&nbsp;
+      <span class="badge b-amber">🟡</span> partial / deliberately deferred &nbsp;·&nbsp;
+      <span class="badge b-red">🔴</span> core requirement unmet with no plan</p>
+  </section>
+
+  <hr>
+
+  <section id="works">
+    <h2>What works (solidly shipped)</h2>
+    <ul>
+      <li><strong>Class moves are clean.</strong> Old <code>FormElementType</code> (both Lead Capture + Enrollment),
+        <code>FormPageData/FormFieldData/ConditionData</code>, <code>FormPageTransformer</code> all deleted and re-homed
+        under <code>app/Domains/FormBuilder/</code>. Imported tree-wide by <strong>≈116 files</strong> (~109 outside the
+        domain&rsquo;s own 7 — exact count varies with grep scope). No leftover dup/stub — only an intentional
+        <code>STATIC_AGREEMENT()</code> queue-drain alias (<code>FormElementType.php:65</code>).</li>
+      <li><strong>PRD 3 (storage) is the strongest.</strong> <code>forms.pages</code> migration
+        (<code>…add_pages_to_forms_table.php:24</code>); <code>BackfillFormPages</code> action +
+        <code>forms:backfill-pages</code> command genuinely idempotent (fingerprint match→skip, divergent→FAILURE unless
+        <code>--force-overwrite</code>; <code>BackfillFormPages.php:47-65,285-304</code>), tested
+        (<code>BackfillFormPagesCommandTest.php</code>). <code>elements</code> accessor synthesizes from <code>pages</code>
+        both directions (<code>Form.php:87-154</code>); <code>elementsByPage()</code> reads <code>pages</code> with raw
+        fallback (<code>Form.php:310-337</code>); <code>elements</code> column correctly deferred, not dropped.</li>
+      <li><strong>PRD 5 decoupling works functionally.</strong> <code>FormSubmitted</code> marker interface
+        (<code>FormSubmitted.php:27</code>); all 5 listeners type-hint it and resolve via <code>getFormSubmissionId()</code>
+        (SendNewLeadNotification, ScheduleLeadCaptureSummary, CreateInboxConversationForLeadCapture,
+        LeadCaptureFormSubmittedWebhook, AdvanceAutoTransitionsOnLeadCaptureFormSubmitted). Laravel walks
+        <code>class_implements()</code> so all fire. Idempotency hardened with an org-scoped fast-path return
+        (<code>ProcessFormSubmission.php:69-84</code>).</li>
+      <li><strong>PRD 1 extraction skeleton.</strong> <code>FormPagesSchema.php</code> + <code>FormPagesSchemaConfig.php</code>
+        are a composable, per-request schema builder; config controls excluded field types, page validators, owning-model /
+        org / storage-prefix resolvers. <code>ApplicationFormResource</code> + <code>ApplicationFormTemplateResource</code>
+        compose <code>pagesSection()</code> and layer their own sections.</li>
+      <li><strong>Two live form runtimes share the extracted traits — as intended.</strong> The two parent components — the
+        AI iframe path (<code>…Ai/DynamicForm:34-35</code>) and the non-AI iframe path
+        (<code>Livewire/LeadCapture/DynamicForm:36-37</code>) — both <code>use RendersFormFields</code> /
+        <code>HandlesFormSubmission</code>. (Their <code>DynamicFormPage</code> sub-components compose Filament
+        <code>InteractsWithForms</code> separately and do <strong>not</strong> consume the traits.) This is the dedup the
+        extraction was for, not dead code.</li>
+      <li><code>architecture.md</code> updated to register + describe the domain.</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section id="broken">
+    <h2>What doesn&rsquo;t work (prioritized)</h2>
+
+    <div class="tier red" id="ci">
+      <h3><span class="badge b-red">🔴 CI-BLOCKING</span> Broken import of a deleted class</h3>
+      <p>Two files import the <strong>deleted</strong> <code>App\Enums\Enrollment\FormElementType</code>:</p>
+      <ul>
+        <li><code>…/FormProgramGroupSelectHideConditionTest.php:3</code> — in the <code>enrollment</code> Pest group. The
+          top-level <code>use</code> is a compile-time alias (no autoload), but every test references
+          <code>FormElementType::PROGRAM_GROUP_SELECT/STATIC_HTML</code> inside the <code>describe()</code> block
+          (<code>:72,81,137,146,159</code>), so each <strong>errors at run time</strong> with <code>Class … not found</code>,
+          reddening the <code>enrollment</code> CI shard. <strong>This is the CI-red trigger.</strong></li>
+        <li><code>app/Scenarios/Enrollment/Plat65ProgramSelectionHideConditions.php:8</code> — <strong>dev/CLI-only</strong>
+          (<code>scenario:run</code> refuses production); fatals only when this scenario is invoked. <code>scenario:list</code>
+          unaffected.</li>
+      </ul>
+      <p>Both reference cases that <strong>do</strong> exist on the new enum, so the fix is a one-line import repoint to
+      <code>App\Domains\FormBuilder\Enums\FormElementType</code> in each. <strong>No production runtime path is affected.</strong></p>
+    </div>
+
+    <div class="tier amber" id="neutral">
+      <h3><span class="badge b-amber">🟠</span> &ldquo;Use-case-neutral&rdquo; — the headline goal — not met (deliberately deferred)</h3>
+      <p>PRD 1 Req 1 (&ldquo;zero dependencies on Enrollment or LeadCapture&rdquo;) is not satisfied. The PR documents this as a
+      conscious deferral to the first non-enrollment consumer, but as merged the domain is <strong>not</strong> neutral:</p>
+      <ul>
+        <li><code>FormPagesSchema</code> <strong>cannot instantiate without Enrollment</strong> — imports
+          <code>App\Enums\Enrollment\ApplicationFormType</code> (referenced 15×) + <code>SensitiveFieldPattern</code>
+          (<code>FormPagesSchema.php:11-12</code>); docblock (<code>:44-46</code>) calls neutralization &ldquo;intentionally deferred.&rdquo;</li>
+        <li><code>FormBuilder/Enums/FormElementType.php:7</code> imports <code>ApplicationFormType</code> (legitimate use at
+          <code>:132</code>, not dangling).</li>
+        <li><code>ProcessFormSubmission</code> imports LeadCapture actions (<code>:12-13</code>) and <strong>hardcodes</strong>
+          <code>AutomationEvent::LeadCaptureFormSubmitted</code> (&ldquo;hardcoded for now&rdquo;, <code>:164</code>). Correct for
+          today&rsquo;s only consumer; blocks a second form type until parameterized.</li>
+        <li><code>HandlesFormSubmission.php:9-10</code> imports LeadCapture <code>CreateFormSubmission/UpdateFormSubmission</code>.</li>
+        <li>→ PRD 1 Req 1 and the &ldquo;no LeadCapture imports&rdquo; success criteria remain unmet.</li>
+      </ul>
+    </div>
+
+    <div class="tier amber" id="specgaps">
+      <h3><span class="badge b-amber">🟠</span> PRD-spec items missing or deferred</h3>
+      <ul>
+        <li><strong><code>FormContext</code> missing <code>LEAD_FORM</code></strong> — only <code>LEAD_CAPTURE/FORM/APPLICATION</code>
+          (<code>FormContext.php:25-27</code>). PRD 2 spec&rsquo;d <code>{LEAD_CAPTURE, LEAD_FORM, FORM}</code>; PRD 6 the superset.
+          Impl = PRD 6&rsquo;s set <strong>minus <code>LEAD_FORM</code></strong>. Any <code>FormContext::LEAD_FORM</code> ref is a fatal <code>Error</code>.</li>
+        <li><strong>Enum categorization API absent</strong> — no <code>isUniversalType()</code>, <code>isEnrollmentType()</code>,
+          <code>forContext()</code> (PRD 2 Req 2). Categorization lives on <code>ApplicationFormType</code> instead; both PRD 2
+          success criteria unsatisfiable. (Commit body claims <code>forContext()</code> shipped; it did not.)</li>
+        <li><strong>PRD 2 Req 7</strong> — <code>FormPagesSchema</code> never references <code>FormContext</code>; the dropdown
+          filters by <code>ApplicationFormType</code> + <code>excludedFieldTypes</code>. Intent met via a different mechanism.</li>
+        <li><strong>PRD 4 shared rendering layer not built</strong> — <code>resources/views/livewire/form-builder/fields/</code>
+          does not exist. <code>RendersFormFields</code> does paging + resolution only — no field render, no validation-by-type.
+          The per-type render <code>match</code> still lives un-extracted at <code>…Ai/DynamicFormPage.php:106-312</code> (and its
+          non-AI twin). PRD 4 success criterion 2 not met. Reasoned deferral (Filament PHP-DSL, not Blade-per-type), so 🟡 not 🔴.
+          (Runtime <code>hide_conditions</code> lives in <code>Enrollment/Form.php</code>, not DynamicFormPage.)</li>
+        <li><strong>PRD 5 Req 3</strong> — no <code>LEAD_FORM</code> on <code>ContactDetailSource</code>; pipeline reuses
+          <code>LEAD_CAPTURE_FORM</code>. Correct for the only live consumer; named case deferred with the Lead Form product.</li>
+        <li><strong>PRD 5 Req 4</strong> — event not renamed; <code>FormSubmitted</code> built as a marker interface (matches
+          <code>architecture.md</code>; contradicts the PRD&rsquo;s &ldquo;rename&rdquo; wording). Functionally fine.</li>
+        <li><strong>PRD 6 Req 2</strong> — <code>form_context</code> is a read-only <strong>VIRTUAL generated column</strong>
+          derived from <code>type</code>, not a writable nullable string. Deliberate tradeoff (no drift from <code>type</code>;
+          INPLACE/LOCK=NONE ALTER), but the enum cast is effectively read-only.</li>
+      </ul>
+    </div>
+
+    <div class="tier yellow" id="hygiene">
+      <h3><span class="badge b-amber">🟡</span> Hygiene / debt</h3>
+      <ul>
+        <li><strong>PRD 6 slice is currently unconsumed.</strong> <code>Widget::scopeFormContext()</code> has <strong>zero callers</strong>
+          anywhere, and <code>FormContext</code> is referenced only inside <code>app/Widget.php</code>. Migration + virtual column +
+          index + cast + scope + enum form a vertical slice nothing reads. The migration docblock also promises a post-deploy
+          NULL-row audit (<code>:22-23</code>) that does not exist — a second instance of the same narrative-vs-tree drift.</li>
+        <li><strong>Test coverage gaps</strong> on core extracted surfaces: <code>ProcessFormSubmission</code>,
+          <code>FormPagesSchema</code>, <code>FormPageTransformer</code>, and the whole PRD 6 <code>FormContext</code> slice have
+          <strong>no dedicated tests</strong>. <code>ProcessFormSubmissionException</code> untested. The &ldquo;all 5 listeners fire via
+          the interface&rdquo; claim has no regression test (listener tests call <code>handle()</code> directly).</li>
+        <li><strong><code>ProcessFormSubmission</code> re-invokes <code>UpdateFormSubmission</code> a second time</strong> purely to
+          dispatch automation (afterCommit, <code>:163-170</code>). The second call writes <strong>no</strong> row (update gated on a
+          non-empty field set; <code>automationEvents</code> excluded — <code>UpdateFormSubmission.php:79-97</code>) — it does an extra
+          <code>firstOrFail()</code> SELECT + dispatches a job. The afterCommit defer is intentional + documented, but best-effort: if it
+          throws, contact link + opt-prefs are committed while the automation event never fires.</li>
+        <li><strong>PRD 3 Req 5 (partial)</strong> — <code>LeadCaptureWidgetPagesTrait</code> still emits the flat
+          <code>['elements' =&gt; …]</code> shape and the Edit page reads <code>$form-&gt;elements</code>; conversion is delegated to the
+          model accessor + actions. Intent met, literal requirement not.</li>
+        <li><strong>PR #6740</strong> (open, CONFLICTING) — branched against the old Enrollment namespace; its migration + EMAIL/PHONE
+          types already shipped in #6887. Stale; needs a full rebase onto <code>FormBuilder</code> or close.</li>
+        <li><strong>Cosmetic</strong> — docblock at <code>FormElementType.php:16-17</code> claims a &ldquo;superset of&rdquo; two paths that both
+          point at the new namespace (should be the old LeadCapture + Enrollment FQCNs).</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr>
+
+  <section id="bottom">
+    <h2>Bottom line</h2>
+    <p>The <em>mechanical</em> extraction (PRD 1 moves + PRD 3 storage) is real and solid. The <em>platform-neutrality</em> promise
+    (PRDs 1, 2, 4, 5) is intentionally half-done — FormBuilder still leans on Enrollment + LeadCapture, the
+    <code>FormContext</code>/<code>forContext()</code> API the PRD specified doesn&rsquo;t exist, and <code>LEAD_FORM</code> was deferred
+    across three enums. The biggest risk is <strong>narrative drift</strong>: the PR&rsquo;s commit message asserts PRD work
+    (<code>LEAD_FORM</code>, <code>forContext()</code>, <code>ContactDetailSource</code>) that never reached the tree, so &ldquo;Done&rdquo;
+    looked defensible while the code wasn&rsquo;t. <strong>Fix the broken <code>enrollment</code>-shard import first (one line)</strong>,
+    then decide explicitly whether full neutrality + <code>LEAD_FORM</code> are PLAT-7 scope or a tracked follow-up — and correct the
+    commit/ticket record so the gap is visible.</p>
+  </section>
+
+  <details id="verification">
+    <summary>Verification — how this report was hardened</summary>
+    <div class="body">
+      <p>Every factual claim was re-checked against <code>master</code> on disk via an adversarial pass across 5 review rounds
+      (accuracy / completeness / severity / false-positive / PRD-fidelity lenses, each finding independently verified). Material
+      corrections applied through the loop:</p>
+      <ul>
+        <li>case count 25 (not 26); 159-file commit (not 100); import count restated as ≈116 tree-wide; render-<code>match</code> citation <code>:106-312</code> (not <code>:107-244</code>); docblock at lines 16-17.</li>
+        <li><code>hide_conditions</code> attribution corrected to <code>Enrollment/Form.php</code>.</li>
+        <li>CRITICAL reframed from &ldquo;production runtime fatal&rdquo; to &ldquo;CI-blocking + dev-only.&rdquo;</li>
+        <li>The &ldquo;orphan Ai/DynamicForm — delete it&rdquo; finding <strong>retracted</strong>: it is the live AI lead-capture runtime; deleting it would break prod widgets + 5 test files.</li>
+        <li><code>ProcessFormSubmission</code> afterCommit corrected to a second SELECT + job dispatch, <strong>not</strong> a second UPDATE write.</li>
+        <li>Headline reframed to a <strong>partial</strong> squash landing (FormSubmitted iface + <code>Form::pages</code> cast landed; LEAD_FORM/forContext/ContactDetailSource did not), not a wholesale back-out.</li>
+        <li>Convergence: round 5 produced zero validated findings.</li>
+      </ul>
+    </div>
+  </details>
+
+  </main>
+</div>
+
+<footer class="page">
+  PLAT-7 Gap Analysis · generated against <code>master @ 66e6f2cf63</code> · adversarially verified (5 rounds, converged).
+</footer>
+
+</div>
+</body>
+</html>
