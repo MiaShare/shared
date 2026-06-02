@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="share-summary" content="A stakeholder walkthrough showing a school staff member building two new website forms (a standard contact form and an AI lead-capture form), previewing them in the Lumion dashboard, and a real anonymous visitor using them end to end.">
+    <title>Lumion — Lead-Capture Forms Walkthrough</title>
+    <style>
+        :root {
+            --ink: #11142b;
+            --ink-soft: #2b2f4a;
+            --muted: #5b6079;
+            --line: #e6e8f0;
+            --bg: #f5f6fa;
+            --card: #ffffff;
+            --primary: #5261ce;
+            --primary-soft: #eef0fb;
+            --coral: #fe6d73;
+            --green: #15a36e;
+            --green-soft: #e7f6ef;
+            --amber: #b7791f;
+            --amber-soft: #fdf3e2;
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--ink);
+            background: var(--bg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        header.hero {
+            background: linear-gradient(135deg, #11142b 0%, #2b2f4a 100%);
+            color: #fff;
+            padding: 56px 24px 64px;
+            text-align: center;
+        }
+        .brand {
+            font-size: 13px;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            color: #aab0d6;
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+        header.hero h1 {
+            margin: 0 auto 14px;
+            font-size: 34px;
+            line-height: 1.25;
+            max-width: 760px;
+            font-weight: 700;
+        }
+        header.hero p.sub {
+            margin: 0 auto;
+            max-width: 660px;
+            font-size: 17px;
+            color: #d6d9ee;
+        }
+        .wrap {
+            max-width: 940px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .intro {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 28px 30px;
+            margin: -40px auto 40px;
+            box-shadow: 0 10px 30px rgba(17, 20, 43, 0.08);
+        }
+        .intro h2 { margin: 0 0 12px; font-size: 19px; }
+        .intro p { margin: 0 0 14px; color: var(--ink-soft); }
+        .forms-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 18px;
+        }
+        .form-chip {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 16px 18px;
+            background: #fbfbfe;
+        }
+        .form-chip .tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 3px 9px;
+            border-radius: 999px;
+            margin-bottom: 8px;
+        }
+        .tag.standard { background: var(--primary-soft); color: var(--primary); }
+        .tag.ai { background: #efe7fb; color: #6b3fc0; }
+        .form-chip h3 { margin: 0 0 6px; font-size: 16px; }
+        .form-chip p { margin: 0; font-size: 14px; color: var(--muted); }
+        @media (max-width: 640px) { .forms-pair { grid-template-columns: 1fr; } }
+
+        section.act { margin: 0 auto 8px; padding-top: 26px; }
+        .act-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 4px;
+        }
+        .act-num {
+            flex: none;
+            width: 42px; height: 42px;
+            border-radius: 11px;
+            background: var(--primary);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 18px;
+        }
+        .act-head h2 { margin: 0; font-size: 24px; }
+        .act-head .lead { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
+
+        figure.shot {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            margin: 26px 0;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(17, 20, 43, 0.06);
+        }
+        figure.shot .cap {
+            padding: 16px 22px 4px;
+        }
+        figure.shot .step {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        figure.shot h4 { margin: 0 0 6px; font-size: 17px; }
+        figure.shot figcaption { color: var(--ink-soft); font-size: 15px; padding: 0 22px 18px; }
+        figure.shot img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-top: 1px solid var(--line);
+            background: #fafafa;
+        }
+
+        .callout {
+            border-radius: 14px;
+            padding: 22px 26px;
+            margin: 34px 0;
+            border: 1px solid;
+        }
+        .callout h3 { margin: 0 0 12px; font-size: 18px; }
+        .callout ul { margin: 0; padding-left: 20px; }
+        .callout li { margin-bottom: 8px; }
+        .confirm { background: var(--green-soft); border-color: #bfe8d4; }
+        .confirm h3 { color: var(--green); }
+        .notes { background: var(--amber-soft); border-color: #f1dcab; }
+        .notes h3 { color: var(--amber); }
+        .notes li { color: #5d4a1f; }
+
+        .cta {
+            text-align: center;
+            background: var(--ink);
+            color: #fff;
+            border-radius: 16px;
+            padding: 34px 26px;
+            margin: 44px 0 20px;
+        }
+        .cta h3 { margin: 0 0 10px; font-size: 22px; }
+        .cta p { margin: 0 auto; max-width: 540px; color: #d6d9ee; }
+
+        footer.foot {
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 30px 20px 50px;
+        }
+        .divider { height: 1px; background: var(--line); margin: 8px 0; border: 0; }
+    </style>
+<meta name="share-hash" content="d7e5747ea9728c927930efeb9b2ebd5b27d52fc8decc0abd6d9e0f067827d20f">
+</head>
+<body>
+    <header class="hero">
+        <div class="brand">Lumion · Product Walkthrough</div>
+        <h1>Building &amp; using two new website forms</h1>
+        <p class="sub">A school staff member creates a contact form and an AI lead-capture form, previews them, and a real website visitor uses them — end to end.</p>
+    </header>
+
+    <div class="wrap">
+        <div class="intro">
+            <h2>What you're looking at</h2>
+            <p>
+                This walkthrough validates that a school can self-serve two new website forms inside Lumion,
+                preview them before going live, and that real (not-logged-in) website visitors can fill them
+                out. It was run on our staging environment using a demo school, <strong>"Excalibur Auto Mechanics
+                Institute."</strong>
+            </p>
+            <p>We set up two distinct form types:</p>
+            <div class="forms-pair">
+                <div class="form-chip">
+                    <span class="tag standard">Form 1 · Standard</span>
+                    <h3>General contact form</h3>
+                    <p>A normal form a school embeds on its website to collect visitor details (name, email, phone) straight into their CRM.</p>
+                </div>
+                <div class="form-chip">
+                    <span class="tag ai">Form 2 · AI</span>
+                    <h3>AI lead-capture form</h3>
+                    <p>Collects the visitor's details, then hands off into a live AI chat assistant ("Nora") that can answer their questions.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACT 1 -->
+        <section class="act">
+            <div class="act-head">
+                <div class="act-num">1</div>
+                <div>
+                    <h2>A school staff member creates the forms</h2>
+                    <p class="lead">Self-serve, inside the school dashboard — no developer needed.</p>
+                </div>
+            </div>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Step 1 · Signed in</div>
+                    <h4>The school dashboard</h4>
+                </div>
+                <figcaption>A staff member at Excalibur is logged in to their Lumion dashboard, where they manage contacts, conversations and website widgets.</figcaption>
+                <img src="00-school-admin-dashboard.png" alt="School dashboard home">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Step 2 · Pick a form type</div>
+                    <h4>Starting a new form</h4>
+                </div>
+                <figcaption>When creating a new form, the staff member chooses between an <strong>AI Chat Agent</strong> form and a standard <strong>Lead Capture Form</strong>. We build one of each.</figcaption>
+                <img src="01-create-widget-type-picker.png" alt="Choose between AI Chat Agent and Lead Capture Form">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Step 3 · The contact form</div>
+                    <h4>Building the standard contact form</h4>
+                </div>
+                <figcaption>The form builder for Form 1. The staff member sets a name, optional allowed website domains, and the fields a visitor fills in — first name, last name, email and phone.</figcaption>
+                <img src="02-form1-general-tab.png" alt="Contact form builder with fields">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Step 4 · Saved</div>
+                    <h4>Contact form created</h4>
+                </div>
+                <figcaption>"PLAT7 Proof Contact Form" is saved and ready.</figcaption>
+                <img src="04-form1-created-edit-page.png" alt="Contact form created">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Step 5 · The AI form</div>
+                    <h4>Building the AI lead-capture form</h4>
+                </div>
+                <figcaption>Form 2 adds an <strong>AI Chat Agent</strong> step. The assistant "Nora" is assigned automatically, with options for how the bot refers to the team and what actions it can suggest.</figcaption>
+                <img src="06-form2-ai-config-filled.png" alt="AI form configuration with Nora assigned">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Step 6 · Saved</div>
+                    <h4>AI form created</h4>
+                </div>
+                <figcaption>"PLAT7 Proof AI Lead Capture" is saved and ready.</figcaption>
+                <img src="07-form2-created-edit-page.png" alt="AI form created">
+            </figure>
+        </section>
+
+        <!-- ACT 2 -->
+        <section class="act">
+            <div class="act-head">
+                <div class="act-num">2</div>
+                <div>
+                    <h2>Previewing the forms before going live</h2>
+                    <p class="lead">The staff member sees exactly what a visitor will see — without publishing yet.</p>
+                </div>
+            </div>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Preview · Contact form</div>
+                    <h4>The standard form, as a visitor sees it</h4>
+                </div>
+                <figcaption>A live preview of the contact form inside the dashboard — the same fields a website visitor will fill in.</figcaption>
+                <img src="05-form1-preview-in-panel.png" alt="Contact form preview in dashboard">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Preview · AI form, step 1</div>
+                    <h4>The AI form's short lead form</h4>
+                </div>
+                <figcaption>The AI form opens with the same quick details form, ending in a <strong>"Start Chat"</strong> button instead of a plain submit.</figcaption>
+                <img src="08-form2-preview-form-stage.png" alt="AI form first step preview">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Preview · AI form, step 2</div>
+                    <h4>The AI assistant takes over</h4>
+                </div>
+                <figcaption>After the form, the assistant <strong>"Nora"</strong> greets the visitor and is ready to chat — this is the AI session the form hands off into.</figcaption>
+                <img src="09-form2-preview-chat-stage.png" alt="AI assistant Nora greeting in preview">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Publish</div>
+                    <h4>Both forms switched on</h4>
+                </div>
+                <figcaption>The staff member enables both forms. They now show as "Enabled" in the school's list of website widgets, ready for real visitors.</figcaption>
+                <img src="10-both-widgets-enabled-list.png" alt="Both forms enabled in widget list">
+            </figure>
+        </section>
+
+        <!-- ACT 3 -->
+        <section class="act">
+            <div class="act-head">
+                <div class="act-num">3</div>
+                <div>
+                    <h2>A real website visitor uses the forms</h2>
+                    <p class="lead">Not logged in — exactly how a prospective student would experience it.</p>
+                </div>
+            </div>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Visitor · Contact form</div>
+                    <h4>The published contact form</h4>
+                </div>
+                <figcaption>An anonymous visitor lands on the school's contact form (note the "Log In" link — they are not signed in).</figcaption>
+                <img src="11-enduser-contact-form-blank.png" alt="Public contact form, anonymous visitor">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Visitor · Contact form</div>
+                    <h4>Filling it in</h4>
+                </div>
+                <figcaption>The visitor enters their details.</figcaption>
+                <img src="12-enduser-contact-form-filled.png" alt="Contact form filled by visitor">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Visitor · Contact form</div>
+                    <h4>Submission confirmed</h4>
+                </div>
+                <figcaption>The visitor sees a thank-you confirmation. Behind the scenes this created a <strong>new contact record</strong> in the school's CRM and triggered their new-lead follow-up automations.</figcaption>
+                <img src="13-enduser-contact-form-success.png" alt="Contact form thank-you confirmation">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Visitor · AI form</div>
+                    <h4>The AI form embedded on a website</h4>
+                </div>
+                <figcaption>The AI form embedded on a simulated school marketing website — it appears as a pop-up for the visitor.</figcaption>
+                <img src="19-enduser-embedded-ai-popup-form.png" alt="AI form embedded as pop-up on a website">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Visitor · AI form</div>
+                    <h4>Filling the short form</h4>
+                </div>
+                <figcaption>The visitor enters their details to begin.</figcaption>
+                <img src="20-enduser-embedded-ai-popup-filled.png" alt="AI form filled by visitor">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Visitor · AI form</div>
+                    <h4>The form becomes a live AI chat</h4>
+                </div>
+                <figcaption>Once the form is submitted, it hands off into a live AI session — <strong>"Nora"</strong> greets the visitor and invites a conversation.</figcaption>
+                <img src="21-enduser-embedded-ai-chat-session.png" alt="AI chat session begins with Nora">
+            </figure>
+
+            <figure class="shot">
+                <div class="cap">
+                    <div class="step">Visitor · AI form</div>
+                    <h4>The visitor asks a question</h4>
+                </div>
+                <figcaption>The visitor sends a message and the assistant responds — confirming the chat is interactive. (See the reviewer note below about the AI's answers on staging.)</figcaption>
+                <img src="22-enduser-embedded-ai-chat-message.png" alt="Visitor message and assistant reply">
+            </figure>
+        </section>
+
+        <div class="callout confirm">
+            <h3>✓ What this confirms</h3>
+            <ul>
+                <li>A school can <strong>build both form types themselves</strong> — a standard contact form and an AI lead-capture form — with no developer involvement.</li>
+                <li>Both can be <strong>previewed</strong> in the dashboard before going live.</li>
+                <li>Both work for <strong>real, not-logged-in website visitors</strong>, whether embedded as a pop-up or via a direct link.</li>
+                <li>A submission <strong>creates a contact record</strong> in the CRM and <strong>triggers the school's follow-up automations</strong> (e.g. new-lead notifications).</li>
+                <li>The AI form correctly <strong>hands off from the form into a live AI chat session</strong>.</li>
+            </ul>
+        </div>
+
+        <div class="callout notes">
+            <h3>Notes for reviewers</h3>
+            <ul>
+                <li>This was run on the <strong>staging environment</strong> with a demo school, using test visitor details.</li>
+                <li>The AI assistant's knowledge base isn't fully connected in staging, so the live chat currently replies with a placeholder ("having trouble responding right now"). The important part — the <strong>hand-off from form into the AI session</strong> — works; wiring the assistant's answers is a separate, already-planned step.</li>
+                <li>Forms are shown here as embedded pop-ups. A <strong>direct shareable link</strong> option also exists for the same forms.</li>
+            </ul>
+        </div>
+
+        <div class="cta">
+            <h3>Your feedback, please</h3>
+            <p>Does this match the experience we want to ship for schools? Reply with approval or any changes you'd like to see.</p>
+        </div>
+    </div>
+
+    <footer class="foot">
+        <hr class="divider">
+        Lumion — Lead-Capture Forms Walkthrough · Prepared for stakeholder review
+    </footer>
+</body>
+</html>
