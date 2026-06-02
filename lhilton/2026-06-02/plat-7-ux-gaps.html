@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="share-summary" content="UX and UI gap analysis for PLAT-7 Classic Website Forms. Finds the PRD scoped all UI out of scope, so there is essentially no in-scope UX gap; the real product forms UX shipped separately as PRAX-713 while the separate Lead Form spec (PRAX-708) was cut. Includes gap tables versus PRAX-708 and the PRD with file-line citations.">
+<meta name="share-hash" content="6301976425032d4ea1c2c2e8873f9a4138dfa646ba669ccf59affd3d97855b81">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PLAT-7 "Classic Website Forms" — UX / UI Gap Analysis</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1c212c; --ink:#e8eaf0; --muted:#9aa3b2;
+    --line:#272d3a; --accent:#6cb8ba; --code:#cdd6f4; --codebg:#11151d;
+    --green:#3fb950; --green-bg:#10341c; --amber:#e3b341; --amber-bg:#3a2e0c;
+    --red:#f85149; --red-bg:#3d1417; --blue:#58a6ff;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f6f7f9; --panel:#ffffff; --panel2:#f2f4f7; --ink:#1a1f29; --muted:#5b6472;
+      --line:#e3e7ec; --accent:#0f8a8d; --code:#1f2430; --codebg:#f0f2f5;
+      --green:#1a7f37; --green-bg:#e6f4ea; --amber:#9a6700; --amber-bg:#fbf3da;
+      --red:#cf222e; --red-bg:#fbe9e9; --blue:#0969da;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); line-height:1.62;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px 96px}
+  header.page{padding:48px 0 28px; border-bottom:1px solid var(--line); margin-bottom:8px}
+  h1{font-size:30px; line-height:1.2; margin:0 0 10px; letter-spacing:-0.01em}
+  .sub{color:var(--muted); font-size:15px; max-width:78ch}
+  .meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{font-size:12.5px; padding:4px 10px; border-radius:999px; border:1px solid var(--line);
+        background:var(--panel2); color:var(--muted)}
+  .chip strong{color:var(--ink); font-weight:600}
+  .layout{display:grid; grid-template-columns:210px 1fr; gap:40px; margin-top:28px}
+  nav.toc{position:sticky; top:24px; align-self:start; font-size:13.5px; max-height:calc(100vh - 48px); overflow:auto}
+  nav.toc a{display:block; color:var(--muted); text-decoration:none; padding:5px 10px; border-left:2px solid transparent; border-radius:0 6px 6px 0}
+  nav.toc a:hover{color:var(--ink); background:var(--panel2)}
+  nav.toc a.lead{color:var(--ink); font-weight:600; margin-top:6px}
+  main{min-width:0}
+  h2{font-size:21px; margin:38px 0 14px; padding-top:8px; letter-spacing:-0.01em}
+  h2:first-child{margin-top:0}
+  h3{font-size:16px; margin:26px 0 10px; display:flex; align-items:center; gap:9px}
+  p{margin:0 0 14px}
+  ul{margin:0 0 16px; padding-left:20px}
+  li{margin:0 0 10px}
+  ol{margin:0 0 16px; padding-left:22px}
+  code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace; font-size:13px;
+       background:var(--codebg); color:var(--code); padding:1.5px 6px; border-radius:5px;
+       border:1px solid var(--line); white-space:nowrap}
+  strong{font-weight:650}
+  em{color:var(--muted)}
+  a{color:var(--blue)}
+  .callout{border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--panel);
+           border-radius:10px; padding:18px 20px; margin:18px 0}
+  .callout.headline{border-left-color:var(--amber)}
+  .callout h2{margin-top:0}
+  .tier{border:1px solid var(--line); border-radius:10px; padding:4px 20px 8px; margin:16px 0; background:var(--panel)}
+  .tier.red{border-left:4px solid var(--red)}
+  .tier.amber{border-left:4px solid var(--amber)}
+  .tier.green{border-left:4px solid var(--green)}
+  .tier.yellow{border-left:4px solid var(--amber)}
+  .badge{font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; white-space:nowrap; letter-spacing:.02em}
+  .b-green{background:var(--green-bg); color:var(--green)}
+  .b-amber{background:var(--amber-bg); color:var(--amber)}
+  .b-red{background:var(--red-bg); color:var(--red)}
+  .b-gray{background:var(--panel2); color:var(--muted)}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:14px; display:block; overflow-x:auto}
+  th,td{text-align:left; padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600; background:var(--panel2)}
+  tbody tr:hover{background:var(--panel2)}
+  td:first-child{font-weight:600}
+  .legend{font-size:13.5px; color:var(--muted); margin-top:-4px}
+  .legend .badge{margin-right:4px}
+  hr{border:none; border-top:1px solid var(--line); margin:34px 0}
+  details{border:1px solid var(--line); border-radius:10px; padding:0 18px; margin:18px 0; background:var(--panel)}
+  details summary{cursor:pointer; padding:14px 0; font-weight:600; font-size:14.5px}
+  details[open] summary{border-bottom:1px solid var(--line); margin-bottom:14px}
+  details .body{font-size:13.5px; color:var(--muted); padding-bottom:16px}
+  footer.page{margin-top:48px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13px}
+  @media (max-width:820px){ .layout{grid-template-columns:1fr} nav.toc{display:none} h1{font-size:25px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>PLAT-7 &ldquo;Classic Website Forms&rdquo; — UX / UI Gap Analysis</h1>
+  <p class="sub">Leadership perceives gaps between the PRD + prototypes and what shipped, <strong>purely from a
+  UX / UI perspective</strong>. This compares the user-facing UI that was <em>expected</em> (PRD + prototypes +
+  related product tickets) against what PLAT-7 actually <em>delivered</em> (PR #6887 merged + follow-up #6993).
+  UI inventory carries <code>file:line</code> citations, verified on <code>master</code>.</p>
+  <div class="meta">
+    <span class="chip">PRD UI scope <strong>explicitly excluded</strong></span>
+    <span class="chip">prototypes <strong>off-topic (phone-number-mgmt)</strong></span>
+    <span class="chip">PRAX-708 <strong>cut → Duplicate</strong></span>
+    <span class="chip">PRAX-713 <strong>shipped Jan 2026</strong></span>
+    <span class="chip">in-scope UI miss <strong>1 (cosmetic)</strong></span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <a class="lead" href="#tldr">TL;DR</a>
+    <a class="lead" href="#specced">1 · What was specced</a>
+    <a class="lead" href="#built">2 · What we built</a>
+    <a class="lead" href="#gap708">3 · Gap vs PRAX-708</a>
+    <a class="lead" href="#gapprd">4 · Gap vs PRD UX</a>
+    <a class="lead" href="#why">5 · Why the perception</a>
+    <a class="lead" href="#bottom">6 · Bottom line</a>
+  </nav>
+
+  <main>
+
+  <section id="tldr">
+    <div class="callout headline">
+      <h2>TL;DR</h2>
+      <p>PLAT-7 is an <strong>engineering platform refactor</strong> whose PRD <strong>explicitly puts all UI out of
+      scope</strong>, and it shipped with <strong>zero intended visible change</strong> — which is exactly what we observe.
+      The perceived &ldquo;UX gap&rdquo; is an <strong>expectation/scope mismatch, not a delivery failure</strong>:</p>
+      <ul>
+        <li>The forms UX leadership can actually point to <strong>is live</strong> — it shipped <em>separately</em> in
+          January as <strong>PRAX-713</strong> (&ldquo;Embedded link&rdquo; option + &ldquo;Get Started&rdquo; button).</li>
+        <li>The richer separate <strong>&ldquo;Lead Form&rdquo; UX (PRAX-708) was intentionally cut</strong>, not built —
+          cancelled and superseded by PRAX-713.</li>
+        <li>The only genuine <em>in-scope</em> UI miss is an <strong>unwired <code>form_context</code> Filament filter</strong>
+          (PRD 6 success criterion) — cosmetic, since no surface reads the column yet.</li>
+      </ul>
+      <p style="margin-bottom:0">The fix is <strong>communications, not code</strong>.</p>
+    </div>
+  </section>
+
+  <section id="specced">
+    <h2>1 · What was actually specced (the &ldquo;PRD &amp; prototypes&rdquo;)</h2>
+    <table>
+      <thead><tr><th>Artifact</th><th>What it is</th><th>UI scope</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>PRD: Forms <span style="font-weight:400;color:var(--muted)">(Notion — the PRD on the PLAT-7 ticket)</span></td>
+          <td>6 <em>engineering</em> sub-PRDs: extract a neutral <code>FormBuilder</code> domain, unify enums / storage /
+            rendering / submission, add <code>form_context</code> column</td>
+          <td><span class="badge b-gray">UI excluded</span></td>
+          <td>This is what PLAT-7 built</td>
+        </tr>
+        <tr>
+          <td>PLAT-7 &ldquo;prototype&rdquo; links</td>
+          <td>Two links on the ticket → <code>prototypes.lumion.dev/&hellip;/phone-number-management/&hellip;</code></td>
+          <td><span class="badge b-red">wrong feature</span></td>
+          <td>Off-topic paste; no forms prototype</td>
+        </tr>
+        <tr>
+          <td>PRAX-708 &ldquo;Forms: Simplified Lead Capture Form&rdquo;</td>
+          <td>The real <em>product/UX</em> spec: a separate &ldquo;Lead Form&rdquo; type (Create button, simplified builder,
+            label + helper text, publish flow, feature flag) + 1 inline mockup</td>
+          <td><span class="badge b-amber">full UX spec</span></td>
+          <td><span class="badge b-red">Canceled → Duplicate</span></td>
+        </tr>
+        <tr>
+          <td>PRAX-713 &ldquo;LC new embedded link option&rdquo;</td>
+          <td>The decided direction: extend existing Lead Capture with an &ldquo;Embedded link&rdquo; display option +
+            &ldquo;Get Started&rdquo; button + copy-link, instead of a separate product</td>
+          <td><span class="badge b-amber">focused UX spec</span></td>
+          <td><span class="badge b-green">DONE — PR #3907, Jan 2026 (live)</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p>The PRD: Forms is unambiguous that it ships no UI. Verbatim:</p>
+    <ul>
+      <li><strong>PRD 1</strong> <em>Out of Scope</em>: &ldquo;Changing any enrollment form behavior or <strong>UI</strong>&rdquo;;
+        &ldquo;<strong>User-facing label rename in School Settings (separate UI ticket)</strong>&rdquo;; &ldquo;Lead Form
+        <strong>product feature itself</strong> (that consumes this infrastructure)&rdquo;.</li>
+      <li><strong>PRD 3</strong> <em>Success</em>: &ldquo;Existing Lead Capture widgets <strong>render identically</strong> after backfill&rdquo;.</li>
+      <li><strong>PRD 4</strong> <em>Success</em>: &ldquo;<code>DynamicForm</code> produces <strong>pixel-identical output</strong>&rdquo;;
+        <em>Out of Scope</em>: &ldquo;Changing <strong>any visual design</strong> of rendered fields&rdquo;.</li>
+      <li><strong>PRD 6</strong> <em>Out of Scope</em>: &ldquo;<strong>Creating the Lead Form create/edit UI</strong> (product feature ticket)&rdquo;;
+        &ldquo;<strong>Renaming user-facing labels</strong> in School Settings UI (separate UI ticket)&rdquo;.</li>
+    </ul>
+    <p>So measured against its own PRD, PLAT-7&rsquo;s UX target was <em>no visible change</em>.</p>
+    <div class="callout">
+      <p style="margin:0"><code>prototypes.lumion.dev</code> returns HTTP 403 (auth-gated), and the only forms-related visuals
+      anywhere are two inline Linear mockup images — one on PRAX-708 (the cut &ldquo;Lead Form&rdquo; concept) and one on
+      PRAX-713 (the shipped &ldquo;Get Started&rdquo; button). Both image URLs are short-lived signed links (≈5-min expiry)
+      and cannot be re-inlined here.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <section id="built">
+    <h2>2 · What we actually built (the visible surface today)</h2>
+    <p>Inventory of the live UI, with <code>file:line</code> citations (verified on <code>master</code>).</p>
+    <table>
+      <thead><tr><th>Surface</th><th>State today</th><th>Citation</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Create flow on Embedded Lead Capturing</td>
+          <td><strong>One</strong> <code>CreateAction</code> &ldquo;Create Widget&rdquo;. No separate &ldquo;Create Lead Form&rdquo;
+            button. Type is chosen <em>inside</em> the form.</td>
+          <td><code>LeadCaptureWidgetResource.php:870-877</code></td>
+        </tr>
+        <tr>
+          <td>Widget-type picker (inside the form)</td>
+          <td>Two cards: &ldquo;AI Chat Agent&rdquo; and &ldquo;<strong>Lead Capture Form</strong>&rdquo; (rules-based vs AI).
+            <em>This is not PRAX-708&rsquo;s &ldquo;Lead Form&rdquo;.</em></td>
+          <td><code>partials/widget-type-picker.blade.php:13-72</code></td>
+        </tr>
+        <tr>
+          <td><code>WidgetType</code> enum</td>
+          <td><code>Application</code> / <code>LeadCapture</code> / <code>Enrollment</code> only.
+            <strong>No <code>LeadForm</code> case.</strong> Labels: &ldquo;Funding Application&rdquo; / &ldquo;Lead Capture&rdquo; / &ldquo;Form&rdquo;.</td>
+          <td><code>app/Enums/WidgetType.php:7-23</code></td>
+        </tr>
+        <tr>
+          <td>Display-mode picker</td>
+          <td>Three options: &ldquo;Full screen modal&rdquo;, &ldquo;Corner pop-up&rdquo;, <strong>&ldquo;Embedded link&rdquo;</strong>
+            — exactly PRAX-713&rsquo;s spec.</td>
+          <td><code>LeadCaptureTemplate.php:7-24</code>, <code>partials/display-mode-picker.blade.php</code></td>
+        </tr>
+        <tr>
+          <td>Lead Capture builder</td>
+          <td>General settings, appearance, AI agent, CTAs, form fields (16 types), end-page rules.</td>
+          <td><code>LeadCaptureWidgetPagesTrait.php:449-1005</code></td>
+        </tr>
+        <tr>
+          <td>End-user form renderer</td>
+          <td>Rendered markup <strong>pixel-identical</strong> pre/post PLAT-7 — only the data source changed
+            (<code>elements</code> → <code>pages</code>).</td>
+          <td><code>Ai/DynamicForm*</code>, <code>Livewire/LeadCapture/DynamicForm*</code></td>
+        </tr>
+        <tr>
+          <td>Approvals / Reminders</td>
+          <td>Gated by <code>ApplicationFormType</code> (ENROLLMENT/STANDARD/OTHER). <strong>No lead-context hide logic.</strong></td>
+          <td><code>ManagesEnrollmentApplicationForm.php:310-326,456-473</code></td>
+        </tr>
+        <tr>
+          <td><code>form_context</code> column / scope</td>
+          <td>Migration + virtual column + cast + <code>scopeFormContext()</code> exist but are <strong>consumed by zero UI</strong>
+            (no Filament filter).</td>
+          <td><code>Widget.php:582-585</code></td>
+        </tr>
+        <tr>
+          <td><code>lead_forms</code> feature flag</td>
+          <td><strong>Does not exist.</strong></td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Net: the only user-visible forms changes in production (the &ldquo;Embedded link&rdquo; option + &ldquo;Get Started&rdquo;
+    button) came from <strong>PRAX-713 (Jan 2026)</strong> — <em>not</em> PLAT-7. PLAT-7 added no new user-facing surface.</p>
+  </section>
+
+  <hr>
+
+  <section id="gap708">
+    <h2>3 · Gap table — PRAX-708 (the UX spec leadership likely means) vs delivered</h2>
+    <p>PRAX-708 is the document with an actual UX wishlist. It is <strong>Duplicate/Canceled</strong> — superseded by
+    PRAX-713&rsquo;s &ldquo;extend LC, don&rsquo;t build a separate product&rdquo; decision.</p>
+    <table>
+      <thead><tr><th>PRAX-708 UX requirement</th><th>Delivered?</th><th>Where it actually landed / why</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Two actions: &ldquo;Create Widget&rdquo; + &ldquo;Create Lead Form&rdquo;</td>
+          <td><span class="badge b-red">❌ Not built</span></td>
+          <td>Superseded — PRAX-713 added an &ldquo;Embedded link&rdquo; <em>display option</em> inside the single Create Widget flow instead of a second create action.</td>
+        </tr>
+        <tr>
+          <td>Lead Form builder = App builder minus Approvals + Reminders</td>
+          <td><span class="badge b-red">❌ Not built</span></td>
+          <td>No <code>FormContext</code>-based hiding of those sections exists; they remain gated by <code>ApplicationFormType</code>.</td>
+        </tr>
+        <tr>
+          <td>Label &ldquo;Lead Form&rdquo; + helper &ldquo;Collect basic lead info. No account or agreement required.&rdquo;</td>
+          <td><span class="badge b-red">❌ Not built</span></td>
+          <td>No such label. Closest string is &ldquo;Lead Capture Form&rdquo; (the rules-vs-AI toggle) — a different concept; a likely source of confusion.</td>
+        </tr>
+        <tr>
+          <td>Publish → embed code + preview</td>
+          <td><span class="badge b-green">✅ Pre-existing</span></td>
+          <td>Lead Capture widgets already had embed + preview; PRAX-713 added the embedded-link variant.</td>
+        </tr>
+        <tr>
+          <td>Submission → Lead + Contact, source = &ldquo;Lead Form&rdquo;, fire notification</td>
+          <td><span class="badge b-amber">🟡 Partial</span></td>
+          <td>Pipeline was extracted (<code>ProcessFormSubmission</code>) and fires notifications, but reuses <code>LEAD_CAPTURE_FORM</code> source — <strong>no <code>LEAD_FORM</code> source</strong>. The live PRAX-713 path uses existing LC submission.</td>
+        </tr>
+        <tr>
+          <td><code>lead_forms</code> feature flag</td>
+          <td><span class="badge b-red">❌ Not built</span></td>
+          <td>No flag in the codebase.</td>
+        </tr>
+        <tr>
+          <td>Embedded link / copy-link / &ldquo;Get Started&rdquo; button</td>
+          <td><span class="badge b-green">✅ Shipped</span></td>
+          <td>Delivered by <strong>PRAX-713 (PR #3907)</strong>, live since Jan 2026.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>Reading:</strong> nearly everything <em>unique to PRAX-708</em> is unbuilt — but that is <strong>by decision</strong>,
+    not by omission. PRAX-708 was cancelled and replaced by PRAX-713, whose narrower UX is shipped and live. Measuring delivery
+    against PRAX-708 will always show a large false &ldquo;gap&rdquo;.</p>
+  </section>
+
+  <hr>
+
+  <section id="gapprd">
+    <h2>4 · Gap table — PLAT-7&rsquo;s own PRD UX expectations vs delivered</h2>
+    <p>This is the fair comparison (PLAT-7 = the PRD: Forms refactor).</p>
+    <table>
+      <thead><tr><th>PRD UX-adjacent expectation</th><th>Delivered?</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>&ldquo;Render identically&rdquo; / &ldquo;pixel-identical output&rdquo; (PRD 3, 4)</td>
+          <td><span class="badge b-green">✅ Met</span></td>
+          <td>Renderer markup unchanged; only <code>elements</code>→<code>pages</code> plumbing moved.</td>
+        </tr>
+        <tr>
+          <td>&ldquo;No visible change&rdquo; to enrollment/LC builders (PRD 1)</td>
+          <td><span class="badge b-green">✅ Met</span></td>
+          <td>Builders compose the extracted schema; visible UI unchanged.</td>
+        </tr>
+        <tr>
+          <td>&ldquo;Filament list pages can filter by <code>form_context</code>&rdquo; (PRD 6 success criterion)</td>
+          <td><span class="badge b-red">❌ Not met</span></td>
+          <td>The column/scope exist but <strong>no Filament filter is wired</strong> — the one genuine <em>in-scope</em> UI miss. Cosmetic today since nothing consumes the column.</td>
+        </tr>
+        <tr>
+          <td>User-facing label renames</td>
+          <td><span class="badge b-gray">N/A</span></td>
+          <td>Out of scope — PRD defers to &ldquo;separate UI ticket&rdquo;.</td>
+        </tr>
+        <tr>
+          <td>Lead Form create/edit UI</td>
+          <td><span class="badge b-gray">N/A</span></td>
+          <td>Out of scope — PRD defers to &ldquo;product feature ticket&rdquo; (= PRAX-708, cut).</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>The single defensible UX/UI gap <em>inside PLAT-7&rsquo;s own scope</em> is the unwired
+    <code>form_context</code> Filament filter</strong> (PRD 6 success criterion). Low impact — no surface reads the column yet.</p>
+  </section>
+
+  <hr>
+
+  <section id="why">
+    <h2>5 · Why leadership perceives a UX gap (the actual problem to fix)</h2>
+    <ol>
+      <li><strong>The ticket title oversells.</strong> &ldquo;Classic Website Forms&rdquo; reads like a shipped end-user feature;
+        the body is a backend domain refactor. Title ≠ scope.</li>
+      <li><strong>The prototype links are wrong.</strong> Both PLAT-7 &ldquo;prototype&rdquo; links point at
+        <code>phone-number-management</code>. Anyone opening them expecting &ldquo;the forms we built&rdquo; sees an unrelated
+        feature and concludes the prototype doesn&rsquo;t match delivery.</li>
+      <li><strong>A rich UX spec exists but was cut.</strong> PRAX-708 reads like a committed feature. Comparing shipped work to
+        PRAX-708 shows everything missing — but PRAX-708 is Duplicate, superseded by the narrower PRAX-713 (which <em>did</em> ship).</li>
+      <li><strong>Label collision.</strong> The builder&rsquo;s &ldquo;Lead Capture Form&rdquo; card (rules-vs-AI) is easily mistaken
+        for PRAX-708&rsquo;s &ldquo;Lead Form&rdquo;.</li>
+    </ol>
+  </section>
+
+  <hr>
+
+  <section id="bottom">
+    <h2>6 · Bottom line</h2>
+    <ul>
+      <li><strong>Pure UX/UI delivery gap vs PLAT-7&rsquo;s own PRD: essentially none.</strong> The PRD&rsquo;s UX target was
+        &ldquo;no visible change / pixel-identical&rdquo;, and that is what shipped. The only in-scope miss is the
+        <strong>unwired <code>form_context</code> Filament filter</strong> (PRD 6), which is cosmetic while the column is unconsumed.</li>
+      <li><strong>The forms UX leadership can actually point to is live</strong> — PRAX-713&rsquo;s &ldquo;Embedded link&rdquo; option
+        + &ldquo;Get Started&rdquo; button, shipped Jan 2026, independent of PLAT-7.</li>
+      <li><strong>The separate &ldquo;Lead Form&rdquo; UX (PRAX-708) was intentionally not built</strong> — cancelled and replaced by PRAX-713.</li>
+      <li><strong>Recommended remediation is communications, not code:</strong>
+        <ol>
+          <li>Fix or remove the off-topic prototype links on PLAT-7.</li>
+          <li>Retitle/relabel PLAT-7 as the platform refactor it is.</li>
+          <li>Explicitly mark PRAX-708 superseded and point stakeholders at PRAX-713 (shipped) so delivery is no longer measured against a cut spec.</li>
+        </ol>
+        The one <em>optional</em> code item is wiring the <code>form_context</code> Filament filter to satisfy the PRD 6 success criterion.</li>
+    </ul>
+  </section>
+
+  </main>
+</div>
+
+<footer class="page">
+  PLAT-7 UX / UI Gap Analysis · user-facing surface verified on <code>master</code> · companion to the engineering gap report.
+</footer>
+
+</div>
+</body>
+</html>
