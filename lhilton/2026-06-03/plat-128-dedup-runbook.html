@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLAT-128 — Sun City Welding Dedup Runbook</title>
+    <meta name="share-hash" content="0fb238020348ca2410aa7ec3ea633e72363838dd086930c90afe25ad8b3e24bf">
+    <meta name="share-summary" content="Production runbook for PLAT-128: soft-delete ~49k runaway-import duplicate contacts for Sun City Welding (org 107) via the contacts:deduplicate-runaway-import command, with dry-run, rollback, and verification steps.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background-color: #11142B;
+            color: #e8eaf2;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background-color: #051014;
+            border-bottom: 1px solid #2a2e4d;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .logo svg { height: 30px; width: auto; fill: white; }
+        .header-label { font-size: 16px; font-weight: 600; color: #7a7f9e; }
+
+        main { max-width: 880px; margin: 0 auto; padding: 40px 24px 80px; }
+
+        /* Title block */
+        .title-block { margin-bottom: 36px; }
+        .eyebrow {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #FE6D73;
+            background: rgba(254, 109, 115, 0.12);
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        h1 { font-size: 32px; font-weight: 700; color: #fff; line-height: 1.25; }
+        .subtitle { font-size: 16px; color: #9aa0bf; margin-top: 10px; }
+
+        /* Callout banner */
+        .banner {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            background: linear-gradient(135deg, rgba(82,97,206,0.15), rgba(82,97,206,0.04));
+            border: 1px solid #3a4290;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 36px;
+        }
+        .banner.warn {
+            background: linear-gradient(135deg, rgba(254,109,115,0.13), rgba(254,109,115,0.03));
+            border-color: #6e3b40;
+        }
+        .banner .icon { font-size: 20px; line-height: 1.4; flex-shrink: 0; }
+        .banner-content { font-size: 14.5px; color: #c7cbe0; }
+        .banner-content strong { color: #fff; }
+
+        /* Sections */
+        section { margin-bottom: 40px; }
+        h2 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #5261CE;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2e4d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h2 .num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px; height: 22px;
+            background: #5261CE;
+            color: #fff;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        h3 { font-size: 16px; font-weight: 600; color: #fff; margin: 22px 0 10px; }
+        p { margin-bottom: 12px; color: #c7cbe0; font-size: 15px; }
+
+        /* Params table */
+        table { width: 100%; border-collapse: collapse; margin: 6px 0 8px; font-size: 14.5px; }
+        th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid #23274a; }
+        th { color: #7a7f9e; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+        td { color: #d4d8ec; }
+        td:first-child { color: #fff; font-weight: 500; }
+        tr:last-child td { border-bottom: none; }
+        .val { font-family: 'JetBrains Mono', monospace; color: #FE6D73; font-weight: 500; }
+        .ok { color: #4ade80; font-weight: 600; }
+
+        /* Code blocks */
+        pre {
+            background: #0b0e22;
+            border: 1px solid #23274a;
+            border-radius: 10px;
+            padding: 18px 20px;
+            overflow-x: auto;
+            margin: 14px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13.5px;
+            line-height: 1.65;
+            color: #d4d8ec;
+        }
+        pre .cmt { color: #5a5f7e; }
+        pre .flag { color: #7dd3fc; }
+        pre .cmd { color: #4ade80; }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88em;
+            background: #0b0e22;
+            border: 1px solid #23274a;
+            border-radius: 5px;
+            padding: 1.5px 6px;
+            color: #FE6D73;
+        }
+
+        /* Lists */
+        ul, ol { margin: 8px 0 14px; padding-left: 22px; }
+        li { margin-bottom: 8px; color: #c7cbe0; font-size: 15px; }
+        li strong { color: #fff; }
+
+        /* Validation card */
+        .check-card {
+            background: #161a36;
+            border: 1px solid #23274a;
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin: 14px 0;
+        }
+        .check-card .ttl { font-size: 13px; font-weight: 600; color: #7dd3fc; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .check-card ul { margin: 0; }
+
+        .pill {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            background: rgba(82,97,206,0.18);
+            color: #9aa6ee;
+            border-radius: 6px;
+            padding: 2px 8px;
+        }
+
+        footer {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 24px;
+            text-align: center;
+            color: #5a5f7e;
+            font-size: 13px;
+            border-top: 1px solid #2a2e4d;
+        }
+        footer a { color: #5261CE; text-decoration: none; }
+        footer a:hover { color: #FE6D73; }
+
+        @media (max-width: 640px) {
+            h1 { font-size: 26px; }
+            main { padding: 28px 18px 60px; }
+            pre { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 692.92913 224.2329"><g><path d="M152.93366,76.30328l-7.00676-6.92973c-.98363-.97292-2.59625-.92509-3.52344.09567l-79.01676,86.81036c-.41925.46238-.40311,1.17213.0403,1.61076.44349.43863,1.1611.45452,1.62876.03981l87.78102-78.14202c1.04014-.92493,1.08051-2.51193.09689-3.48485Z"/><path d="M63.39441,128.56811c.44349.43863,1.153.46254,1.62065.04784l63.85033-56.61088c1.04014-.91706,1.08051-2.51201.09672-3.48485l-4.86997-4.81662c-.98363-.97284-2.59625-.93295-3.52344.09575l-57.23072,63.15785h.00803c-.41114.46254-.39501,1.16435.0484,1.61092Z"/><path d="M63.403,103.09777c.44341.43052,1.14489.45444,1.61254.05578l35.63813-30.48649c1.0643-.91706,1.12884-2.5279.12899-3.51672l-3.11222-3.07817c-.99984-.98882-2.63654-.92501-3.55579.12762l-30.82458,35.24725c-.41114.47049-.37887,1.16427.05651,1.59478l.05643.05594Z"/><path d="M153.78684,93.07349c-.98363-.97276-2.59625-.93287-3.52344.09583l-57.23874,63.15793c-.41925.46254-.39509,1.16427.04832,1.60281.44357.44657,1.153.46254,1.62073.04792l.00795.00803,63.8586-56.61096c1.04006-.91714,1.08035-2.51193.09664-3.48485l-4.87005-4.8167Z"/><path d="M153.16027,120.95263c-.99984-.9889-2.6286-.92509-3.55579.12753l-30.82458,35.24717c-.40311.46254-.37895,1.1564.05643,1.59487l.05651.05594c.43538.43052,1.13678.46254,1.61262.05578l35.63805-30.48649c1.0643-.90904,1.12884-2.5279.12899-3.51672l-3.11222-3.07809Z"/><path d="M603.33263,88.93556c-8.81899,0-16.94728,4.82887-20.39443,11.31276l-1.68567-8.46355c-.13678-.69142-.74388-1.19418-1.4559-1.19418h-11.37608c-.82763,0-1.48776.67043-1.48776,1.48744v66.01225c0,.82739.67083,1.48736,1.48776,1.48736h13.15612c.82755,0,1.48776-.67034,1.48776-1.48736v-26.65844c0-18.90708,7.43752-27.87338,16.94858-27.87338s13.78447,6.76669,13.78447,19.0432v35.48862c0,.82739.67083,1.48736,1.48776,1.48736h13.15612c.82763,0,1.48776-.67034,1.48776-1.48736v-39.35389c0-19.31554-8.82029-29.80083-26.5965-29.80083Z"/><path d="M516.48538,88.93556c-20.94965,0-36.3786,16.00541-36.3786,36.14851s15.42895,36.14859,36.3786,36.14859,36.37998-16.00549,36.37998-36.14859-15.43025-36.14851-36.37998-36.14851ZM516.48538,146.60985c-11.84632,0-19.83914-9.23881-19.83914-21.52578s8.12829-21.52562,19.83914-21.52562,19.83922,9.23881,19.83922,21.52562-8.12829,21.52578-19.83922,21.52578Z"/><path d="M403.64208,88.93556c-8.81899,0-16.94728,4.96499-20.52991,11.31276-3.17481-7.44749-9.23881-11.31276-20.1221-11.31276-8.82029,0-16.8131,4.96499-20.39435,11.31276l-1.68705-8.46355c-.13548-.69142-.74388-1.19418-1.4559-1.19418h-11.37608c-.82763,0-1.48647.67043-1.48647,1.48744v66.03325c0,.82739.66953,1.48736,1.48647,1.48736h13.15742c.82626,0,1.48647-.67043,1.48647-1.48736v-26.65844c0-18.90708,7.0284-27.87354,16.25789-27.87354,7.02832,0,11.30173,4.69274,11.30173,15.58657v38.93488c0,.82747.67083,1.48736,1.48776,1.48736h13.15612c.82755,0,1.48776-.67043,1.48776-1.48736v-26.65844c0-18.907,7.0284-27.87346,16.25651-27.87346,7.0284,0,11.30181,4.69274,11.30181,15.58649v38.93496c0,.82739.67083,1.48736,1.48776,1.48736h13.15612c.82755,0,1.48776-.67034,1.48776-1.48736v-39.35389c0-19.31554-8.68351-29.80083-26.45972-29.80083Z"/><path d="M221.14853,63h-13.15612c-.82755,0-1.48776.65989-1.48776,1.48744v93.60283c0,.82755.67083,1.48744,1.48776,1.48744h13.15612c.82755,0,1.48776-.67043,1.48776-1.48744v-93.60283c0-.82755-.67083-1.48744-1.48776-1.48744Z"/><path d="M465.60899,63h-14.80061c-.82755,0-1.48776.67034-1.48776,1.48744v13.86863c0,.81701.67083,1.48744,1.48776,1.48744h14.80061c.82763,0,1.48776-.67043,1.48776-1.48744v-13.86863c0-.82755-.67083-1.48744-1.48776-1.48744Z"/><path d="M464.78144,90.59067h-6.5648v-.00008h-14.64389v-.01038c-.81693,0-1.48776.67026-1.48776,1.48736v8.76734c0,.81709.67083,1.48752,1.48776,1.48752h6.57543v55.76784h-.01062c0,.82755.67083,1.48744,1.48776,1.48744h13.15612c.82755,0,1.48776-.67043,1.48776-1.48744v-66.01225c0-.82739-.67083-1.48736-1.48776-1.48736Z"/><path d="M310.51963,147.84579h-5.28817v-55.76744c0-.82763-.67083-1.48752-1.48776-1.48752h-13.1562c-.82755,0-1.48776.67043-1.48776,1.48752v28.1771c0,17.25205-7.02832,26.35465-17.63936,26.35465-9.36496,0-14.46592-5.93921-14.46592-18.21573v-36.31601c0-.82763-.67075-1.48752-1.48776-1.48752h-13.15612c-.82755,0-1.48776.67043-1.48776,1.48752v38.25383c0,19.72409,8.95723,30.90072,27.42413,30.90072h.03057c8.80967,0,17.49326-4.82887,20.93903-11.31276l1.68697,8.46371c.13556.69126.74388,1.19402,1.4559,1.19402h12.83206v-.00024h5.28817c.81831,0,1.48776-.67043,1.48776-1.48752v-8.75688c0-.81701-.66945-1.48744-1.48776-1.48744Z"/></g></svg>
+    </div>
+    <div class="header-label">Production Runbook</div>
+</header>
+
+<main>
+    <div class="title-block">
+        <span class="eyebrow">PLAT-128 · Ops Cleanup</span>
+        <h1>Dedup runaway-import contacts — Sun City Welding</h1>
+        <p class="subtitle">Soft-delete ~49k duplicate contacts for organization <span class="pill">107</span> using <code>contacts:deduplicate-runaway-import</code>. Reversible, dry-runnable, org-scoped.</p>
+    </div>
+
+    <div class="banner warn">
+        <span class="icon">⚠️</span>
+        <div class="banner-content"><strong>Destructive run (soft-delete).</strong> Always run <code>--dry-run</code> first and confirm the summary matches the preview below. The command soft-deletes only — fully reversible via the per-run rollback recipe.</div>
+    </div>
+
+    <section>
+        <h2>Context</h2>
+        <p>A runaway Filament CSV import on <strong>June 2, 2026</strong> created ~49k duplicate <code>Contact</code> rows for <strong>Sun City Welding (org 107)</strong>. The failing import row retried non-idempotently, re-creating the same handful of name groups thousands of times.</p>
+        <p>The PLAT-128 command (<code>app/Console/Commands/DeduplicateOrganizationContacts.php</code>, PR&nbsp;#7021) collapses each <code>(first_name, last_name)</code> group inside the affected import window down to the earliest copy (<code>MIN(id)</code>) by <strong>soft-deleting</strong> every later copy that owns no real activity. Copies that own real child-table activity are reported — never deleted — for manual <code>Merge*</code> review.</p>
+    </section>
+
+    <section>
+        <h2>Parameters</h2>
+        <table>
+            <thead><tr><th>Option</th><th>Value</th><th>Why</th></tr></thead>
+            <tbody>
+                <tr><td>--organization</td><td><span class="val">107</span></td><td>Sun City Welding (PLAT-128)</td></tr>
+                <tr><td>--min-id</td><td><span class="val">2998664</span></td><td>First org-107 contact created June 2. May 30 ended at id 2,966,854; org 107 created nothing June 1 — so this is the runaway window's PK lower bound (timezone-proof).</td></tr>
+                <tr><td>--chunk</td><td><span class="val">2000</span></td><td>Default. ~49k losers → ~25 chunks.</td></tr>
+            </tbody>
+        </table>
+        <p style="margin-top:16px;"><strong>Why a PK bound, not a date:</strong> pre-existing real contacts (id&nbsp;&lt;&nbsp;2998664) are never touched. Setting min-id a little low is safe (legit singletons are preserved); too high would miss dupes. <code>2998664</code> is the safe, correct lower bound.</p>
+
+        <div class="check-card">
+            <div class="ttl">Replica preview — the dry-run on prod should roughly match</div>
+            <ul>
+                <li>Named window contacts: <strong>50,325</strong></li>
+                <li>Distinct name groups / survivors kept: <strong>1,266</strong></li>
+                <li>Total losers (collapse candidates): <strong>49,059</strong> across <strong>53</strong> runaway groups</li>
+                <li>Blank-name rows: <strong class="ok">0</strong> — so the blank-name hard-stop will not fire</li>
+            </ul>
+        </div>
+    </section>
+
+    <section>
+        <h2><span class="num">0</span>Pre-flight</h2>
+        <ol>
+            <li><strong>Confirm PR #7021 is merged AND deployed to production.</strong> The command does not exist on prod until then.</li>
+        </ol>
+<pre><span class="cmt"># Verify the command is live on the app server</span>
+<span class="cmd">php</span> artisan list | grep deduplicate-runaway-import</pre>
+        <p>If it prints the command, the deploy is live. (Optional: run inside <code>screen</code>/<code>tmux</code> so a dropped SSH session doesn't interrupt — though the command is idempotent and chunk-committed, so a re-run after a drop just converges.)</p>
+    </section>
+
+    <section>
+        <h2><span class="num">1</span>Dry run — read-only</h2>
+        <p>SSH into the Forge app server and cd to the site root.</p>
+<pre><span class="cmd">ssh</span> forge@&lt;your-app-server&gt;
+<span class="cmd">cd</span> /home/forge/&lt;your-site-domain&gt;          <span class="cmt"># dir holding artisan</span>
+
+<span class="cmt"># DRY RUN FIRST — makes no changes. Review the summary table.</span>
+<span class="cmd">php</span> artisan contacts:deduplicate-runaway-import \
+  <span class="flag">--organization</span>=107 \
+  <span class="flag">--min-id</span>=2998664 \
+  <span class="flag">--dry-run</span></pre>
+
+        <div class="check-card">
+            <div class="ttl">Validate before going further</div>
+            <ul>
+                <li>"Window contacts (named)" ≈ <strong>50,325</strong></li>
+                <li>"Distinct … groups / survivors kept" ≈ <strong>1,266</strong></li>
+                <li>"eligible for soft-delete" close to <strong>49,059</strong> (minus any "excluded — own real activity")</li>
+                <li>Note the <strong>excluded</strong> count + per-child-table breakdown — those go to manual review, not deletion. Capture this table for the ticket.</li>
+                <li>If numbers are wildly different from the preview, <strong>STOP</strong> and re-derive min-id (see below).</li>
+            </ul>
+        </div>
+    </section>
+
+    <section>
+        <h2><span class="num">2</span>Real run</h2>
+        <p>Omit <code>--force</code> so it prints the count and prompts before deleting — eyeball <span class="pill">N</span>, then confirm.</p>
+<pre><span class="cmd">php</span> artisan contacts:deduplicate-runaway-import \
+  <span class="flag">--organization</span>=107 \
+  <span class="flag">--min-id</span>=2998664</pre>
+        <p>Use <code>--force</code> only for a fully non-interactive run (e.g. inside screen/tmux where you can't answer the prompt). Interactive is safer for a one-off prod cleanup.</p>
+    </section>
+
+    <section>
+        <h2><span class="num">3</span>Post-run</h2>
+        <ol>
+            <li>The command prints the <strong>run file path</strong> (<code>storage/app/contact-dedup/org-107-YYYYMMDD-HHMMSS.jsonl</code>) — the per-run audit trail of every soft-deleted id. Copy it off the server and attach to PLAT-128.</li>
+            <li><strong>Reindex search</strong> — trashed dupes still appear in the index until reindexed (global, not org-scoped; coordinate timing):</li>
+        </ol>
+<pre><span class="cmd">php</span> artisan mirror:reimport && <span class="cmd">php</span> artisan mirror:reindex</pre>
+    </section>
+
+    <section>
+        <h2>Rollback — this run only</h2>
+        <p>The command prints the exact recipe with the run's timestamp. It is a timestamp-scoped restore — run via <code>php artisan tinker</code> on the app server:</p>
+<pre>Contact::withTrashed()
+    -&gt;where(<span class="flag">'organization_id'</span>, 107)
+    -&gt;where(<span class="flag">'deleted_at'</span>, <span class="cmt">'&lt;run timestamp the command printed&gt;'</span>)
+    -&gt;restore();</pre>
+    </section>
+
+    <section>
+        <h2>Re-derive min-id (only if dry-run looks wrong)</h2>
+        <p>Run against the production DB (read replica or read-only SQL). Finds the runaway window's first id:</p>
+<pre><span class="flag">SELECT</span> DATE(created_at) AS d, COUNT(*) AS n, MIN(id) AS min_id, MAX(id) AS max_id
+<span class="flag">FROM</span> contacts
+<span class="flag">WHERE</span> organization_id = 107
+  <span class="flag">AND</span> created_at &gt;= <span class="cmt">'2026-05-30 00:00:00'</span>
+<span class="flag">GROUP BY</span> DATE(created_at)
+<span class="flag">ORDER BY</span> d;</pre>
+        <p><code>--min-id</code> = the <code>min_id</code> of the first runaway day (the June 2 burst). On the replica that is <span class="val">2998664</span>.</p>
+    </section>
+
+    <section>
+        <h2>Safety notes (enforced by the command)</h2>
+        <ul>
+            <li><strong>Soft-delete only</strong> (<code>deleted_at</code> stamp). Reversible; child rows stay attached; per-model delete side effects (audits, conversation-relink hook, <code>ContactDeleted</code> event) are deliberately bypassed.</li>
+            <li><strong>Activity guard</strong>: any loser owning a row in ~44 child tables (+ <code>notes</code> morph, <code>student_referrals</code>) is excluded from deletion and reported.</li>
+            <li><strong>Blank-name hard-stop</strong>: aborts if any window contact has a blank first/last name (0 here, so it won't fire).</li>
+            <li><strong>Write-ahead run file</strong> per chunk → idempotent; safe to re-run after an interruption.</li>
+            <li>Scope is <code>organization_id = 107</code> + <code>id &gt;= 2998664</code> on every query. No other org is touched.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Verification</h2>
+        <p>The dry run is the verification gate: confirm survivors ≈ 1,266, losers ≈ 49,059, blank names = 0, then do the real run. After the real run, confirm the live window count dropped:</p>
+<pre><span class="flag">SELECT</span> COUNT(*) <span class="flag">FROM</span> contacts
+<span class="flag">WHERE</span> organization_id = 107 <span class="flag">AND</span> id &gt;= 2998664 <span class="flag">AND</span> deleted_at <span class="flag">IS NULL</span>
+  <span class="flag">AND</span> first_name <span class="flag">IS NOT NULL</span> <span class="flag">AND</span> TRIM(first_name) &lt;&gt; <span class="cmt">''</span>
+  <span class="flag">AND</span> last_name  <span class="flag">IS NOT NULL</span> <span class="flag">AND</span> TRIM(last_name)  &lt;&gt; <span class="cmt">''</span>;</pre>
+        <p>Expected ≈ the "Expected live (non-trashed) window count after run" from the command's summary table (survivors + excluded).</p>
+    </section>
+</main>
+
+<footer>
+    PLAT-128 runbook &middot; org 107 Sun City Welding &middot; <a href="/shared/">All shares</a>
+</footer>
+</body>
+</html>
