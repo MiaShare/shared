@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="share-summary" content="Storyboard walkthrough of Mia's new confirm-before-execute change-payment-schedule tool: five flows (bulk shift, single date, start-date auto-apply, refusal, cancel) captured end-to-end in the real app for SME UX review.">
+<meta name="share-hash" content="224f0444ec89bb33d882b6f7cfd092c4a8f93c5d33ed356c100c0bee4a219d62">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PLAT-31 — Mia: Change Payment Schedule · UX Walkthrough</title>
+<style>
+  :root{
+    --primary:#5261ce; --primary-50:#eef0fb; --primary-100:#e0e3f8; --primary-700:#3f4cab;
+    --secondary:#fe6d73; --secondary-50:#ffe9ea;
+    --ink:#0f1222; --ink-2:#3c4257; --muted:#6b7280; --line:#e6e8ef;
+    --bg:#f6f7fb; --card:#ffffff;
+    --ok:#16a34a; --ok-50:#e9f8ef; --warn:#b45309; --warn-50:#fdf6ec; --danger:#dc2626; --danger-50:#fdecec;
+    --shadow:0 1px 2px rgba(16,18,34,.06),0 8px 24px rgba(16,18,34,.06);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  a{color:var(--primary);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+  /* Header */
+  header.hero{background:linear-gradient(150deg,#fff 0%,var(--primary-50) 60%,#fff 100%);
+    border-bottom:1px solid var(--line)}
+  .hero-inner{padding:46px 0 38px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--primary-700);background:#fff;border:1px solid var(--primary-100);
+    padding:6px 12px;border-radius:999px}
+  h1{font-size:34px;line-height:1.15;margin:18px 0 8px;letter-spacing:-.02em}
+  .sub{font-size:18px;color:var(--ink-2);max-width:72ch;margin:0}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .chip{font-size:13px;color:var(--ink-2);background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:6px 12px}
+  .chip b{color:var(--ink)}
+
+  /* Sticky nav */
+  nav.jump{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.86);
+    backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+  .jump-inner{display:flex;gap:6px;overflow-x:auto;padding:10px 20px;max-width:1040px;margin:0 auto}
+  .jump a{white-space:nowrap;font-size:13px;font-weight:600;color:var(--ink-2);
+    padding:7px 12px;border-radius:999px;border:1px solid transparent}
+  .jump a:hover{background:var(--primary-50);color:var(--primary-700);text-decoration:none}
+
+  /* Intro / how-to-read */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px}
+  .intro{margin:30px 0}
+  .intro h2{margin:0 0 8px;font-size:20px}
+  .intro p{margin:8px 0;color:var(--ink-2)}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+  .legend .li{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);
+    border-radius:12px;background:#fcfcff}
+  .legend .num{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    font-weight:700;font-size:13px;color:#fff;background:var(--primary)}
+  .legend .li small{display:block;color:var(--muted)}
+
+  /* Flow section */
+  section.flow{margin:40px 0 8px}
+  .flow-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .badge{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    padding:6px 12px;border-radius:999px}
+  .badge.golden{color:var(--ok);background:var(--ok-50);border:1px solid #bfe9cd}
+  .badge.support{color:var(--primary-700);background:var(--primary-50);border:1px solid var(--primary-100)}
+  .badge.anti{color:var(--warn);background:var(--warn-50);border:1px solid #f0dcb6}
+  .flow-head h2{font-size:24px;margin:0;letter-spacing:-.01em}
+  .flow-sub{color:var(--ink-2);margin:2px 0 22px}
+  .flow-sub code{background:#f0f1f6;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+
+  /* Timeline */
+  .timeline{position:relative;margin-left:8px;padding-left:34px;border-left:2px solid var(--line)}
+  .step{position:relative;margin:0 0 26px}
+  .step::before{content:attr(data-step);position:absolute;left:-51px;top:0;width:34px;height:34px;
+    border-radius:50%;background:#fff;border:2px solid var(--primary);color:var(--primary-700);
+    font-weight:800;font-size:14px;display:grid;place-items:center;box-shadow:0 0 0 5px var(--bg)}
+  .step.is-anti::before{border-color:var(--warn);color:var(--warn)}
+  .step-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden}
+  .step-body{padding:18px 20px 6px}
+  .step-title{font-size:17px;font-weight:700;margin:0 0 12px}
+  .kv{display:grid;grid-template-columns:104px 1fr;gap:8px 14px;margin:0 0 14px}
+  .kv .k{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);padding-top:2px}
+  .kv .k.act{color:var(--primary-700)}
+  .kv .k.show{color:var(--secondary)}
+  .kv .v{color:var(--ink-2)}
+  figure{margin:0;background:#0f1222;border-top:1px solid var(--line)}
+  figure img{display:block;width:100%;height:auto;cursor:zoom-in}
+  figcaption{font-size:12.5px;color:var(--muted);padding:10px 20px;background:#fbfbfe;
+    border-top:1px solid var(--line);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  /* Verification */
+  .verify{margin:40px 0}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);
+    border-radius:var(--radius);overflow:hidden}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+  th{background:#f3f4fa;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+  tr:last-child td{border-bottom:0}
+  td code{background:#f0f1f6;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px}
+  .pill.ok{color:var(--ok);background:var(--ok-50)}
+  .pill.lock{color:var(--warn);background:var(--warn-50)}
+  .pill.none{color:var(--ink-2);background:#eef0f4}
+
+  footer{color:var(--muted);font-size:13px;padding:30px 0 60px;text-align:center}
+
+  /* Lightbox */
+  .lb{position:fixed;inset:0;background:rgba(8,10,20,.92);display:none;z-index:100;
+    align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+  .lb.open{display:flex}
+  .lb img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+  .lb .hint{position:fixed;top:16px;left:0;right:0;text-align:center;color:#cfd3e6;font-size:13px}
+
+  @media (max-width:640px){
+    h1{font-size:26px}.kv{grid-template-columns:1fr}.kv .k{padding-top:0}
+    .timeline{padding-left:26px;margin-left:6px}.step::before{left:-44px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <span class="eyebrow">PLAT-31 · UX review</span>
+    <h1>Mia can now change a payment schedule</h1>
+    <p class="sub">A storyboard of the new <b>confirm-before-execute</b> “change payment schedule” tool in
+    Mia, the school-side AI assistant. Captured end-to-end in the real running app, driven by the real
+    language model. Five flows: one golden path, one single-date variant, one auto-applying start-date
+    change, and two guardrails (refusal + cancel). Please review the UX and the basic flow logic.</p>
+    <div class="meta-row">
+      <span class="chip"><b>App</b> ccr-mia.quito-v2.test (admin portal)</span>
+      <span class="chip"><b>Driver</b> real LLM, natural-language prompts</span>
+      <span class="chip"><b>Every outcome</b> verified against the database</span>
+      <span class="chip"><b>Shots</b> 19 · 2560×1440</span>
+    </div>
+  </div>
+</header>
+
+<nav class="jump">
+  <div class="jump-inner">
+    <a href="#how">How to read</a>
+    <a href="#f1">1 · Golden (bulk shift)</a>
+    <a href="#f2">2 · Single date</a>
+    <a href="#f3">3 · Start date (auto-apply)</a>
+    <a href="#f4">4 · Refusal</a>
+    <a href="#f5">5 · Cancel</a>
+    <a href="#verify">Verification</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- HOW TO READ -->
+  <section id="how" class="intro panel">
+    <h2>How the feature works (read this first)</h2>
+    <p>A school admin opens <b>Mia</b> from the sparkles “AI Assistant” button in the top nav and asks, in
+    plain English, to move a student’s payment due dates. Mia finds the contract, prepares the change, and
+    renders a <b>confirmation card</b> — the new UI element under review. Nothing is committed until the
+    admin presses <b>Confirm</b>. The model is built to be safe by default:</p>
+    <div class="legend">
+      <div class="li"><span class="num">1</span><div><b>Propose</b><small>Mia drafts the change and shows a before/after card. No data has changed yet.</small></div></div>
+      <div class="li"><span class="num">2</span><div><b>Confirm</b><small>Admin reviews and confirms (or cancels). Cancel commits nothing.</small></div></div>
+      <div class="li"><span class="num">3</span><div><b>Borrower approves</b><small>For most change types the student must approve in their portal before it applies.</small></div></div>
+      <div class="li"><span class="num">!</span><div><b>Exceptions</b><small>A <i>start-date</i> change applies immediately (no borrower step). A contract with a pending change is refused.</small></div></div>
+    </div>
+    <p style="margin-top:18px;color:var(--muted);font-size:14px">Tip: click any screenshot to view it full-size.</p>
+  </section>
+
+  <!-- FLOW 1 -->
+  <section id="f1" class="flow">
+    <div class="flow-head"><span class="badge golden">Golden path</span><h2>1 · Bulk shift — move the whole upcoming schedule</h2></div>
+    <p class="flow-sub">Student <b>Takeela</b> · contract <code>48602</code> · payment plan currently due on the 13th, with one past-due payment. Goal: move every <i>upcoming</i> payment to the 15th and leave paid / past-due payments alone.</p>
+
+    <div class="timeline">
+      <div class="step" data-step="1">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Starting schedule (before)</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Admin opens Takeela’s contract and the <b>Payment Schedule</b> tab in the school portal.</div>
+            <div class="k show">Showing</div><div class="v">The “before” state — all 12 payments due on the <b>13th</b>; payments 1–2 are paid, payment 3 (May 13) is <b>past due</b>. This is what we’re about to shift.</div>
+          </div></div>
+          <figure><img loading="lazy" src="01-golden-01-schedule-before.png" alt="Takeela schedule before — all on the 13th, May 13 past due"><figcaption>01-golden-01-schedule-before.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Asking Mia, in plain English</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Admin clicks the sparkles <b>AI Assistant</b> button (top nav) and types: <i>“Move Takeela’s remaining payments to the 15th of each month.”</i></div>
+            <div class="k show">Showing</div><div class="v">How an admin requests a schedule change — no form, just a sentence.</div>
+          </div></div>
+          <figure><img loading="lazy" src="01-golden-02-prompt-typed.png" alt="Mia drawer with golden prompt typed"><figcaption>01-golden-02-prompt-typed.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="3">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">The confirmation card (the new element)</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Mia looks up the contract, prepares the change, and renders the confirmation card.</div>
+            <div class="k show">Showing</div><div class="v">A row-by-row before/after preview: payments 1–3 stay <b>unchanged</b> (Paid / Paid / Past&nbsp;Due), payments 4–12 move <b>13th → 15th</b>. It states past-due payments are left alone and that the borrower will approve. Nothing is committed yet.</div>
+          </div></div>
+          <figure><img loading="lazy" src="01-golden-03-card.png" alt="Confirmation card with 12-row before/after, 13th to 15th"><figcaption>01-golden-03-card.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="4">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Confirmed → request sent to the student</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Admin clicks <b>Confirm</b> on the card.</div>
+            <div class="k show">Showing</div><div class="v">Mia confirms the request was sent to the borrower to approve — it does <b>not</b> apply until the student accepts (30-day expiry).</div>
+          </div></div>
+          <figure><img loading="lazy" src="01-golden-04-confirmed-sent.png" alt="Mia: sent Takeela a schedule-change request"><figcaption>01-golden-04-confirmed-sent.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="5">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Borrower review (student portal)</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Sign out, log in as the student (Takeela), open <b>Contract Updates</b> in the student portal.</div>
+            <div class="k show">Showing</div><div class="v">The borrower’s side — the proposed before/after with a required “I have reviewed…” checkbox that gates the <b>Approve</b> button.</div>
+          </div></div>
+          <figure><img loading="lazy" src="01-golden-05-borrower-pending.png" alt="Student portal pending bulk schedule shift with review checkbox"><figcaption>01-golden-05-borrower-pending.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="6">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Borrower approves</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Student checks the acknowledgement box and clicks <b>Approve change</b>.</div>
+            <div class="k show">Showing</div><div class="v">The post-approval state — the change is now <b>Completed</b> and effective Jun 15, 2026.</div>
+          </div></div>
+          <figure><img loading="lazy" src="01-golden-06-borrower-approved.png" alt="Student portal — completed, effective Jun 15 2026"><figcaption>01-golden-06-borrower-approved.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="7">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Final schedule (after)</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Back in the admin portal, reload Takeela’s Payment Schedule.</div>
+            <div class="k show">Showing</div><div class="v">The result — upcoming payments now land on the <b>15th</b>; the past-due 5/13 payment was deliberately left untouched.</div>
+          </div></div>
+          <figure><img loading="lazy" src="01-golden-07-schedule-after.png" alt="Takeela schedule after — upcoming on the 15th"><figcaption>01-golden-07-schedule-after.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 2 -->
+  <section id="f2" class="flow">
+    <div class="flow-head"><span class="badge support">Variant</span><h2>2 · Single date — move just one payment</h2></div>
+    <p class="flow-sub">Student <b>Maria</b> · contract <code>48603</code>. Goal: push only the next payment, leaving the rest of the schedule in place.</p>
+
+    <div class="timeline">
+      <div class="step" data-step="1">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Asking Mia to move one payment</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">New Mia conversation: <i>“Push Maria’s next payment to the 20th.”</i></div>
+            <div class="k show">Showing</div><div class="v">A more surgical request — only one date should change.</div>
+          </div></div>
+          <figure><img loading="lazy" src="02-single-date-01-prompt-typed.png" alt="Mia drawer with single-date prompt"><figcaption>02-single-date-01-prompt-typed.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Single-row confirmation card</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Mia identifies Maria’s next payment and renders the card.</div>
+            <div class="k show">Showing</div><div class="v">A one-row before/after (<b>Jul 10 → Jul 20</b>) — proof that only the targeted payment is affected and the rest stay on the 10th.</div>
+          </div></div>
+          <figure><img loading="lazy" src="02-single-date-02-card.png" alt="Single-date card, Jul 10 to Jul 20"><figcaption>02-single-date-02-card.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="3">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Confirmed → request sent</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Admin clicks <b>Confirm</b>.</div>
+            <div class="k show">Showing</div><div class="v">Same confirm-then-borrower-approval pattern as the golden path.</div>
+          </div></div>
+          <figure><img loading="lazy" src="02-single-date-03-confirmed-sent.png" alt="Mia confirmation sent for Maria"><figcaption>02-single-date-03-confirmed-sent.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="4">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Borrower review</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Log in as Maria → Contract Updates.</div>
+            <div class="k show">Showing</div><div class="v">The borrower’s “Date Change” review — Jul 10 → Jul 20 — with the same acknowledgement gate.</div>
+          </div></div>
+          <figure><img loading="lazy" src="02-single-date-04-borrower-pending.png" alt="Maria pending single date change"><figcaption>02-single-date-04-borrower-pending.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="5">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Borrower approves</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Maria approves.</div>
+            <div class="k show">Showing</div><div class="v">Completed, effective Jul 20 — and the other 11 payments remain on the 10th.</div>
+          </div></div>
+          <figure><img loading="lazy" src="02-single-date-05-borrower-approved.png" alt="Maria completed single date change"><figcaption>02-single-date-05-borrower-approved.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 3 -->
+  <section id="f3" class="flow">
+    <div class="flow-head"><span class="badge support">Auto-apply</span><h2>3 · Start date — applies immediately, no borrower step</h2></div>
+    <p class="flow-sub">Student <b>Priya</b> · interest-bearing (RIC) contract <code>48607</code>. A start-date change re-anchors the whole schedule and, unlike the others, takes effect right away.</p>
+
+    <div class="timeline">
+      <div class="step" data-step="1">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Interest-bearing schedule (before)</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Open Priya’s RIC contract → Payment Schedule.</div>
+            <div class="k show">Showing</div><div class="v">The “before” — a daily-interest schedule starting <b>Jul 1, 2026</b>, with each payment split into principal + interest.</div>
+          </div></div>
+          <figure><img loading="lazy" src="03-start-date-01-schedule-before.png" alt="Priya RIC schedule before, starting Jul 1"><figcaption>03-start-date-01-schedule-before.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Asking to change the start date</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Open Mia: <i>“Change the start date of Priya’s plan to September 1, 2026.”</i></div>
+            <div class="k show">Showing</div><div class="v">A different kind of change — re-anchoring the entire repayment start.</div>
+          </div></div>
+          <figure><img loading="lazy" src="03-start-date-02-prompt-typed.png" alt="Mia drawer with start-date prompt"><figcaption>03-start-date-02-prompt-typed.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="3">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Card with the “applies immediately” warning</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Mia prepares the change; the card is scrolled to show the full table and the callout.</div>
+            <div class="k show">Showing</div><div class="v">All 12 payments re-anchored (Jul 1 → <b>Sep 1</b>, …) <i>and</i> the key UX difference: a yellow callout stating this <b>applies immediately and does not need borrower approval</b>. This is the one flow without a student step — worth a close UX look.</div>
+          </div></div>
+          <figure><img loading="lazy" src="03-start-date-03-card.png" alt="Start-date card with auto-apply warning"><figcaption>03-start-date-03-card.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step" data-step="4">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Schedule regenerated (after)</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Admin clicks <b>Confirm</b>; reload the schedule.</div>
+            <div class="k show">Showing</div><div class="v">The schedule has regenerated starting <b>Sep 1, 2026</b> — applied instantly, with no borrower approval in the loop.</div>
+          </div></div>
+          <figure><img loading="lazy" src="03-start-date-04-schedule-after.png" alt="Priya schedule after, starting Sep 1"><figcaption>03-start-date-04-schedule-after.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 4 -->
+  <section id="f4" class="flow">
+    <div class="flow-head"><span class="badge anti">Guardrail</span><h2>4 · Refusal — a change is already pending</h2></div>
+    <p class="flow-sub">Student <b>Marcus</b> · contract <code>48606</code>, which already has a pending change awaiting the borrower. Mia should refuse rather than stack a second request.</p>
+
+    <div class="timeline">
+      <div class="step is-anti" data-step="1">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Mia declines and explains</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Open Mia: <i>“Move Marcus’s payments to the 1st.”</i></div>
+            <div class="k show">Showing</div><div class="v">The guardrail in action — <b>no card</b> is shown. Mia explains the contract already has a pending change waiting on the borrower and offers options (wait for the student, or have the team resolve the existing request). Nothing is created.</div>
+          </div></div>
+          <figure><img loading="lazy" src="04-refusal-01-declined.png" alt="Mia refuses — pending change already exists"><figcaption>04-refusal-01-declined.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 5 -->
+  <section id="f5" class="flow">
+    <div class="flow-head"><span class="badge anti">Guardrail</span><h2>5 · Cancel — back out before committing</h2></div>
+    <p class="flow-sub">Student <b>Devon</b> · contract <code>48604</code>. The admin gets a valid card but decides not to proceed.</p>
+
+    <div class="timeline">
+      <div class="step" data-step="1">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Card rendered — the escape hatch</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Open Mia: <i>“Move Devon’s payments to the 5th.”</i> A valid bulk-shift card appears.</div>
+            <div class="k show">Showing</div><div class="v">The card with both <b>Cancel</b> and <b>Confirm</b> — the admin’s chance to back out before anything is committed.</div>
+          </div></div>
+          <figure><img loading="lazy" src="05-cancel-01-card.png" alt="Devon bulk-shift card with Cancel and Confirm"><figcaption>05-cancel-01-card.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-anti" data-step="2">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Cancelled — nothing changes</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Admin clicks <b>Cancel</b>.</div>
+            <div class="k show">Showing</div><div class="v">Mia acknowledges “action cancelled.” No request was created and Devon’s schedule is untouched.</div>
+          </div></div>
+          <figure><img loading="lazy" src="05-cancel-02-cancelled.png" alt="Mia — action cancelled"><figcaption>05-cancel-02-cancelled.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERIFY -->
+  <section id="verify" class="verify">
+    <div class="flow-head"><span class="badge support">Evidence</span><h2>Outcomes verified in the database</h2></div>
+    <p class="flow-sub">Each flow was confirmed against the database after capture — not just visually.</p>
+    <table>
+      <thead><tr><th>Flow</th><th>Contract</th><th>Result</th><th>Change request</th></tr></thead>
+      <tbody>
+        <tr><td>1 · Golden bulk shift</td><td><code>48602</code></td><td>Upcoming payments on the 15th; past-due 5/13 untouched <span class="pill ok">applied</span></td><td><code>bulk_shift</code> / active, approved</td></tr>
+        <tr><td>2 · Single date</td><td><code>48603</code></td><td>Only the targeted payment moved to the 20th; others on the 10th <span class="pill ok">applied</span></td><td><code>single_date</code> / active, approved</td></tr>
+        <tr><td>3 · Start date (auto-apply)</td><td><code>48607</code></td><td>Schedule regenerated from Sep 1, 2026 <span class="pill ok">applied immediately</span></td><td><code>start_date</code> / active, no borrower step</td></tr>
+        <tr><td>4 · Refusal</td><td><code>48606</code></td><td>Schedule unchanged; no new request created <span class="pill lock">blocked</span></td><td>1 pre-existing pending (untouched)</td></tr>
+        <tr><td>5 · Cancel</td><td><code>48604</code></td><td>Schedule unchanged <span class="pill none">no-op</span></td><td>0 requests created</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    PLAT-31 · Mia change-payment-schedule · storyboard for SME UX review · real app, real LLM, DB-verified · no console errors observed.
+  </footer>
+</main>
+
+<div class="lb" id="lb" aria-hidden="true">
+  <div class="hint">Click anywhere to close · full resolution</div>
+  <img id="lb-img" src="" alt="">
+</div>
+
+<script>
+  (function(){
+    var lb=document.getElementById('lb'), img=document.getElementById('lb-img');
+    document.querySelectorAll('figure img').forEach(function(el){
+      el.addEventListener('click', function(){
+        img.src=el.src; img.alt=el.alt; lb.classList.add('open'); lb.setAttribute('aria-hidden','false');
+      });
+    });
+    function close(){ lb.classList.remove('open'); lb.setAttribute('aria-hidden','true'); img.src=''; }
+    lb.addEventListener('click', close);
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+  })();
+</script>
+</body>
+</html>
