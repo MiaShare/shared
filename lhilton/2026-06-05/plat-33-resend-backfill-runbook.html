@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="share-summary" content="Runbook for the PLAT-33 resend-tools prompt backfill: how to safely add the 'Resending contracts and disclosures' guidance to the existing AI Assistant (School) prompt in production, with dry-run-first then full-run steps.">
+<title>PLAT-33 Resend Backfill — Runbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11142B; --panel:#1a1e3d; --panel-2:#1e2245; --border:#2c3160;
+    --ink:#e8eaf6; --muted:#9aa0c7; --coral:#FE6D73; --blue:#5261CE;
+    --green:#4CAF50; --amber:#FFC107; --code-bg:#0b0e22;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+    line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:48px 24px 96px}
+  header.hero{
+    background:linear-gradient(135deg,#051014 0%,#161a3a 100%);
+    border:1px solid var(--border);border-radius:16px;padding:36px 32px;margin-bottom:32px;
+  }
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--coral);margin-bottom:12px}
+  h1{font-size:30px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px}
+  .sub{color:var(--muted);font-size:16px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .pill{font-size:12px;font-weight:600;background:rgba(82,97,206,.16);border:1px solid var(--border);color:#aeb6f5;padding:5px 11px;border-radius:999px}
+  section{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:26px 28px;margin-bottom:22px}
+  h2{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;background:var(--blue);color:#fff;font-size:12px;font-weight:800}
+  p{margin-bottom:12px}
+  p:last-child{margin-bottom:0}
+  code{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(255,255,255,.07);padding:2px 6px;border-radius:5px;color:#ffd9a8}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:12px 0}
+  pre code{background:none;padding:0;color:#cdd3ff;font-size:13px;line-height:1.7;display:block;white-space:pre}
+  .out{color:#8fae8f}
+  strong{color:#fff;font-weight:600}
+  .callout{border-radius:12px;padding:18px 20px;margin-bottom:22px;display:flex;gap:14px;align-items:flex-start}
+  .callout .ic{flex:none;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+  .danger{background:rgba(254,109,115,.10);border:1px solid rgba(254,109,115,.45)}
+  .danger .ic{background:var(--coral);color:#2a0608}
+  .danger h3{color:var(--coral);font-size:15px;margin-bottom:6px}
+  .info{background:rgba(82,97,206,.10);border:1px solid rgba(82,97,206,.4)}
+  .info .ic{background:var(--blue);color:#fff}
+  .info h3{color:#aeb6f5;font-size:15px;margin-bottom:6px}
+  ul{margin:8px 0 8px 4px;list-style:none}
+  ul li{position:relative;padding-left:22px;margin-bottom:8px;color:var(--ink)}
+  ul li::before{content:"";position:absolute;left:4px;top:11px;width:6px;height:6px;border-radius:50%;background:var(--coral)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:6px;vertical-align:middle}
+  .tag-read{background:rgba(76,175,80,.18);color:#9fe0a3;border:1px solid rgba(76,175,80,.4)}
+  .tag-write{background:rgba(255,193,7,.16);color:#ffd863;border:1px solid rgba(255,193,7,.4)}
+  .expect{color:var(--muted);font-size:13px;margin-top:6px}
+  hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:36px}
+  a{color:#aeb6f5}
+</style>
+<meta name="share-hash" content="5cce68babed8bd2be26011307eae44f36e116075b0d9ab5cedea81c08c83ec31">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Production Runbook</div>
+    <h1>PLAT-33 — Resend-Tools Prompt Backfill</h1>
+    <p class="sub">Add the “Resending contracts and disclosures” guidance to the existing AI&nbsp;Assistant&nbsp;(School) prompt in production. Dry-run first, then full run.</p>
+    <div class="meta-row">
+      <span class="pill">command: backfill:ai-assistant-school-prompt-for-resend-tools</span>
+      <span class="pill">idempotent</span>
+      <span class="pill">prod data write</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="num">i</span> What this is</h2>
+    <p>PLAT-33 taught Mia to <strong>resend contracts &amp; disclosure copies</strong> — the “Resending contracts and disclosures” guidance block (contact-search &rarr; <code>resend-contract-draft</code> / <code>resend-disclosure-copy-draft</code>, confirm card, disambiguation, 24-hour budget).</p>
+    <p>Fresh databases get that text from the seeder. <strong>Existing</strong> rows (production) get it from this one-time backfill command. Production never ran it, so prod’s Mia is missing the section.</p>
+    <p>The command finds every <code>ai-assistant-school</code> prompt row that lacks the <code>### Resending contracts and disclosures</code> marker and inserts the block right before <code>&lt;user_context&gt;</code>. Rows that already have it are skipped — safe to re-run.</p>
+  </section>
+
+  <div class="callout danger">
+    <div class="ic">!</div>
+    <div>
+      <h3>Environment — read before running</h3>
+      <p style="margin-bottom:10px">This is a <strong>production data write</strong>. Two things to get right:</p>
+      <ul>
+        <li><strong>The full run must point at the prod PRIMARY (writable) DB.</strong> Run it on the prod app host (Forge / Horizon box) via your normal deploy path — not from a local workspace.</li>
+        <li><strong>A workspace pointed at the read-only replica:</strong> the <code>--dry-run</code> is safe (writes nothing; replica reflects prod state, so the preview count is accurate). The full run will <strong>fail</strong> against the replica. Do not repoint <code>.env</code> to primary just to run it — run it on prod.</li>
+      </ul>
+    </div>
+  </div>
+
+  <section>
+    <h2><span class="num">1</span> Dry-run — preview, no writes <span class="tag tag-read">READ-ONLY</span></h2>
+    <p>On prod (or against the replica for a safe preview):</p>
+    <pre><code>php -d memory_limit=512M artisan backfill:ai-assistant-school-prompt-for-resend-tools --dry-run</code></pre>
+    <p class="expect">Expected output (prod has 1 global row missing it, 0 institution overrides):</p>
+    <pre><code class="out">Would patch prompt #&lt;id&gt; (global).
+Done. Would update: 1. Already had marker: 0. Total examined: 1.</code></pre>
+    <ul>
+      <li><strong>Would update: 1</strong> &rarr; correct — exactly the global school prompt.</li>
+      <li><strong>Already had marker: N</strong> &rarr; those rows already have the section (skipped).</li>
+      <li>If <strong>Would update</strong> is higher than expected, stop and inspect — each institution override would also be patched.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span> Full run — writes, on prod primary <span class="tag tag-write">WRITES</span></h2>
+    <p>After the dry-run looks right:</p>
+    <pre><code>php -d memory_limit=512M artisan backfill:ai-assistant-school-prompt-for-resend-tools</code></pre>
+    <p class="expect">Expected:</p>
+    <pre><code class="out">Done. Updated: 1. Already had marker: 0. Total examined: 1.</code></pre>
+    <p>Re-runnable and safe: running it again does nothing (reports <span class="out">Already had marker: 1, Updated: 0</span>).</p>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span> Verify <span class="tag tag-read">READ-ONLY</span></h2>
+    <pre><code>php -d memory_limit=512M artisan backfill:ai-assistant-school-prompt-for-resend-tools --dry-run</code></pre>
+    <p>Should now report <strong>Would update: 0, Already had marker: 1</strong>. That’s the converged state.</p>
+  </section>
+
+  <div class="callout info">
+    <div class="ic">⇄</div>
+    <div>
+      <h3>Sequencing with PLAT-31</h3>
+      <p style="margin-bottom:0">Order doesn’t matter. The resend backfill inserts before <code>&lt;user_context&gt;</code>; the PLAT-31 migration inserts before <code># Data Grounding</code> — different anchors. After both run, prod’s school prompt equals the fresh-build seeder body <strong>byte-for-byte</strong> (verified, md5 <code>18d8a3…</code>, 27558&nbsp;B). Convergence proven in both orders.</p>
+    </div>
+  </div>
+
+  <footer>
+    Generated from production read-only verification of branch <code>plan-plat-31-v1</code>.
+  </footer>
+
+</div>
+</body>
+</html>
