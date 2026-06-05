@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="share-summary" content="End-to-end browser walkthrough of the handwritten lead-card OCR ingestion pipeline (PR #7032): upload → detect → crop → OCR (OpenAI gpt-5.4) → create/match Contact. 9 golden paths and 6 anti-paths captured in the real app, every outcome verified against the database. Surfaces one PR defect: the lead_cards 'created' outcome is unreachable.">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PLAT-114 — Lead Card OCR Ingestion · E2E Review</title>
+<style>
+  :root{
+    --primary:#5261ce; --primary-50:#eef0fb; --primary-100:#e0e3f8; --primary-700:#3f4cab;
+    --secondary:#fe6d73; --secondary-50:#ffe9ea;
+    --ink:#0f1222; --ink-2:#3c4257; --muted:#6b7280; --line:#e6e8ef;
+    --bg:#f6f7fb; --card:#ffffff;
+    --ok:#16a34a; --ok-50:#e9f8ef; --warn:#b45309; --warn-50:#fdf6ec; --danger:#dc2626; --danger-50:#fdecec;
+    --shadow:0 1px 2px rgba(16,18,34,.06),0 8px 24px rgba(16,18,34,.06);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  a{color:var(--primary);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+  header.hero{background:linear-gradient(150deg,#fff 0%,var(--primary-50) 60%,#fff 100%);
+    border-bottom:1px solid var(--line)}
+  .hero-inner{padding:46px 0 38px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--primary-700);background:#fff;border:1px solid var(--primary-100);
+    padding:6px 12px;border-radius:999px}
+  h1{font-size:34px;line-height:1.15;margin:18px 0 8px;letter-spacing:-.02em}
+  .sub{font-size:18px;color:var(--ink-2);max-width:74ch;margin:0}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .chip{font-size:13px;color:var(--ink-2);background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:6px 12px}
+  .chip b{color:var(--ink)}
+
+  nav.jump{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.86);
+    backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+  .jump-inner{display:flex;gap:6px;overflow-x:auto;padding:10px 20px;max-width:1040px;margin:0 auto}
+  .jump a{white-space:nowrap;font-size:13px;font-weight:600;color:var(--ink-2);
+    padding:7px 12px;border-radius:999px;border:1px solid transparent}
+  .jump a:hover{background:var(--primary-50);color:var(--primary-700);text-decoration:none}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px}
+  .intro{margin:30px 0}
+  .intro h2{margin:0 0 8px;font-size:20px}
+  .intro p{margin:8px 0;color:var(--ink-2)}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+  .legend .li{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);
+    border-radius:12px;background:#fcfcff}
+  .legend .num{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    font-weight:700;font-size:13px;color:#fff;background:var(--primary)}
+  .legend .li small{display:block;color:var(--muted)}
+
+  /* Finding callout */
+  .finding{margin:26px 0;border:1px solid #f0c8b6;background:linear-gradient(150deg,#fff,var(--warn-50));
+    border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px}
+  .finding .tag{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--warn);background:#fff;border:1px solid #f0dcb6;padding:5px 11px;border-radius:999px}
+  .finding h2{margin:14px 0 6px;font-size:20px}
+  .finding p{margin:8px 0;color:var(--ink-2)}
+  .finding code{background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+
+  section.flow{margin:40px 0 8px}
+  .flow-head{display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap}
+  .badge{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    padding:6px 12px;border-radius:999px}
+  .badge.golden{color:var(--ok);background:var(--ok-50);border:1px solid #bfe9cd}
+  .badge.support{color:var(--primary-700);background:var(--primary-50);border:1px solid var(--primary-100)}
+  .badge.anti{color:var(--warn);background:var(--warn-50);border:1px solid #f0dcb6}
+  .flow-head h2{font-size:24px;margin:0;letter-spacing:-.01em}
+  .flow-sub{color:var(--ink-2);margin:2px 0 22px}
+  .flow-sub code{background:#f0f1f6;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+
+  .timeline{position:relative;margin-left:8px;padding-left:34px;border-left:2px solid var(--line)}
+  .step{position:relative;margin:0 0 26px}
+  .step::before{content:attr(data-step);position:absolute;left:-51px;top:0;width:34px;height:34px;
+    border-radius:50%;background:#fff;border:2px solid var(--primary);color:var(--primary-700);
+    font-weight:800;font-size:13px;display:grid;place-items:center;box-shadow:0 0 0 5px var(--bg)}
+  .step.is-anti::before{border-color:var(--warn);color:var(--warn)}
+  .step.is-ok::before{border-color:var(--ok);color:var(--ok)}
+  .step-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden}
+  .step-body{padding:18px 20px 6px}
+  .step-title{font-size:17px;font-weight:700;margin:0 0 12px}
+  .kv{display:grid;grid-template-columns:104px 1fr;gap:8px 14px;margin:0 0 14px}
+  .kv .k{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);padding-top:2px}
+  .kv .k.act{color:var(--primary-700)}
+  .kv .k.show{color:var(--secondary)}
+  .kv .k.db{color:var(--ok)}
+  .kv .v{color:var(--ink-2)}
+  .kv .v code{background:#f0f1f6;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px}
+  figure{margin:0;background:#0f1222;border-top:1px solid var(--line)}
+  figure img{display:block;width:100%;height:auto;cursor:zoom-in}
+  figcaption{font-size:12.5px;color:var(--muted);padding:10px 20px;background:#fbfbfe;
+    border-top:1px solid var(--line);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  .verify{margin:40px 0}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);
+    border-radius:var(--radius);overflow:hidden}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+  th{background:#f3f4fa;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+  tr:last-child td{border-bottom:0}
+  td code{background:#f0f1f6;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px}
+  .pill.ok{color:var(--ok);background:var(--ok-50)}
+  .pill.lock{color:var(--warn);background:var(--warn-50)}
+  .pill.none{color:var(--ink-2);background:#eef0f4}
+  .pill.bug{color:var(--danger);background:var(--danger-50)}
+
+  footer{color:var(--muted);font-size:13px;padding:30px 0 60px;text-align:center}
+
+  .lb{position:fixed;inset:0;background:rgba(8,10,20,.92);display:none;z-index:100;
+    align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+  .lb.open{display:flex}
+  .lb img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+  .lb .hint{position:fixed;top:16px;left:0;right:0;text-align:center;color:#cfd3e6;font-size:13px}
+
+  @media (max-width:640px){
+    h1{font-size:26px}.kv{grid-template-columns:1fr}.kv .k{padding-top:0}
+    .timeline{padding-left:26px;margin-left:6px}.step::before{left:-44px}
+  }
+</style>
+<meta name="share-hash" content="6c51ce529b3f741c7b17c80a7ed14e0bc9da9dc9764b43be7f49afb7efa04e4c">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <span class="eyebrow">PLAT-114 · E2E review</span>
+    <h1>Handwritten lead-card OCR ingestion</h1>
+    <p class="sub">An end-to-end walkthrough of the new lead-card upload pipeline in PR&nbsp;#7032. A school
+    admin uploads photos / scans / PDFs of inquiry cards; the app persists each file, then background jobs
+    <b>detect card bounding boxes</b>, <b>crop one image per card</b>, <b>OCR each card</b> with OpenAI vision,
+    and <b>create or match a Contact</b>. An <b>Upload History</b> widget reports per-file outcomes. Captured in
+    the real running app driving the real model — 9 golden paths and 6 anti-paths, every backend outcome
+    verified against the database.</p>
+    <div class="meta-row">
+      <span class="chip"><b>App</b> wwa.london.test (school portal)</span>
+      <span class="chip"><b>Feature</b> ocr-lead-upload · org 12</span>
+      <span class="chip"><b>OCR</b> real OpenAI gpt-5.4-2026-03-05 (vision)</span>
+      <span class="chip"><b>Every outcome</b> verified in the DB</span>
+      <span class="chip"><b>Shots</b> 17</span>
+      <span class="chip"><b>New failed jobs</b> 0</span>
+    </div>
+  </div>
+</header>
+
+<nav class="jump">
+  <div class="jump-inner">
+    <a href="#how">How it works</a>
+    <a href="#finding">Finding</a>
+    <a href="#f1">Access &amp; form</a>
+    <a href="#f2">Golden uploads</a>
+    <a href="#f3">Contacts &amp; dedup</a>
+    <a href="#f4">Anti-paths</a>
+    <a href="#f5">Feature gate</a>
+    <a href="#verify">Verification</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- HOW IT WORKS -->
+  <section id="how" class="intro panel">
+    <h2>How the feature works (read this first)</h2>
+    <p>The upload page lives at <b>/portal/lead-card-upload</b> and is gated by the <code>ocr-lead-upload</code>
+    feature. A school admin drops one or more inquiry-card images (JPG / PNG / WEBP) or a PDF and clicks
+    <b>Upload</b>. The request persists the file(s) and rasterises any PDF pages synchronously, then queues
+    background jobs:</p>
+    <div class="legend">
+      <div class="li"><span class="num">1</span><div><b>Persist</b><small>Each uploaded file (or PDF page) is rastered to S3 as a <code>lead_image</code>; the <b>Upload History</b> records a per-file outcome.</small></div></div>
+      <div class="li"><span class="num">2</span><div><b>Detect &amp; crop</b><small><code>ProcessLeadImage</code> asks the model for card bounding boxes and creates one <code>lead_card</code> per detected card (whole-frame fallback if none found).</small></div></div>
+      <div class="li"><span class="num">3</span><div><b>OCR</b><small><code>ProcessLeadCard</code> sends the cropped card to OpenAI vision and stores the extracted fields in <code>ocr_payload</code>.</small></div></div>
+      <div class="li"><span class="num">4</span><div><b>Contact</b><small>If a valid email or phone was read, the card is linked to a created-or-matched Contact; email/phone are tagged source <code>Lead Card</code>.</small></div></div>
+    </div>
+    <p style="margin-top:18px;color:var(--muted);font-size:14px">Each screenshot below pairs the browser
+    <b>Interaction</b> with what it is <b>Showing</b> and the matching <b>DB check</b>. The queue connection is
+    <code>database</code>, so jobs were drained with <code>queue:work --queue=communications --stop-when-empty</code>
+    after every upload. Tip: click any screenshot to view it full-size.</p>
+  </section>
+
+  <!-- HEADLINE FINDING -->
+  <section id="finding" class="finding">
+    <span class="tag">⚠ Finding · should-fix</span>
+    <h2>The <code>lead_cards.outcome = 'created'</code> value is unreachable</h2>
+    <p>The pipeline works end-to-end, but <b>every</b> successful card — including ones that create a brand-new
+    contact — is recorded as <code>outcome = 'matched'</code>, never <code>'created'</code>. Across this run, <b>9
+    distinct contacts were created</b> from lead cards, yet <b>0</b> cards were labelled <code>created</code>
+    (11&nbsp;<code>matched</code> + 1&nbsp;<code>no_contact_details</code>).</p>
+    <p><b>Root cause.</b> <code>ProcessLeadCard::resolveContact()</code> sets the outcome from
+    <code>$contact->wasRecentlyCreated</code>. But <code>ContactService::firstOrCreateContactByEmailOrPhone()</code>
+    creates the contact via the <code>CreateContact</code> action (which returns an <i>id</i>) and then
+    <b>re-queries</b> it with <code>Contact::where(...)->firstOrFail()</code>. A query-hydrated model has
+    <code>wasRecentlyCreated = false</code>, so the "created" branch can never be taken.</p>
+    <p><b>Impact.</b> The dedup logic itself is correct (no duplicate contacts are created), but operators
+    reading the <code>lead_cards</code> audit cannot distinguish a card that created a new lead from one that
+    matched an existing contact. Proven empirically below in G3 (a brand-new contact, created at the exact
+    job-completion instant, still reported <code>matched</code>).</p>
+  </section>
+
+  <!-- FLOW 1 · ACCESS & FORM -->
+  <section id="f1" class="flow">
+    <div class="flow-head"><span class="badge support">Setup</span><h2>Access &amp; the upload form</h2></div>
+    <p class="flow-sub">Signed in as a <b>Western Welding Academy</b> SCHOOL_ADMIN. WWA's org (12) carries the
+    <code>ocr-lead-upload</code> feature, so the upload surface is reachable.</p>
+
+    <div class="timeline">
+      <div class="step is-ok" data-step="G1">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Feature gate ON — entry point present</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Open <code>/portal/contacts</code> as the WWA admin.</div>
+            <div class="k show">Showing</div><div class="v">The <b>“Upload Lead Cards”</b> button in the page header — it only renders when the <code>ocr-lead-upload</code> gate passes.</div>
+            <div class="k db">DB check</div><div class="v">Org 12 has features <code>ocr-lead-upload</code> + <code>contact-management</code>.</div>
+          </div></div>
+          <figure><img loading="lazy" src="01-G1-contacts-upload-button.png" alt="WWA contacts page with the Upload Lead Cards button"><figcaption>01-G1-contacts-upload-button.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-ok" data-step="G2">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Empty upload form</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Open <code>/portal/lead-card-upload</code>.</div>
+            <div class="k show">Showing</div><div class="v">The empty FilePond dropzone (<i>“Max 10MB each. Types: JPG, PNG, WEBP, PDF.”</i>) and an <b>Upload History</b> reading <i>“No lead uploads.”</i></div>
+            <div class="k db">DB check</div><div class="v">Baseline <code>lead_uploads / lead_images / lead_cards = 0</code>; page 200, console clean.</div>
+          </div></div>
+          <figure><img loading="lazy" src="02-G2-upload-page-empty.png" alt="Empty lead-card upload page"><figcaption>02-G2-upload-page-empty.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-ok" data-step="G0">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">FilePond mechanism check</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Attach one card PNG through the hidden file input behind <b>Browse</b>.</div>
+            <div class="k show">Showing</div><div class="v">FilePond registers the file and shows <b>“Upload complete.”</b> — the client→server temp upload landed before any submit.</div>
+            <div class="k db">DB check</div><div class="v"><code>POST /livewire/upload-file → 200</code>; the temp file appears in the component's <code>data.files</code> state.</div>
+          </div></div>
+          <figure><img loading="lazy" src="03-G0-filepond-registered.png" alt="FilePond with the file registered and upload complete"><figcaption>03-G0-filepond-registered.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 2 · GOLDEN UPLOADS -->
+  <section id="f2" class="flow">
+    <div class="flow-head"><span class="badge golden">Golden path</span><h2>Uploads that produce cards &amp; contacts</h2></div>
+    <p class="flow-sub">Sample cards were generated with the in-repo <code>leadcards:generate-sample-card</code>
+    command (machine-printed WyoTech-style inquiry cards). Each contact below was read straight off the card
+    by the model.</p>
+
+    <div class="timeline">
+      <div class="step is-ok" data-step="G3">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Single card — 1 file → 1 contact</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Submit a single-card PNG (Mason Okafor).</div>
+            <div class="k show">Showing</div><div class="v">Inline <b>“Upload complete”</b> banner and an Upload History row: <b>Manual upload · 1 of 1 · Failures —</b>.</div>
+            <div class="k db">DB check</div><div class="v"><code>lead_uploads</code> method=<code>manual</code>, outcome succeeded; 1 <code>lead_image</code> (<code>source_page</code> NULL); 1 <code>lead_card</code> <code>completed</code>; contact <code>5076197</code> created, email + phone source=<code>Lead&nbsp;Card</code>. <b>Note:</b> outcome read back as <code>matched</code> despite the contact being brand-new — see the <a href="#finding">Finding</a>.</div>
+          </div></div>
+          <figure><img loading="lazy" src="04-G3-single-card-submitted.png" alt="Single-card upload success + history row"><figcaption>04-G3-single-card-submitted.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-ok" data-step="G4">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Multi-card image — 1 file → 4 contacts</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Submit a single PNG containing <b>4</b> cards.</div>
+            <div class="k show">Showing</div><div class="v">Success + history <b>“1 of 1.”</b> Detection split the one image into four cards.</div>
+            <div class="k db">DB check</div><div class="v">1 <code>lead_image</code> → <b>4</b> <code>lead_cards</code> all <code>completed</code>, 4 distinct contacts (Mia Sullivan, Liam Halvorsen, Ethan Brooks, Caleb Halvorsen) matching the generated set.</div>
+          </div></div>
+          <figure><img loading="lazy" src="05-G4-multicard-submitted.png" alt="Multi-card upload success"><figcaption>05-G4-multicard-submitted.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-ok" data-step="G5">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Multi-page PDF — 3 pages → 3 cards</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Submit a 3-page PDF (one card per page).</div>
+            <div class="k show">Showing</div><div class="v">Success + history <b>“1 of 1”</b> for the single PDF file.</div>
+            <div class="k db">DB check</div><div class="v">PDF rasterised to <b>3</b> <code>lead_images</code> with <code>source_page</code> 1 / 2 / 3 and the same <code>source_file_index</code>; 3 cards <code>completed</code> (Mason Brooks p1, Caleb Okafor p2, Ethan Nguyen p3).</div>
+          </div></div>
+          <figure><img loading="lazy" src="06-G5-pdf-3page-submitted.png" alt="3-page PDF upload success"><figcaption>06-G5-pdf-3page-submitted.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-ok" data-step="G8">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">WEBP — mime-agnostic parity</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Submit a single-card <b>WEBP</b> image (Mia Okafor).</div>
+            <div class="k show">Showing</div><div class="v">Success + history <b>“1 of 1”</b> — same flow as PNG.</div>
+            <div class="k db">DB check</div><div class="v"><code>file_outcomes</code> mime=<code>image/webp</code>; 1 card <code>completed</code>, contact <code>5076205</code> created. Raster path is format-agnostic.</div>
+          </div></div>
+          <figure><img loading="lazy" src="09-G8-webp-submitted.png" alt="WEBP upload success"><figcaption>09-G8-webp-submitted.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 3 · CONTACTS & DEDUP -->
+  <section id="f3" class="flow">
+    <div class="flow-head"><span class="badge golden">Golden path</span><h2>Contacts land &amp; re-uploads dedupe</h2></div>
+    <p class="flow-sub">The cards above produced real contacts in WWA's contact list, and re-uploading a card
+    that was already ingested reuses the existing contact instead of duplicating it.</p>
+
+    <div class="timeline">
+      <div class="step is-ok" data-step="G6">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Lead-card contacts in the list</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Open <code>/portal/contacts</code> (sorted by <b>Added</b>).</div>
+            <div class="k show">Showing</div><div class="v">All <b>8</b> contacts from G3–G5 at the top of the list with their OCR'd names, emails and phones.</div>
+            <div class="k db">DB check</div><div class="v">Contact count moved 4,381 → <b>4,389</b> (+8 = G3:1 + G4:4 + G5:3). Email/phone <code>source = 'Lead Card'</code>.</div>
+          </div></div>
+          <figure><img loading="lazy" src="07-G6-contacts-leadcard-list.png" alt="Contacts list showing lead-card contacts at top"><figcaption>07-G6-contacts-leadcard-list.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-ok" data-step="G7">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Re-upload — dedupe, no duplicate contact</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Re-upload the <i>same</i> single-card PNG (Mason Okafor) used in G3.</div>
+            <div class="k show">Showing</div><div class="v">Upload succeeds and a new card is produced.</div>
+            <div class="k db">DB check</div><div class="v">The new card reuses <code>contact_id 5076197</code>; exactly <b>one</b> Mason Okafor contact exists across both cards. Dedup works (this is the only case where <code>matched</code> is truly correct).</div>
+          </div></div>
+          <figure><img loading="lazy" src="08-G7-reupload-dedup-submitted.png" alt="Re-upload dedup success"><figcaption>08-G7-reupload-dedup-submitted.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 4 · ANTI-PATHS -->
+  <section id="f4" class="flow">
+    <div class="flow-head"><span class="badge anti">Guardrails</span><h2>Anti-paths — bad input is handled cleanly</h2></div>
+    <p class="flow-sub">The handled failure modes: empty submit, unreadable PDF, a card with no contact details,
+    a mixed good/bad batch, and client-side type / size rejection.</p>
+
+    <div class="timeline">
+      <div class="step is-anti" data-step="A1">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Submit with no files</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Click <b>Upload</b> with nothing attached.</div>
+            <div class="k show">Showing</div><div class="v">Inline validation <b>“The files field is required.”</b> (the required-field check fires before the submit handler).</div>
+            <div class="k db">DB check</div><div class="v">No <code>lead_upload</code> created (count unchanged at 5).</div>
+          </div></div>
+          <figure><img loading="lazy" src="10-A1-no-files-validation.png" alt="Required-field validation on empty submit"><figcaption>10-A1-no-files-validation.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-anti" data-step="A2">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Corrupt PDF</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Upload a <code>bad.pdf</code> whose bytes are not a real PDF.</div>
+            <div class="k show">Showing</div><div class="v">History row <b>“0 of 1”</b> with the failure reason <b>“bad.pdf — PDF could not be read.”</b> No success banner.</div>
+            <div class="k db">DB check</div><div class="v"><code>file_outcomes</code> succeeded=false, <code>failure_reason = pdf_rasterize_failed</code>; 0 images, 0 cards.</div>
+          </div></div>
+          <figure><img loading="lazy" src="11-A2-corrupt-pdf-failure.png" alt="Corrupt PDF failure in upload history"><figcaption>11-A2-corrupt-pdf-failure.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-anti" data-step="A3">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Non-card image (no contact details)</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Upload a solid-colour image with no text.</div>
+            <div class="k show">Showing</div><div class="v">The upload <i>succeeds</i> — a blank image is still a valid file.</div>
+            <div class="k db">DB check</div><div class="v">Whole-frame fallback still creates 1 card, which <code>completed</code> with <code>outcome = no_contact_details</code> and <code>contact_id NULL</code> (OCR found no email/phone). No contact is invented.</div>
+          </div></div>
+          <figure><img loading="lazy" src="12-A3-noncard-submitted.png" alt="Non-card image upload"><figcaption>12-A3-noncard-submitted.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-anti" data-step="A4">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Mixed batch — one good, one bad</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Upload a good PNG <b>and</b> the corrupt PDF together.</div>
+            <div class="k show">Showing</div><div class="v">History row <b>“1 of 2”</b> with <b>“bad.pdf — PDF could not be read.”</b> — partial success, per-file accounting.</div>
+            <div class="k db">DB check</div><div class="v">One <code>file_outcome</code> succeeded, one failed; the PNG yields 1 image / 1 card, the bad PDF yields none.</div>
+          </div></div>
+          <figure><img loading="lazy" src="13-A4-mixed-batch.png" alt="Mixed batch 1 of 2 in upload history"><figcaption>13-A4-mixed-batch.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-anti" data-step="A5a">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Wrong file type — rejected client-side</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Attach a <code>.txt</code> file.</div>
+            <div class="k show">Showing</div><div class="v">FilePond rejects it: <b>“File of invalid type — Expects image/jpeg, image/png, image/webp or application/pdf.”</b></div>
+            <div class="k db">DB check</div><div class="v">Never reaches the server — the file is not synced into Livewire state; no upload.</div>
+          </div></div>
+          <figure><img loading="lazy" src="14-A5a-wrongtype-txt-rejected.png" alt="Wrong file type rejected by FilePond"><figcaption>14-A5a-wrongtype-txt-rejected.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-anti" data-step="A5b">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Oversize file — rejected client-side</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Attach a 26.5&nbsp;MB PNG.</div>
+            <div class="k show">Showing</div><div class="v">FilePond rejects it: <b>“File is too large — Maximum file size is 10.2&nbsp;MB.”</b> (matches <code>maxSize(10240)</code>).</div>
+            <div class="k db">DB check</div><div class="v">Not synced into Livewire state; no upload.</div>
+          </div></div>
+          <figure><img loading="lazy" src="15-A5b-oversize-rejected.png" alt="Oversize file rejected by FilePond"><figcaption>15-A5b-oversize-rejected.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 5 · FEATURE GATE -->
+  <section id="f5" class="flow">
+    <div class="flow-head"><span class="badge anti">Guardrail</span><h2>Feature gate — a school without the feature is denied</h2></div>
+    <p class="flow-sub">Logged in (isolated session) as an admin of <b>National Welding Academy</b> — org 28, which
+    does <b>not</b> carry <code>ocr-lead-upload</code>. The point is to prove the denial is the feature gate, not
+    an unrelated subdomain/auth failure.</p>
+
+    <div class="timeline">
+      <div class="step is-anti" data-step="A6">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Upload page → 403</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">As the natwelding admin, open <code>/portal/lead-card-upload</code>.</div>
+            <div class="k show">Showing</div><div class="v"><b>“Access Denied.”</b> The natwelding portal chrome renders around it — the user <i>is</i> authenticated on the correct subdomain, so this is the <code>OcrLeadUploadAccess</code> gate's <code>abort(403)</code>, not a subdomain mismatch.</div>
+            <div class="k db">DB check</div><div class="v"><code>OcrLeadUploadAccess::enabledFor($user) === false</code> (org 28 + natwelding lack the feature).</div>
+          </div></div>
+          <figure><img loading="lazy" src="16-A6-403-upload-page-denied.png" alt="Access Denied 403 on the upload page for natwelding"><figcaption>16-A6-403-upload-page-denied.png</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="step is-anti" data-step="A6">
+        <div class="step-card"><div class="step-body">
+          <p class="step-title">Contacts loads — but no upload entry point</p>
+          <div class="kv">
+            <div class="k act">Interaction</div><div class="v">Open <code>/portal/contacts</code> as the same natwelding admin.</div>
+            <div class="k show">Showing</div><div class="v">The contacts page loads normally (59 contacts, Import / Export / New Contact present) but the <b>“Upload Lead Cards”</b> button is <b>absent</b> — confirming the gate hides the entry point and the 403 above was the feature check, not broken access.</div>
+            <div class="k db">DB check</div><div class="v">Same gate path; the button is rendered only when <code>OcrLeadUploadAccess</code> passes.</div>
+          </div></div>
+          <figure><img loading="lazy" src="17-A6-contacts-no-upload-button.png" alt="Natwelding contacts page without the Upload Lead Cards button"><figcaption>17-A6-contacts-no-upload-button.png</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERIFY -->
+  <section id="verify" class="verify">
+    <div class="flow-head"><span class="badge support">Evidence</span><h2>Outcomes verified in the database</h2></div>
+    <p class="flow-sub">Every upload was drained through the queue worker and then checked against the database —
+    not just visually. <b>0</b> new <code>failed_jobs</code> across the whole run (no OpenAI denials, no crashes).</p>
+    <table>
+      <thead><tr><th>Test</th><th>Input</th><th>Result</th><th>DB evidence</th></tr></thead>
+      <tbody>
+        <tr><td>G1 · Gate ON</td><td>—</td><td>Upload button visible <span class="pill ok">pass</span></td><td>org 12 has <code>ocr-lead-upload</code></td></tr>
+        <tr><td>G2 · Form</td><td>—</td><td>Empty form, no console errors <span class="pill ok">pass</span></td><td>baseline counts 0</td></tr>
+        <tr><td>G0 · FilePond</td><td>1 PNG</td><td>File registers, temp upload 200 <span class="pill ok">pass</span></td><td><code>data.files</code> populated</td></tr>
+        <tr><td>G3 · Single card</td><td>1 PNG (1 card)</td><td>1 contact created <span class="pill ok">pass</span> <span class="pill bug">outcome=matched</span></td><td>1 img (page NULL), 1 card <code>completed</code>, contact 5076197, source <code>Lead Card</code></td></tr>
+        <tr><td>G4 · Multi-card</td><td>1 PNG (4 cards)</td><td>4 contacts created <span class="pill ok">pass</span></td><td>1 img → 4 cards <code>completed</code></td></tr>
+        <tr><td>G5 · PDF</td><td>3-page PDF</td><td>3 cards created <span class="pill ok">pass</span></td><td>3 imgs <code>source_page</code> 1/2/3, 3 cards</td></tr>
+        <tr><td>G8 · WEBP</td><td>1 WEBP</td><td>1 contact created <span class="pill ok">pass</span></td><td>mime <code>image/webp</code>, 1 card <code>completed</code></td></tr>
+        <tr><td>G6 · Contacts</td><td>—</td><td>8 lead-card contacts listed <span class="pill ok">pass</span></td><td>count 4,381 → 4,389 (+8)</td></tr>
+        <tr><td>G7 · Re-upload</td><td>same PNG</td><td>No duplicate contact <span class="pill ok">pass</span></td><td>reuses <code>contact_id 5076197</code>; 1 Mason contact</td></tr>
+        <tr><td>A1 · No files</td><td>—</td><td>“files field is required” <span class="pill ok">pass</span></td><td>no upload created</td></tr>
+        <tr><td>A2 · Corrupt PDF</td><td>bad.pdf</td><td>“PDF could not be read”, 0 of 1 <span class="pill lock">blocked</span></td><td><code>pdf_rasterize_failed</code>, 0 cards</td></tr>
+        <tr><td>A3 · Non-card</td><td>solid image</td><td>Card completes, no contact <span class="pill ok">pass</span></td><td><code>no_contact_details</code>, <code>contact_id NULL</code></td></tr>
+        <tr><td>A4 · Mixed batch</td><td>PNG + bad.pdf</td><td>1 of 2; only PNG yields a card <span class="pill ok">pass</span></td><td>1 img / 1 card, PDF 0</td></tr>
+        <tr><td>A5a · Wrong type</td><td>.txt</td><td>FilePond rejects <span class="pill lock">blocked</span></td><td>not synced; no upload</td></tr>
+        <tr><td>A5b · Oversize</td><td>26.5 MB PNG</td><td>FilePond rejects (10.2 MB cap) <span class="pill lock">blocked</span></td><td>not synced; no upload</td></tr>
+        <tr><td>A6 · Feature gate</td><td>natwelding admin</td><td>403 + button hidden, contacts loads <span class="pill lock">blocked</span></td><td><code>enabledFor()=false</code>, org 28</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    PLAT-114 · Lead-card OCR ingestion (PR #7032) · end-to-end browser review · real app, real OpenAI gpt-5.4 · DB-verified · 0 new failed jobs · 1 should-fix finding (outcome=created unreachable).
+  </footer>
+</main>
+
+<div class="lb" id="lb" aria-hidden="true">
+  <div class="hint">Click anywhere to close · full resolution</div>
+  <img id="lb-img" src="" alt="">
+</div>
+
+<script>
+  (function(){
+    var lb=document.getElementById('lb'), img=document.getElementById('lb-img');
+    document.querySelectorAll('figure img').forEach(function(el){
+      el.addEventListener('click', function(){
+        img.src=el.src; img.alt=el.alt; lb.classList.add('open'); lb.setAttribute('aria-hidden','false');
+      });
+    });
+    function close(){ lb.classList.remove('open'); lb.setAttribute('aria-hidden','true'); img.src=''; }
+    lb.addEventListener('click', close);
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+  })();
+</script>
+</body>
+</html>
